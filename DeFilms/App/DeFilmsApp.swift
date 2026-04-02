@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import Foundation
 
 @main
 struct DeFilmsApp: App {
+    @StateObject private var favoritesStore = FavoritesStore()
+
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                .environmentObject(favoritesStore)
         }
     }
 }

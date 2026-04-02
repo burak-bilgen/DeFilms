@@ -12,19 +12,20 @@ struct MainTabView: View {
         TabView {
             MoviesView()
                 .tabItem {
-                    Label("Filmler", systemImage: "popcorn.fill")
+                    Label("Filmler", systemImage: "movieclapper.fill")
                 }
 
             FavoritesView()
                 .tabItem {
-                    Label("Favoriler", systemImage: "heart.stack.fill")
+                    Label("Favoriler", systemImage: "rectangle.stack.badge.play")
                 }
 
             SettingsView()
                 .tabItem {
-                    Label("Ayarlar", systemImage: "gearshape.fill")
+                    Label("Ayarlar", systemImage: "filemenu.and.selection")
                 }
         }
         .tint(Color.accentColor)
     }
 }
+

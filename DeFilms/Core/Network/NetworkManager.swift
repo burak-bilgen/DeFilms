@@ -38,6 +38,8 @@ final class NetworkManager: NetworkServiceProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = endpoint.method.rawValue
 
+        print("[NetworkManager] Request: \(request.httpMethod ?? "") \(url.absoluteString)")
+
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
