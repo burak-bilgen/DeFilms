@@ -18,6 +18,7 @@ final class NetworkManager: NetworkServiceProtocol {
 
     func request<T: Decodable>(endpoint: Endpoint) async throws -> T {
         guard let apiKey = APIConfig.apiKey, !apiKey.isEmpty else {
+            AppLogger.log("Missing API key", category: .network, level: .error)
             throw NetworkError.missingAPIKey
         }
 
@@ -28,6 +29,7 @@ final class NetworkManager: NetworkServiceProtocol {
         var queryItems = endpoint.queryItems
         
         queryItems.append(URLQueryItem(name: "api_key", value: apiKey))
+        queryItems.append(URLQueryItem(name: "language", value: AppPreferences.persistedLanguage.tmdbLanguageCode))
         
         urlComponents.queryItems = queryItems
 
@@ -38,25 +40,28 @@ final class NetworkManager: NetworkServiceProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = endpoint.method.rawValue
 
-        print("[NetworkManager] Request: \(request.httpMethod ?? "") \(url.absoluteString)")
+        AppLogger.log("Request started: \(request.httpMethod ?? "") \(url.absoluteString)", category: .network)
 
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            AppLogger.log("Invalid HTTP response", category: .network, level: .error)
             throw NetworkError.invalidResponse
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
+            AppLogger.log("Server responded with status \(httpResponse.statusCode)", category: .network, level: .error)
             throw NetworkError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
             let decoder = JSONDecoder()
-            return try decoder.decode(T.self, from: data)
+            let decoded = try decoder.decode(T.self, from: data)
+            AppLogger.log("Request completed successfully", category: .network, level: .success)
+            return decoded
         } catch {
+            AppLogger.log("Decoding failed for \(url.absoluteString)", category: .network, level: .error)
             throw NetworkError.decodingError
         }
     }
 }
-
-

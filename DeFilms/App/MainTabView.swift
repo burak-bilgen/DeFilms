@@ -8,24 +8,41 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @EnvironmentObject private var preferences: AppPreferences
+    @State private var selection: Tab = .movies
+    @StateObject private var moviesViewModel = MovieSearchViewModel(
+        networkService: NetworkManager.shared,
+        recentSearchRepository: RecentSearchRepository.shared,
+        sessionManager: AuthSessionManager.shared
+    )
+
     var body: some View {
-        TabView {
-            MoviesView()
+        TabView(selection: $selection) {
+            MoviesView(viewModel: moviesViewModel)
+                .tag(Tab.movies)
                 .tabItem {
-                    Label("Filmler", systemImage: "movieclapper.fill")
+                    Label(Localization.string("tab.movies"), systemImage: "movieclapper.fill")
                 }
 
             FavoritesView()
+                .tag(Tab.favorites)
                 .tabItem {
-                    Label("Favoriler", systemImage: "rectangle.stack.badge.play")
+                    Label(Localization.string("tab.favorites"), systemImage: "rectangle.stack.badge.play")
                 }
 
             SettingsView()
+                .tag(Tab.settings)
                 .tabItem {
-                    Label("Ayarlar", systemImage: "filemenu.and.selection")
+                    Label(Localization.string("tab.settings"), systemImage: "filemenu.and.selection")
                 }
         }
+        .id(preferences.selectedLanguage.rawValue)
         .tint(Color.accentColor)
     }
 }
 
+private enum Tab: Hashable {
+    case movies
+    case favorites
+    case settings
+}

@@ -16,11 +16,11 @@ enum NetworkError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidURL: return "Geçersiz URL."
-        case .invalidResponse: return "Sunucudan geçersiz yanıt alındı."
-        case .decodingError: return "Veri işlenirken bir hata oluştu."
-        case .serverError(let statusCode): return "Sunucu hatası. Kod: \(statusCode)"
-        case .missingAPIKey: return "API anahtarı bulunamadı."
+        case .invalidURL: return Localization.string("network.error.invalidURL")
+        case .invalidResponse: return Localization.string("network.error.invalidResponse")
+        case .decodingError: return Localization.string("network.error.decoding")
+        case .serverError(let statusCode): return Localization.string("network.error.server", statusCode)
+        case .missingAPIKey: return Localization.string("network.error.missingAPIKey")
         }
     }
 }

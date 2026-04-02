@@ -1,9 +1,29 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
-    <entity name="Item" representedClassName="Item" syncable="YES" codeGenerationType="class">
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24377" systemVersion="24A335" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
+    <entity name="FavoriteListEntity" representedClassName="FavoriteListEntity" syncable="YES">
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="userIdentifier" attributeType="String"/>
+        <relationship name="movies" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="FavoriteMovieEntity" inverseName="list" inverseEntity="FavoriteMovieEntity"/>
+    </entity>
+    <entity name="FavoriteMovieEntity" representedClassName="FavoriteMovieEntity" syncable="YES">
+        <attribute name="movieID" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="posterPath" optional="YES" attributeType="String"/>
+        <attribute name="releaseDate" optional="YES" attributeType="String"/>
+        <attribute name="title" attributeType="String"/>
+        <attribute name="voteAverage" optional="YES" attributeType="Double" usesScalarValueType="NO"/>
+        <relationship name="list" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="FavoriteListEntity" inverseName="movies" inverseEntity="FavoriteListEntity"/>
+    </entity>
+    <entity name="RecentSearchEntity" representedClassName="RecentSearchEntity" syncable="YES">
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="query" attributeType="String"/>
+        <attribute name="userIdentifier" attributeType="String"/>
     </entity>
     <elements>
-        <element name="Item" positionX="-63" positionY="-18" width="128" height="44"/>
+        <element name="FavoriteListEntity" positionX="-189" positionY="-18" width="128" height="104"/>
+        <element name="FavoriteMovieEntity" positionX="27" positionY="-18" width="128" height="104"/>
+        <element name="RecentSearchEntity" positionX="243" positionY="-18" width="128" height="89"/>
     </elements>
 </model>

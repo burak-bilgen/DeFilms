@@ -8,14 +8,28 @@
 import Combine
 import Foundation
 
-@MainActor
 final class FavoritesStore: ObservableObject {
     @Published private(set) var lists: [FavoriteList] = []
 
-    private let storageKey = "FavoriteListsStorage"
+    private let repository: FavoritesRepositoryProtocol
+    private let sessionManager: AuthSessionManager
+    private let defaultListNameKey = "favorites.defaultListName"
+    private var cancellables: Set<AnyCancellable> = []
 
-    init() {
-        load()
+    init(
+        repository: FavoritesRepositoryProtocol,
+        sessionManager: AuthSessionManager
+    ) {
+        self.repository = repository
+        self.sessionManager = sessionManager
+
+        sessionManager.$session
+            .sink { [weak self] _ in
+                self?.reloadLists()
+            }
+            .store(in: &cancellables)
+
+        reloadLists()
     }
 
     func createList(named name: String) -> FavoriteList? {
@@ -24,25 +38,41 @@ final class FavoritesStore: ObservableObject {
             return nil
         }
 
-        let list = FavoriteList(id: UUID(), name: trimmed, movies: [])
-        lists.insert(list, at: 0)
-        save()
-        return list
+        do {
+            let list = try repository.createList(named: trimmed, userIdentifier: currentUserIdentifier)
+            reloadLists()
+            AppLogger.log("Created favorite list: \(trimmed)", category: .favorites, level: .success)
+            ToastCenter.shared.showSuccess(Localization.string("favorites.toast.listCreated"))
+            return list
+        } catch {
+            AppLogger.log("Failed to create favorite list", category: .favorites, level: .error)
+            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            return nil
+        }
     }
 
     func add(movie: Movie, to listID: UUID) {
-        guard let index = lists.firstIndex(where: { $0.id == listID }) else { return }
-        if lists[index].movies.contains(where: { $0.id == movie.id }) {
+        do {
+            try repository.add(movie: movie, to: listID, userIdentifier: currentUserIdentifier)
+            reloadLists()
+            AppLogger.log("Added movie \(movie.id) to favorites", category: .favorites, level: .success)
+        } catch {
+            AppLogger.log("Failed to add movie \(movie.id) to favorites", category: .favorites, level: .error)
+            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
             return
         }
-        lists[index].movies.append(FavoriteMovie(movie: movie))
-        save()
     }
 
     func remove(movieID: Int, from listID: UUID) {
-        guard let index = lists.firstIndex(where: { $0.id == listID }) else { return }
-        lists[index].movies.removeAll { $0.id == movieID }
-        save()
+        do {
+            try repository.remove(movieID: movieID, from: listID, userIdentifier: currentUserIdentifier)
+            reloadLists()
+            AppLogger.log("Removed movie \(movieID) from list \(listID.uuidString)", category: .favorites, level: .success)
+        } catch {
+            AppLogger.log("Failed to remove movie \(movieID) from list", category: .favorites, level: .error)
+            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            return
+        }
     }
 
     func isMovieInAnyList(movieID: Int) -> Bool {
@@ -56,22 +86,41 @@ final class FavoritesStore: ObservableObject {
         return list.movies.contains { $0.id == movieID }
     }
 
-    private func load() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return }
-        do {
-            let decoded = try JSONDecoder().decode([FavoriteList].self, from: data)
-            lists = decoded
-        } catch {
-            lists = []
+    func toggleFavorite(movie: Movie) {
+        if isMovieInAnyList(movieID: movie.id) {
+            remove(movieID: movie.id)
+        } else {
+            let listID = defaultList().id
+            add(movie: movie, to: listID)
         }
     }
 
-    private func save() {
+    func remove(movieID: Int) {
         do {
-            let data = try JSONEncoder().encode(lists)
-            UserDefaults.standard.set(data, forKey: storageKey)
+            try repository.remove(movieID: movieID, userIdentifier: currentUserIdentifier)
+            reloadLists()
+            AppLogger.log("Removed movie \(movieID) from all lists", category: .favorites, level: .success)
         } catch {
-            // no-op
+            AppLogger.log("Failed to remove movie \(movieID) from favorites", category: .favorites, level: .error)
+            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            return
         }
+    }
+
+    func defaultList() -> FavoriteList {
+        if let list = lists.first(where: { $0.name.localizedCaseInsensitiveCompare(Localization.string(defaultListNameKey)) == .orderedSame }) {
+            return list
+        }
+
+        return createList(named: Localization.string(defaultListNameKey)) ?? FavoriteList(id: UUID(), name: Localization.string(defaultListNameKey), movies: [])
+    }
+
+    private var currentUserIdentifier: String {
+        sessionManager.currentUserIdentifier
+    }
+
+    private func reloadLists() {
+        lists = (try? repository.fetchLists(for: currentUserIdentifier)) ?? []
+        AppLogger.log("Favorites reloaded for \(currentUserIdentifier)", category: .favorites)
     }
 }

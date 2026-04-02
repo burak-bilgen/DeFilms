@@ -85,6 +85,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		679A38762F7F280600874F34 /* en.lproj */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = en.lproj;
+			sourceTree = "<group>";
+		};
+		679A38772F7F280600874F34 /* tr.lproj */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = tr.lproj;
+			sourceTree = "<group>";
+		};
 		67D50D052F7EA12900534A63 = {
 			isa = PBXGroup;
 			children = (
@@ -92,6 +106,8 @@
 				67D50D232F7EA12B00534A63 /* DeFilmsTests */,
 				67D50D2D2F7EA12B00534A63 /* DeFilmsUITests */,
 				67D50D0F2F7EA12900534A63 /* Products */,
+				679A38762F7F280600874F34 /* en.lproj */,
+				679A38772F7F280600874F34 /* tr.lproj */,
 			);
 			sourceTree = "<group>";
 		};
@@ -205,6 +221,7 @@
 			knownRegions = (
 				en,
 				Base,
+				tr,
 			);
 			mainGroup = 67D50D052F7EA12900534A63;
 			minimizedProjectReferenceProxies = 1;

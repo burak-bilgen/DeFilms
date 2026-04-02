@@ -16,11 +16,12 @@ struct PosterImageView: View {
         AsyncImage(url: url) { phase in
             switch phase {
             case .empty:
-                ProgressView()
+                loadingPlaceholder
             case .success(let image):
                 image
                     .resizable()
                     .scaledToFill()
+                    .transition(.opacity)
             case .failure:
                 placeholder
             @unknown default:
@@ -36,6 +37,22 @@ struct PosterImageView: View {
                 .fill(Color.gray.opacity(0.2))
             Image(systemName: placeholderSystemImage)
                 .foregroundColor(.gray)
+        }
+    }
+
+    private var loadingPlaceholder: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(Color.gray.opacity(0.12))
+
+            VStack(spacing: 10) {
+                Image(systemName: placeholderSystemImage)
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+
+                ProgressView()
+                    .tint(.secondary)
+            }
         }
     }
 }

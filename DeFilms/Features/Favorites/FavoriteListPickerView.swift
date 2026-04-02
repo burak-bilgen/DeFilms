@@ -18,9 +18,9 @@ struct FavoriteListPickerView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Listeler") {
+                Section(Localization.string("favorites.picker.section.lists")) {
                     if favoritesStore.lists.isEmpty {
-                        Text("Henüz liste yok. Yeni bir liste oluşturun.")
+                        Text(Localization.string("favorites.picker.empty"))
                             .foregroundColor(.secondary)
                     } else {
                         ForEach(favoritesStore.lists) { list in
@@ -28,18 +28,18 @@ struct FavoriteListPickerView: View {
                                 VStack(alignment: .leading) {
                                     Text(list.name)
                                         .font(.headline)
-                                    Text("\(list.movies.count) film")
+                                    Text(Localization.string("favorites.count", list.movies.count))
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
                                 Spacer()
                                 if favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) {
-                                    Button("Çıkar") {
+                                    Button(Localization.string("favorites.action.remove")) {
                                         favoritesStore.remove(movieID: movie.id, from: list.id)
                                     }
                                     .buttonStyle(.bordered)
                                 } else {
-                                    Button("Ekle") {
+                                    Button(Localization.string("favorites.action.add")) {
                                         favoritesStore.add(movie: movie, to: list.id)
                                     }
                                     .buttonStyle(.borderedProminent)
@@ -50,10 +50,10 @@ struct FavoriteListPickerView: View {
                     }
                 }
 
-                Section("Yeni Liste") {
+                Section(Localization.string("favorites.picker.section.newList")) {
                     HStack {
-                        TextField("Liste adı", text: $newListName)
-                        Button("Oluştur") {
+                        TextField(Localization.string("favorites.picker.placeholder"), text: $newListName)
+                        Button(Localization.string("favorites.action.create")) {
                             if let list = favoritesStore.createList(named: newListName) {
                                 favoritesStore.add(movie: movie, to: list.id)
                                 newListName = ""
@@ -63,10 +63,10 @@ struct FavoriteListPickerView: View {
                     }
                 }
             }
-            .navigationTitle("Favori Listesi")
+            .navigationTitle(Localization.string("favorites.picker.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Kapat") { dismiss() }
+                    Button(Localization.string("common.close")) { dismiss() }
                 }
             }
         }

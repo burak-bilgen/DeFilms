@@ -21,6 +21,14 @@ struct FavoriteMovie: Identifiable, Codable, Equatable {
         self.releaseDate = movie.releaseDate
         self.voteAverage = movie.voteAverage
     }
+
+    init(id: Int, title: String, posterPath: String?, releaseDate: String?, voteAverage: Double?) {
+        self.id = id
+        self.title = title
+        self.posterPath = posterPath
+        self.releaseDate = releaseDate
+        self.voteAverage = voteAverage
+    }
 }
 
 struct FavoriteList: Identifiable, Codable, Equatable {
