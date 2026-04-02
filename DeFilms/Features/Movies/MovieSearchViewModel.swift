@@ -11,7 +11,8 @@ import Foundation
 @MainActor
 final class MovieSearchViewModel: ObservableObject {
     @Published var query: String = ""
-    @Published var movies: [Movie] = []
+    @Published var popularMovies: [Movie] = []
+    @Published var searchResults: [Movie] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var searchHistory: [String] = []
@@ -27,6 +28,7 @@ final class MovieSearchViewModel: ObservableObject {
     private let networkService: NetworkServiceProtocol
     private let historyKey = "MovieSearchHistory"
     private let historyLimit = 10
+    private var searchTask: Task<Void, Never>?
 
     init(networkService: NetworkServiceProtocol) {
         self.networkService = networkService
@@ -36,7 +38,6 @@ final class MovieSearchViewModel: ObservableObject {
     func search() async {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedQuery.isEmpty else {
-            errorMessage = "Arama alanı boş olamaz."
             return
         }
 
@@ -49,7 +50,7 @@ final class MovieSearchViewModel: ObservableObject {
             let response: MovieResponse = try await networkService.request(
                 endpoint: TMDBEndpoint.searchMovie(query: trimmedQuery, page: 1)
             )
-            movies = response.results
+            searchResults = response.results
             updateHistory(with: trimmedQuery)
             log("Search success", details: ["count": "\(response.results.count)"])
         } catch {
@@ -59,7 +60,7 @@ final class MovieSearchViewModel: ObservableObject {
     }
 
     func loadPopularMoviesIfNeeded() async {
-        if !movies.isEmpty {
+        if !popularMovies.isEmpty {
             return
         }
 
@@ -72,7 +73,7 @@ final class MovieSearchViewModel: ObservableObject {
             let response: MovieResponse = try await networkService.request(
                 endpoint: TMDBEndpoint.popularMovies(page: 1)
             )
-            movies = response.results
+            popularMovies = response.results
             log("Popular fetch success", details: ["count": "\(response.results.count)"])
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? "Bir hata oluştu."
@@ -122,8 +123,30 @@ final class MovieSearchViewModel: ObservableObject {
         appliedSortOption = .titleAsc
     }
 
+    func clearSearchResults() {
+        searchResults = []
+    }
+
+    func searchDebounced() {
+        searchTask?.cancel()
+        let currentQuery = query
+
+        searchTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            guard !Task.isCancelled else { return }
+            await self?.performSearch(for: currentQuery)
+        }
+    }
+
+    private func performSearch(for query: String) async {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        self.query = trimmed
+        await search()
+    }
+
     var filteredMovies: [Movie] {
-        var results = movies
+        var results = searchResults
 
         let trimmedYear = appliedFilters.year.trimmingCharacters(in: .whitespacesAndNewlines)
         if let year = Int(trimmedYear), trimmedYear.count == 4 {

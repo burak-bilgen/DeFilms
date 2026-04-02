@@ -16,32 +16,12 @@ struct MovieCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             ZStack(alignment: .topTrailing) {
-                AsyncImage(url: movie.posterURL) { phase in
-                    switch phase {
-                    case .empty:
-                        ZStack {
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.2))
-                            ProgressView()
-                        }
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: .infinity)
-                    case .failure:
-                        ZStack {
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.2))
-                            Image(systemName: "photo")
-                                .foregroundColor(.gray)
-                        }
-                    @unknown default:
-                        Color.gray.opacity(0.2)
-                    }
-                }
+                PosterImageView(
+                    url: movie.posterURL,
+                    cornerRadius: 8,
+                    placeholderSystemImage: "photo",
+                )
                 .frame(height: 240)
-                .cornerRadius(8)
 
                 Button {
                     isPickerPresented = true

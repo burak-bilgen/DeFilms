@@ -11,56 +11,86 @@ struct MoviesView: View {
     @StateObject private var viewModel = MovieSearchViewModel(networkService: NetworkManager.shared)
     @State private var isFilterPopoverPresented: Bool = false
     @State private var isSortPopoverPresented: Bool = false
-    @State private var isSearchPopoverPresented: Bool = false
     @State private var toastItem: ToastItem?
+    @FocusState private var isSearchFocused: Bool
 
     private let columns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
 
+    private let searchColumns = [
+        GridItem(.flexible(), spacing: 16),
+        GridItem(.flexible(), spacing: 16)
+    ]
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                headerBar
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 20) {
+                    searchSection
 
-                popularHeader
-
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, alignment: .center)
-                } else if viewModel.movies.isEmpty {
-                    SearchHistoryView(history: viewModel.searchHistory) { selected in
-                        viewModel.query = selected
-                        Task { await viewModel.search() }
+                    if showCarousel {
+                        Text("Popular Movies")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .transition(.opacity)
+                            .animation(.easeInOut(duration: 0.25), value: isSearching)
+                        
+                        popularCarousel
+                            .transition(.opacity)
+                            .padding(.horizontal, -16)
+                            .animation(.easeInOut(duration: 0.25), value: showCarousel)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else if viewModel.filteredMovies.isEmpty {
-                    Text("Filtrelere uygun sonuç bulunamadı.")
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(viewModel.filteredMovies) { movie in
-                                MovieCardView(movie: movie)
-                                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                            }
+
+                    if isSearching {
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        } else if viewModel.filteredMovies.isEmpty {
+                            Text("Arama sonucu bulunamadı.")
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        } else {
+                            searchResultsGrid
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
                         }
-                        .padding(.vertical, 8)
+                    } else if viewModel.popularMovies.isEmpty {
+                        SearchHistoryView(history: viewModel.searchHistory) { selected in
+                            viewModel.query = selected
+                            Task { await viewModel.search() }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .animation(.easeInOut(duration: 0.25), value: viewModel.filteredMovies)
                 }
+                .padding(.horizontal)
+                .padding(.bottom)
             }
             .task {
                 await viewModel.loadPopularMoviesIfNeeded()
             }
-            .padding()
+            .safeAreaInset(edge: .top) {
+                headerBar
+                    .padding(.horizontal)
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                isSearchFocused = false
+            }
+            .scrollDismissesKeyboard(.interactively)
             .toast(item: $toastItem)
             .onChange(of: viewModel.errorMessage) { newValue in
                 guard let message = newValue, !message.isEmpty else { return }
                 toastItem = ToastItem(message: message, style: .error)
                 viewModel.clearError()
+            }
+            .onChange(of: viewModel.query) { newValue in
+                if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    viewModel.clearSearchResults()
+                } else {
+                    viewModel.searchDebounced()
+                }
             }
         }
     }
@@ -70,86 +100,98 @@ struct MoviesView: View {
             Image("AppLogo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 44)
+                .frame(height: 75)
+                .padding(.leading, -5)
                 .accessibilityLabel("DeFilms Logo")
 
-            Text("DeFilms")
-                .font(.title2)
-                .fontWeight(.bold)
-
             Spacer()
-
-            Button {
-                isSearchPopoverPresented = true
-            } label: {
-                Image(systemName: "magnifyingglass")
-                    .font(.title3)
-                    .foregroundColor(.primary)
-            }
-            .buttonStyle(.plain)
-            .popover(isPresented: $isSearchPopoverPresented) {
-                searchPopover
-                    .presentationCompactAdaptation(.none)
-            }
         }
     }
 
-    private var popularHeader: some View {
-        HStack(spacing: 12) {
-            Text("Popular Movies")
-                .font(.headline)
-
-            Spacer()
-
-            Button {
-                isFilterPopoverPresented = true
-                Task { await viewModel.loadGenresIfNeeded() }
-            } label: {
-                Image(systemName: "line.3.horizontal.decrease.circle")
-                    .font(.title3)
-                    .foregroundColor(.primary)
-            }
-            .buttonStyle(.plain)
-            .popover(isPresented: $isFilterPopoverPresented) {
-                filterPopover
-                    .presentationCompactAdaptation(.none)
-            }
-
-            Button {
-                isSortPopoverPresented = true
-            } label: {
-                Image(systemName: "arrow.up.arrow.down.circle")
-                    .font(.title3)
-                    .foregroundColor(.primary)
-            }
-            .buttonStyle(.plain)
-            .popover(isPresented: $isSortPopoverPresented) {
-                sortPopover
-                    .presentationCompactAdaptation(.none)
-            }
+    private var searchSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            searchField
         }
     }
 
-    private var searchPopover: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Ara")
-                .font(.headline)
+    private var popularCarousel: some View {
+        PosterCarousel(movies: viewModel.popularMovies)
+            .frame(height: 480)
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.secondary)
 
             TextField("Film ara...", text: $viewModel.query)
-                .textFieldStyle(.roundedBorder)
-
-            HStack {
-                Spacer()
-                Button("Ara") {
+                .textFieldStyle(.plain)
+                .focused($isSearchFocused)
+                .submitLabel(.search)
+                .onSubmit {
                     Task { await viewModel.search() }
-                    isSearchPopoverPresented = false
                 }
-                .buttonStyle(.borderedProminent)
+
+            if !viewModel.query.isEmpty {
+                Button {
+                    viewModel.query = ""
+                    viewModel.clearSearchResults()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if showFilterSortButtons {
+                HStack(spacing: 10) {
+                    Button {
+                        isFilterPopoverPresented = true
+                        Task { await viewModel.loadGenresIfNeeded() }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                            .font(.title3)
+                            .foregroundColor(.primary)
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $isFilterPopoverPresented) {
+                        filterPopover
+                            .presentationCompactAdaptation(.none)
+                    }
+
+                    Button {
+                        isSortPopoverPresented = true
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down.circle")
+                            .font(.title3)
+                            .foregroundColor(.primary)
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $isSortPopoverPresented) {
+                        sortPopover
+                            .presentationCompactAdaptation(.none)
+                    }
+                }
+                .transition(.opacity)
             }
         }
-        .padding(16)
-        .frame(width: 280)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.gray.opacity(0.12))
+        )
     }
+
+    private var searchResultsGrid: some View {
+        LazyVGrid(columns: searchColumns, spacing: 16) {
+            ForEach(viewModel.filteredMovies) { movie in
+                MovieCardView(movie: movie)
+            }
+        }
+        .padding(.vertical, 8)
+        .animation(.easeInOut(duration: 0.25), value: viewModel.filteredMovies)
+    }
+
 
     private var filterPopover: some View {
         let genres = viewModel.genres
@@ -261,4 +303,124 @@ struct MoviesView: View {
         .padding(16)
         .frame(width: 260)
     }
+
+    private var isSearching: Bool {
+        !viewModel.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var showFilterSortButtons: Bool {
+        isSearching && viewModel.filteredMovies.count > 1
+    }
+
+    private var showCarousel: Bool {
+        !isSearching && !isSearchFocused
+    }
 }
+
+private struct PosterCarousel: View {
+    let movies: [Movie]
+
+    @State private var internalIndex: Int = 0
+    @State private var dragOffset: CGFloat = 0
+
+    var body: some View {
+        GeometryReader { proxy in
+            let containerWidth = proxy.size.width
+            let cardWidth = min(containerWidth * 0.72, 340)
+            let cardHeight = cardWidth * 1.5
+            let spacing: CGFloat = 16
+            let totalWidth = cardWidth + spacing
+            let count = movies.count
+
+            HStack(spacing: spacing) {
+                ForEach(Array(movies.enumerated()), id: \.offset) { index, movie in
+                    MovieCarouselCard(
+                        movie: movie,
+                        isActive: index == internalIndex,
+                        width: cardWidth,
+                        height: cardHeight
+                    )
+                    .scaleEffect(scale(for: index, totalWidth: totalWidth, containerWidth: containerWidth))
+                }
+            }
+            .padding(.horizontal, (containerWidth - cardWidth) / 2)
+            .offset(x: -CGFloat(internalIndex) * totalWidth + dragOffset)
+            .animation(.easeOut(duration: 0.35), value: internalIndex)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        dragOffset = value.translation.width
+                    }
+                    .onEnded { value in
+                        guard count > 0 else { return }
+                        let threshold = totalWidth * 0.35
+                        var target = internalIndex
+                        if dragOffset < -threshold {
+                            target = internalIndex + 1
+                        } else if dragOffset > threshold {
+                            target = internalIndex - 1
+                        }
+                        let clamped = min(max(target, 0), max(count - 1, 0))
+
+                        withAnimation(.easeOut(duration: 0.35)) {
+                            internalIndex = clamped
+                            dragOffset = 0
+                        }
+                    }
+            )
+            .padding(.vertical, 16)
+        }
+    }
+
+    private func scale(for index: Int, totalWidth: CGFloat, containerWidth: CGFloat) -> CGFloat {
+        let centerOffset = (CGFloat(index) - CGFloat(internalIndex)) * totalWidth + dragOffset
+        let normalized = min(abs(centerOffset) / containerWidth, 1)
+        return 1 - (normalized * 0.18)
+    }
+}
+
+private struct MovieCarouselCard: View {
+    let movie: Movie
+    let isActive: Bool
+    let width: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        PosterImageView(
+            url: movie.posterURL,
+            cornerRadius: 18,
+            placeholderSystemImage: "photo"
+        )
+        .frame(width: width, height: height)
+        .shadow(color: .black.opacity(isActive ? 0.28 : 0), radius: isActive ? 12 : 0, y: isActive ? 10 : 0)
+    }
+}
+
+private struct MovieSearchRow: View {
+    let movie: Movie
+
+    var body: some View {
+        HStack(spacing: 12) {
+            PosterImageView(
+                url: movie.posterURL,
+                cornerRadius: 8,
+                placeholderSystemImage: "photo"
+            )
+            .frame(width: 56, height: 84)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(movie.title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .lineLimit(2)
+                Text(movie.releaseYear)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+}
+
