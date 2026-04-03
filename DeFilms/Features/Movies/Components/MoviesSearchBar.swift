@@ -12,11 +12,12 @@ struct MoviesSearchBar: View {
     let onClear: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
-            HStack(spacing: 10) {
+        HStack(spacing: AppSpacing.sm) {
+            HStack(spacing: AppSpacing.sm) {
                 Image(systemName: "magnifyingglass")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
 
                 TextField(Localization.string("movies.search.placeholder"), text: $text)
                     .textFieldStyle(.plain)
@@ -25,6 +26,7 @@ struct MoviesSearchBar: View {
                     .submitLabel(.search)
                     .focused(isFocused)
                     .onSubmit(onSubmit)
+                    .accessibilityLabel(Localization.string("movies.accessibility.searchField"))
                     .accessibilityIdentifier("movies.search.textField")
 
                 if !text.isEmpty {
@@ -35,40 +37,39 @@ struct MoviesSearchBar: View {
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(Localization.string("movies.accessibility.clearSearch"))
                     .accessibilityIdentifier("movies.search.clearButton")
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 44)
+            .frame(height: AppDimension.controlHeight)
             .padding(.horizontal, 16)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(AppPalette.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
 
             Button(Localization.string("movies.search.action")) {
                 onSubmit()
             }
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(Color(.systemBackground))
-            .frame(width: 78, height: 44)
-            .background(Color.primary)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .frame(width: 78)
+            .buttonStyle(PrimaryProminentButtonStyle())
             .accessibilityIdentifier("movies.search.submitButton")
         }
-        .padding(6)
+        .padding(AppSpacing.xxs + 2)
         .background(
             LinearGradient(
                 colors: [
-                    Color(.secondarySystemBackground),
-                    Color(.tertiarySystemBackground)
+                    AppPalette.cardBackground,
+                    AppPalette.cardAccentBackground
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous)
+                .stroke(AppPalette.border, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 6)
+        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
+        .shadow(color: AppPalette.shadow, radius: 12, x: 0, y: 6)
     }
 }

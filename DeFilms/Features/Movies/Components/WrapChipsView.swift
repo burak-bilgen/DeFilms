@@ -11,15 +11,15 @@ struct WrapChipsView: View {
 
     var body: some View {
         ViewThatFits(in: .vertical) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppSpacing.xs) {
                 ForEach(items.prefix(3), id: \.self) { item in
                     chip(item)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 ForEach(Array(Array(items.prefix(4)).chunked(into: 2).enumerated()), id: \.offset) { entry in
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppSpacing.xs) {
                         ForEach(entry.element, id: \.self) { item in
                             chip(item)
                         }
@@ -33,26 +33,9 @@ struct WrapChipsView: View {
         Text(item)
             .font(.caption.weight(.medium))
             .foregroundStyle(inverted ? .white.opacity(0.92) : .secondary)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppSpacing.sm - 2)
             .frame(height: 28)
-            .background(inverted ? Color.white.opacity(0.16) : Color(.secondarySystemBackground))
+            .background(inverted ? Color.white.opacity(0.16) : AppPalette.cardBackground)
             .clipShape(Capsule())
-    }
-}
-
-private extension Array {
-    func chunked(into size: Int) -> [[Element]] {
-        guard size > 0 else { return [self] }
-
-        var result: [[Element]] = []
-        var index = startIndex
-
-        while index < endIndex {
-            let end = self.index(index, offsetBy: size, limitedBy: endIndex) ?? endIndex
-            result.append(Array(self[index..<end]))
-            index = end
-        }
-
-        return result
     }
 }

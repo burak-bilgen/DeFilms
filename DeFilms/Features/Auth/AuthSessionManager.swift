@@ -93,61 +93,65 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
     }
 
     func signUp(email: String, password: String, confirmPassword: String) throws {
-        let sanitizedEmail = normalize(email: email)
-        let sanitizedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let emailAddress = normalize(email: email)
+        let passwordText = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !sanitizedEmail.isEmpty, !sanitizedPassword.isEmpty else {
+        guard !emailAddress.isEmpty, !passwordText.isEmpty else {
             throw AuthError.emptyFields
         }
 
-        guard sanitizedEmail.contains("@") else {
+        guard emailAddress.contains("@") else {
             throw AuthError.invalidEmail
         }
 
-        guard sanitizedPassword.count >= 6 else {
+        guard passwordText.count >= 6 else {
             throw AuthError.weakPassword
         }
 
-        guard sanitizedPassword == confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines) else {
+        guard passwordText == confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines) else {
             throw AuthError.passwordMismatch
         }
 
         var accounts = try loadAccounts()
-        guard !accounts.contains(where: { $0.email == sanitizedEmail }) else {
+        guard !accounts.contains(where: { $0.email == emailAddress }) else {
             throw AuthError.accountExists
         }
 
         accounts.append(
             StoredAccount(
                 id: UUID().uuidString,
-                email: sanitizedEmail,
-                passwordHash: hash(password: sanitizedPassword)
+                email: emailAddress,
+                passwordHash: hash(password: passwordText)
             )
         )
         try saveAccounts(accounts)
-        try startSession(for: sanitizedEmail)
-        AppLogger.log("User signed up: \(sanitizedEmail)", category: .auth, level: .success)
+        try startSession(for: emailAddress)
+        AppLogger.log("User signed up: \(emailAddress)", category: .auth, level: .success)
     }
 
     func signIn(email: String, password: String) throws {
-        let sanitizedEmail = normalize(email: email)
-        let sanitizedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let emailAddress = normalize(email: email)
+        let passwordText = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !sanitizedEmail.isEmpty, !sanitizedPassword.isEmpty else {
+        guard !emailAddress.isEmpty, !passwordText.isEmpty else {
             throw AuthError.emptyFields
         }
 
+        guard emailAddress.contains("@") else {
+            throw AuthError.invalidEmail
+        }
+
         let accounts = try loadAccounts()
-        guard let account = accounts.first(where: { $0.email == sanitizedEmail }) else {
+        guard let account = accounts.first(where: { $0.email == emailAddress }) else {
             throw AuthError.accountNotFound
         }
 
-        guard account.passwordHash == hash(password: sanitizedPassword) else {
+        guard account.passwordHash == hash(password: passwordText) else {
             throw AuthError.invalidCredentials
         }
 
-        try startSession(for: sanitizedEmail)
-        AppLogger.log("User signed in: \(sanitizedEmail)", category: .auth, level: .success)
+        try startSession(for: emailAddress)
+        AppLogger.log("User signed in: \(emailAddress)", category: .auth, level: .success)
     }
 
     func changePassword(currentPassword: String, newPassword: String, confirmPassword: String) throws {
@@ -157,17 +161,10 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
         let currentPassword = currentPassword.trimmingCharacters(in: .whitespacesAndNewlines)
         let newPassword = newPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+        let confirmedPassword = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !currentPassword.isEmpty, !newPassword.isEmpty else {
+        guard !currentPassword.isEmpty, !newPassword.isEmpty, !confirmedPassword.isEmpty else {
             throw AuthError.emptyFields
-        }
-
-        guard newPassword.count >= 6 else {
-            throw AuthError.weakPassword
-        }
-
-        guard newPassword == confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines) else {
-            throw AuthError.passwordMismatch
         }
 
         var accounts = try loadAccounts()
@@ -176,7 +173,19 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         }
 
         guard accounts[index].passwordHash == hash(password: currentPassword) else {
-            throw AuthError.invalidCredentials
+            throw AuthError.currentPasswordIncorrect
+        }
+
+        guard newPassword != currentPassword else {
+            throw AuthError.newPasswordMustDiffer
+        }
+
+        guard newPassword.count >= 6 else {
+            throw AuthError.weakPassword
+        }
+
+        guard newPassword == confirmedPassword else {
+            throw AuthError.passwordMismatch
         }
 
         accounts[index].passwordHash = hash(password: newPassword)
@@ -255,22 +264,21 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
     }
 
     private func restoreUserIdentifier(for email: String) -> String {
-        let storedData = try? keychainService.data(for: sessionUserIdentifierKey)
-        if let identifierData = storedData ?? nil,
+        if let identifierData = try? keychainService.data(for: sessionUserIdentifierKey),
            let identifier = String(data: identifierData, encoding: .utf8),
            identifier.isEmpty == false {
             return identifier
         }
 
-        let normalizedEmail = normalize(email: email)
-        let accountIdentifier = (try? loadAccounts().first(where: { $0.email == normalizedEmail })?.id)
+        let emailAddress = normalize(email: email)
+        let accountIdentifier = (try? loadAccounts().first(where: { $0.email == emailAddress })?.id)
 
         if let accountIdentifier, accountIdentifier.isEmpty == false {
             try? keychainService.save(Data(accountIdentifier.utf8), for: sessionUserIdentifierKey)
             return accountIdentifier
         }
 
-        return normalizedEmail
+        return emailAddress
     }
 
     private func normalize(email: String) -> String {
@@ -284,7 +292,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 }
 
 
-enum AuthError: Error, LocalizedError {
+enum AuthError: Error, LocalizedError, Equatable {
     case emptyFields
     case invalidEmail
     case weakPassword
@@ -292,6 +300,8 @@ enum AuthError: Error, LocalizedError {
     case accountExists
     case accountNotFound
     case invalidCredentials
+    case currentPasswordIncorrect
+    case newPasswordMustDiffer
     case notSignedIn
 
     var errorDescription: String? {
@@ -310,6 +320,10 @@ enum AuthError: Error, LocalizedError {
             return Localization.string("auth.error.accountNotFound")
         case .invalidCredentials:
             return Localization.string("auth.error.invalidCredentials")
+        case .currentPasswordIncorrect:
+            return Localization.string("auth.error.currentPasswordIncorrect")
+        case .newPasswordMustDiffer:
+            return Localization.string("auth.error.newPasswordMustDiffer")
         case .notSignedIn:
             return Localization.string("auth.error.notSignedIn")
         }

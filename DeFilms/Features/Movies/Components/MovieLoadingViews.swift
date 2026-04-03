@@ -8,31 +8,67 @@
 import SwiftUI
 
 struct SkeletonBlock: View {
-    var cornerRadius: CGFloat = 14
-    @State private var isActive = false
+    var cornerRadius: CGFloat = AppCornerRadius.sm
+    @State private var shimmerOffset: CGFloat = -1.2
 
     var body: some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(Color(.secondarySystemFill))
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color.white.opacity(0.22))
-                    .opacity(isActive ? 0.38 : 0.12)
-            )
-            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: isActive)
-            .onAppear {
-                isActive = true
-            }
+        GeometryReader { geometry in
+            let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+
+            shape
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(.systemGray5),
+                            Color(.systemGray6),
+                            Color(.systemGray5)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay {
+                    shape
+                        .fill(Color.white.opacity(0.55))
+                        .mask {
+                            Rectangle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            .clear,
+                                            .white,
+                                            .clear
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .frame(width: geometry.size.width * 0.4)
+                                .rotationEffect(.degrees(14))
+                                .offset(x: geometry.size.width * shimmerOffset)
+                        }
+                }
+                .clipShape(shape)
+                .onAppear {
+                    shimmerOffset = -1.2
+                    withAnimation(.linear(duration: 1.15).repeatForever(autoreverses: false)) {
+                        shimmerOffset = 1.2
+                    }
+                }
+                .onDisappear {
+                    shimmerOffset = -1.2
+                }
+        }
     }
 }
 
 struct MovieCardSkeletonView: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SkeletonBlock(cornerRadius: 16)
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            SkeletonBlock(cornerRadius: AppCornerRadius.md)
                 .aspectRatio(2.0 / 3.0, contentMode: .fit)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs - 2) {
                 SkeletonBlock(cornerRadius: 6)
                     .frame(height: 14)
 
@@ -46,15 +82,15 @@ struct MovieCardSkeletonView: View {
 
 struct MovieSectionSkeletonView: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             SkeletonBlock(cornerRadius: 6)
                 .frame(width: 110, height: 18)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 14) {
+                HStack(spacing: AppSpacing.sm) {
                     ForEach(0..<5, id: \.self) { _ in
                         MovieCardSkeletonView()
-                            .frame(width: 146)
+                            .frame(width: AppDimension.posterRailWidth)
                     }
                 }
             }
@@ -66,7 +102,7 @@ struct MovieGridSkeletonView: View {
     let columns: [GridItem]
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 18) {
+        LazyVGrid(columns: columns, spacing: AppSpacing.lg - 2) {
             ForEach(0..<6, id: \.self) { _ in
                 MovieCardSkeletonView()
             }
@@ -77,12 +113,12 @@ struct MovieGridSkeletonView: View {
 struct MovieDetailSkeletonView: View {
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: AppSpacing.lg) {
                 SkeletonBlock(cornerRadius: 0)
                     .frame(height: 420)
 
-                VStack(alignment: .leading, spacing: 20) {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: AppSpacing.sm) {
                         ForEach(0..<4, id: \.self) { _ in
                             SkeletonBlock(cornerRadius: 18)
                                 .frame(height: 82)
@@ -110,10 +146,10 @@ struct MovieDetailSkeletonView: View {
                         }
                     }
                 }
-                .padding(24)
+                .padding(AppSpacing.xl)
                 .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .padding(.horizontal, 18)
+                .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous))
+                .padding(.horizontal, AppSpacing.lg - 2)
             }
         }
         .ignoresSafeArea(edges: .top)

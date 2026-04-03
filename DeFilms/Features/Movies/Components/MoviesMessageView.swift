@@ -12,9 +12,10 @@ struct MoviesMessageView: View {
     let action: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppSpacing.sm) {
             Text(title)
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             Text(message)
                 .font(.subheadline)
@@ -27,8 +28,8 @@ struct MoviesMessageView: View {
                     .tint(.primary)
             }
         }
-        .padding(24)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .padding(AppSpacing.xl)
+        .appCardSurface(cornerRadius: AppCornerRadius.md)
+        .accessibilityElement(children: .contain)
     }
 }

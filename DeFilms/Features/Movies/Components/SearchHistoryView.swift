@@ -17,6 +17,7 @@ struct SearchHistoryView: View {
                 Text(Localization.string("movies.recentSearches"))
                     .font(.headline)
                     .padding(.horizontal, 16)
+                    .accessibilityAddTraits(.isHeader)
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -34,6 +35,7 @@ struct SearchHistoryView: View {
                             }
                             .buttonStyle(.plain)
                             .foregroundStyle(.primary)
+                            .accessibilityLabel(Localization.string("movies.accessibility.recentSearch", item))
                         }
                     }
                     .padding(.horizontal, 16)

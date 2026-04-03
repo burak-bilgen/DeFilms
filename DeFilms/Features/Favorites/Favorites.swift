@@ -125,6 +125,9 @@ private struct FavoriteListRow: View {
             FavoriteListCard(list: list)
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Localization.string("favorites.accessibility.listSummary", list.name, list.movies.count))
+        .accessibilityHint(Localization.string("movies.accessibility.openDetails"))
         .contextMenu {
             Button(Localization.string("favorites.rename.title"), action: renameList)
             Button(Localization.string("favorites.delete.confirm"), role: .destructive, action: deleteList)
@@ -139,10 +142,11 @@ private struct FavoritesEmptyState: View {
     let action: () -> Void
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: AppSpacing.lg) {
             Image(systemName: "rectangle.stack.badge.plus")
                 .font(.system(size: 54, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
 
             Text(title)
                 .font(.title3.weight(.bold))
@@ -151,18 +155,14 @@ private struct FavoritesEmptyState: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 28)
+                .padding(.horizontal, AppSpacing.xxl)
 
             Button(actionTitle, action: action)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color(.systemBackground))
-                .frame(height: 50)
-                .padding(.horizontal, 22)
-                .background(Color.primary)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .buttonStyle(PrimaryProminentButtonStyle())
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .background(AppPalette.screenBackground)
+        .accessibilityElement(children: .contain)
     }
 }
 
@@ -171,7 +171,7 @@ private struct FavoritesSummaryCard: View {
     let movieCount: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text(Localization.string("favorites.summary.title"))
                 .font(.title2.weight(.bold))
 
@@ -185,22 +185,23 @@ private struct FavoritesSummaryCard: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
+        .padding(AppSpacing.lg)
         .background(
             LinearGradient(
                 colors: [
-                    Color(.secondarySystemBackground),
-                    Color(.tertiarySystemBackground)
+                    AppPalette.cardBackground,
+                    AppPalette.cardAccentBackground
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous)
+                .stroke(AppPalette.border, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 
     private func summaryBadge(systemImage: String, text: String) -> some View {
@@ -259,12 +260,8 @@ private struct FavoriteListCard: View {
                 }
             }
         }
-        .padding(18)
-        .background(Color(.secondarySystemBackground))
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(AppSpacing.md + 2)
+        .appCardSurface()
+        .accessibilityElement(children: .combine)
     }
 }

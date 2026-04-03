@@ -10,7 +10,7 @@ struct MovieFilterSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     private let genreColumns = [
-        GridItem(.adaptive(minimum: 110), spacing: 10)
+        GridItem(.adaptive(minimum: 110), spacing: AppSpacing.sm)
     ]
 
     var body: some View {
@@ -24,7 +24,7 @@ struct MovieFilterSheet: View {
                         viewModel.filterYear = String(newValue.filter(\.isNumber).prefix(4))
                     }
 
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     HStack {
                         Text(Localization.string("movies.filter.rating"))
                         Spacer()
@@ -35,11 +35,11 @@ struct MovieFilterSheet: View {
                     Slider(value: $viewModel.minRating, in: 0...10, step: 1)
                 }
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     Text(Localization.string("movies.filter.genre"))
                         .font(.subheadline.weight(.semibold))
 
-                    LazyVGrid(columns: genreColumns, alignment: .leading, spacing: 10) {
+                    LazyVGrid(columns: genreColumns, alignment: .leading, spacing: AppSpacing.sm) {
                         genreChip(
                             title: Localization.string("movies.filter.genre.all"),
                             isSelected: viewModel.selectedGenreID == nil
@@ -85,11 +85,11 @@ struct MovieFilterSheet: View {
                 .foregroundStyle(isSelected ? Color(.systemBackground) : .primary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 36)
-                .padding(.horizontal, 8)
-                .background(isSelected ? Color.primary : Color(.secondarySystemBackground))
+                .padding(.horizontal, AppSpacing.xs)
+                .background(isSelected ? Color.primary : AppPalette.cardBackground)
                 .overlay(
                     Capsule()
-                        .stroke(Color.primary.opacity(isSelected ? 0 : 0.08), lineWidth: 1)
+                        .stroke(AppPalette.border.opacity(isSelected ? 0 : 1), lineWidth: 1)
                 )
                 .clipShape(Capsule())
         }

@@ -11,21 +11,22 @@ struct MovieHorizontalSection: View {
     let movies: [Movie]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text(title)
                 .font(.title3.weight(.semibold))
-                .padding(.horizontal, 16)
+                .padding(.horizontal, AppSpacing.md)
+                .accessibilityAddTraits(.isHeader)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 22) {
+                HStack(alignment: .top, spacing: AppSpacing.lg + 2) {
                     ForEach(movies) { movie in
                         MovieCardNavigationLink(movie: movie, cardStyle: .rail) {
                             coordinator.push(.detail(movie))
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 2)
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, AppSpacing.xxs - 2)
             }
         }
     }

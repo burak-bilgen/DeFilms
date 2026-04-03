@@ -7,12 +7,6 @@
 
 import SwiftUI
 
-private enum AuthFlowMode {
-    case signIn
-    case signUp
-    case changePassword
-}
-
 struct SignInView: View {
     @EnvironmentObject private var sessionManager: AuthSessionManager
     @Environment(\.dismiss) private var dismiss
@@ -35,13 +29,6 @@ struct SignInView: View {
                     systemImage: "lock.fill",
                     kind: .password
                 )
-            }
-
-            if let errorMessage = viewModel.errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                }
             }
 
             Section {
@@ -84,13 +71,6 @@ struct SignUpView: View {
                 )
             }
 
-            if let errorMessage = viewModel.errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                }
-            }
-
             Section {
                 Button(Localization.string("auth.createAccount")) {
                     if viewModel.submit(using: sessionManager) {
@@ -131,30 +111,11 @@ struct ChangePasswordView: View {
                 )
             }
 
-            if let errorMessage = viewModel.errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                }
-            }
-
-            if let successMessage = viewModel.successMessage {
-                Section {
-                    Text(successMessage)
-                        .foregroundStyle(.green)
-                }
-            }
-
             Section {
                 Button(Localization.string("auth.changePassword")) {
-                    _ = viewModel.submit(using: sessionManager)
-                }
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(Localization.string("common.done")) {
-                    dismiss()
+                    if viewModel.submit(using: sessionManager) {
+                        dismiss()
+                    }
                 }
             }
         }

@@ -77,9 +77,6 @@ struct FavoriteListDetailView: View {
                 .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(.systemGroupedBackground))
-                .onAppear {
-                    dismiss()
-                }
             }
         }
         .alert(Localization.string("favorites.rename.title"), isPresented: $isRenamePresented) {
@@ -195,6 +192,7 @@ private struct FavoriteMovieGridItem: View {
                     .font(.caption.weight(.semibold))
             }
             .tint(.primary)
+            .accessibilityLabel(Localization.string("favorites.manage.movie"))
         }
     }
 }
@@ -227,10 +225,11 @@ private struct FavoriteListDetailEmptyState: View {
     let listName: String
 
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: AppSpacing.sm) {
             Image(systemName: "bookmark.slash")
                 .font(.system(size: 42, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
 
             Text(Localization.string("favorites.list.empty.title"))
                 .font(.headline.weight(.bold))
@@ -241,9 +240,9 @@ private struct FavoriteListDetailEmptyState: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 28)
-        .padding(.horizontal, 22)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(.vertical, AppSpacing.xxl)
+        .padding(.horizontal, AppSpacing.lg + 2)
+        .appCardSurface()
+        .accessibilityElement(children: .contain)
     }
 }

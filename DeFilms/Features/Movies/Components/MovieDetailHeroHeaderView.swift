@@ -16,7 +16,7 @@ struct MovieDetailHeroHeaderView: View {
         let collapseProgress = min(max(-scrollOffset / (heroHeight * 0.55), 0), 1)
         let contentOpacity = Double(1 - (collapseProgress * 0.22))
 
-        VStack(spacing: 24) {
+        VStack(spacing: AppSpacing.xl) {
             topBar
                 .padding(.horizontal, 30)
                 .padding(.top, 40)
@@ -25,8 +25,8 @@ struct MovieDetailHeroHeaderView: View {
             Spacer()
 
             heroContent
-                .padding(.horizontal, 20)
-                .padding(.bottom, 28)
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.xxl)
                 .offset(y: -collapseProgress * 26)
                 .scaleEffect(1 - (collapseProgress * 0.06), anchor: .bottomLeading)
                 .opacity(contentOpacity)
@@ -53,16 +53,16 @@ struct MovieDetailHeroHeaderView: View {
     }
 
     private var heroContent: some View {
-        HStack(alignment: .bottom, spacing: 18) {
+        HStack(alignment: .bottom, spacing: AppSpacing.lg - 2) {
             PosterImageView(
                 url: viewModel.posterURL,
-                cornerRadius: 22,
+                cornerRadius: AppCornerRadius.md + 4,
                 placeholderSystemImage: "film"
             )
-            .frame(width: 132, height: 198)
+            .frame(width: AppDimension.posterHeroWidth, height: AppDimension.posterHeroHeight)
             .shadow(color: .black.opacity(0.25), radius: 18, y: 12)
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text(viewModel.title)
                     .font(.system(size: 30, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
@@ -74,7 +74,7 @@ struct MovieDetailHeroHeaderView: View {
                     }
                     
                     MovieDetailRatingBadge(ratingText: viewModel.ratingText, style: .hero)
-                        .padding(.leading, 16)
+                        .padding(.leading, AppSpacing.md)
                 }
 
                 if viewModel.hasTrailer {
@@ -82,14 +82,14 @@ struct MovieDetailHeroHeaderView: View {
                         .padding(.leading, -6)
                 }
             }
-            .padding(.bottom, 10)
+            .padding(.bottom, AppSpacing.sm - 2)
 
             Spacer(minLength: 0)
         }
     }
 
     private var heroFacts: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
             ForEach(viewModel.heroFacts, id: \.self) { fact in
                 Text(fact)
                     .font(.subheadline.weight(.semibold))
@@ -119,7 +119,7 @@ struct MovieDetailHeroHeaderView: View {
 
     @ViewBuilder
     private func detailActionButtonLabel(title: String, systemImage: String?) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppSpacing.xs) {
             if let systemImage {
                 Image(systemName: systemImage)
                     .font(.subheadline.weight(.bold))
@@ -130,8 +130,8 @@ struct MovieDetailHeroHeaderView: View {
                 .lineLimit(1)
         }
         .foregroundStyle(.white)
-        .padding(.horizontal, 18)
-        .frame(height: 44)
+        .padding(.horizontal, AppSpacing.md + 2)
+        .frame(height: AppDimension.controlHeight)
         .background(Color.black.opacity(0.28))
         .clipShape(Capsule())
         .overlay(

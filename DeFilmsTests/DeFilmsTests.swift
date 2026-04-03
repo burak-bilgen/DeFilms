@@ -30,6 +30,38 @@ final class DeFilmsTests: XCTestCase {
 
         XCTAssertTrue(sessionManager.didSignOut)
     }
+
+    func testChangePasswordRejectsIncorrectCurrentPasswordBeforeOtherValidation() throws {
+        let keychain = InMemoryKeychainService()
+        let sessionManager = AuthSessionManager(keychainService: keychain)
+        try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
+
+        XCTAssertThrowsError(
+            try sessionManager.changePassword(
+                currentPassword: "wrongpass",
+                newPassword: "short",
+                confirmPassword: "mismatch"
+            )
+        ) { error in
+            XCTAssertEqual(error as? AuthError, .currentPasswordIncorrect)
+        }
+    }
+
+    func testChangePasswordRejectsReusingCurrentPassword() throws {
+        let keychain = InMemoryKeychainService()
+        let sessionManager = AuthSessionManager(keychainService: keychain)
+        try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
+
+        XCTAssertThrowsError(
+            try sessionManager.changePassword(
+                currentPassword: "secret1",
+                newPassword: "secret1",
+                confirmPassword: "secret1"
+            )
+        ) { error in
+            XCTAssertEqual(error as? AuthError, .newPasswordMustDiffer)
+        }
+    }
 }
 
 private final class InMemoryKeychainService: KeychainServicing {

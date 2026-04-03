@@ -10,19 +10,16 @@ import SwiftUI
 struct MoviesView: View {
     @EnvironmentObject private var coordinator: NavigationCoordinator<MovieRoute>
     @ObservedObject var viewModel: MovieSearchViewModel
-    let openFavorites: () -> Void
     @State private var isFilterSheetPresented = false
     @FocusState private var isSearchFocused: Bool
     @EnvironmentObject private var preferences: AppPreferences
 
     private let searchColumns = [
-        GridItem(.flexible(), spacing: 24),
-        GridItem(.flexible(), spacing: 24)
+        GridItem(.adaptive(minimum: AppDimension.posterRailWidth, maximum: AppDimension.posterRailWidth), spacing: AppSpacing.xxxl, alignment: .top)
     ]
 
-    init(viewModel: MovieSearchViewModel, openFavorites: @escaping () -> Void) {
+    init(viewModel: MovieSearchViewModel) {
         self.viewModel = viewModel
-        self.openFavorites = openFavorites
     }
 
     var body: some View {
@@ -31,10 +28,10 @@ struct MoviesView: View {
                 .padding(.horizontal)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 15) {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
                     searchSection
                         .padding(.horizontal)
-
+                        
                     if !viewModel.shouldShowBrowseContent {
                         searchControlsRow
                             .padding(.horizontal)
@@ -46,13 +43,13 @@ struct MoviesView: View {
                         searchContent
                     }
                 }
-                .padding(.top, viewModel.shouldShowBrowseContent ? 25 : 0)
-                .padding(.bottom, 28)
+                .padding(.top, viewModel.shouldShowBrowseContent ? AppSpacing.xxl : 0)
+                .padding(.bottom, AppSpacing.xxl)
             }
             .scrollDismissesKeyboard(.interactively)
         }
         .padding(.top, 0)
-        .background(Color(.systemGroupedBackground))
+        .background(AppPalette.screenBackground)
         .contentShape(Rectangle())
         .onTapGesture {
             isSearchFocused = false
@@ -112,9 +109,9 @@ struct MoviesView: View {
                 Label(Localization.string("movies.filter.title"), systemImage: "line.3.horizontal.decrease.circle")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
-                    .frame(height: 38)
+                    .frame(height: AppDimension.controlHeight)
                     .padding(.horizontal, 14)
-                    .background(Color(.secondarySystemBackground))
+                    .background(AppPalette.cardBackground)
                     .clipShape(Capsule())
             }
 
@@ -140,9 +137,9 @@ struct MoviesView: View {
                 Label(Localization.string("movies.sort.title"), systemImage: "arrow.up.arrow.down.circle")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
-                    .frame(height: 38)
+                    .frame(height: AppDimension.controlHeight)
                     .padding(.horizontal, 14)
-                    .background(Color(.secondarySystemBackground))
+                    .background(AppPalette.cardBackground)
                     .clipShape(Capsule())
             }
 
@@ -162,7 +159,7 @@ struct MoviesView: View {
                     await viewModel.selectRecentSearch(selected)
                 }
             }
-            .padding(.bottom, -8)
+            .padding(.bottom, 10)
         }
 
         switch viewModel.screenState {
@@ -200,45 +197,42 @@ struct MoviesView: View {
                 .padding(.top, 6)
         case .loadedResults:
             if displayedMovies.isEmpty {
-                MovieSearchEmptyStateView(
+                searchEmptyStateContainer(
                     title: Localization.string("movies.message.filteredEmpty.title"),
                     message: Localization.string("movies.message.filteredEmpty.body"),
                     buttonTitle: Localization.string("movies.filter.reset"),
                     action: viewModel.resetFiltersAndSort
                 )
-                .padding(.horizontal, 16)
-                .frame(maxWidth: .infinity, minHeight: 420, alignment: .center)
             } else {
-                LazyVGrid(columns: searchColumns, spacing: 24) {
-                    ForEach(displayedMovies) { movie in
-                        MovieCardNavigationLink(movie: movie, cardStyle: .search) {
-                            coordinator.push(.detail(movie))
-                        }
-                        .onAppear {
-                            Task {
-                                await viewModel.loadNextSearchPageIfNeeded(currentMovie: movie, displayedMovies: displayedMovies)
+                VStack(spacing: AppSpacing.lg) {
+                    LazyVGrid(columns: searchColumns, alignment: .center, spacing: AppSpacing.xl) {
+                        ForEach(displayedMovies) { movie in
+                            MovieCardNavigationLink(movie: movie, cardStyle: .rail) {
+                                coordinator.push(.detail(movie))
+                            }
+                            .onAppear {
+                                Task {
+                                    await viewModel.loadNextSearchPageIfNeeded(currentMovie: movie, displayedMovies: displayedMovies)
+                                }
                             }
                         }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 16)
 
                     if viewModel.isLoadingNextSearchPage {
                         ProgressView()
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .gridCellColumns(searchColumns.count)
+                            .padding(.vertical, AppSpacing.xs)
                     }
                 }
-                .padding(.horizontal, 16)
             }
         case .emptyResults:
-            MovieSearchEmptyStateView(
+            searchEmptyStateContainer(
                 title: Localization.string("movies.message.noResults.title"),
                 message: Localization.string("movies.message.noResults.body", viewModel.query),
                 buttonTitle: nil,
                 action: nil
             )
-            .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, minHeight: 420, alignment: .center)
         case let .error(message):
             MoviesMessageView(
                 title: Localization.string("movies.message.searchFailed.title"),
@@ -250,6 +244,30 @@ struct MoviesView: View {
         case .browse, .loadingBrowse:
             EmptyView()
         }
+    }
+
+    @ViewBuilder
+    private func searchEmptyStateContainer(
+        title: String,
+        message: String,
+        buttonTitle: String?,
+        action: (() -> Void)?
+    ) -> some View {
+        VStack {
+            Spacer(minLength: AppSpacing.xxl)
+
+            MovieSearchEmptyStateView(
+                title: title,
+                message: message,
+                buttonTitle: buttonTitle,
+                action: action
+            )
+            .frame(maxWidth: 380)
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, minHeight: AppDimension.emptyStateMinHeight)
+        .padding(.horizontal, 16)
     }
 
     private func performSearch() {
@@ -285,6 +303,7 @@ struct MoviesView: View {
         }
     }
 }
+
 private struct MovieSearchEmptyStateView: View {
     let title: String
     let message: String
@@ -298,6 +317,6 @@ private struct MovieSearchEmptyStateView: View {
             buttonTitle: buttonTitle,
             action: action
         )
+        .frame(maxWidth: .infinity)
     }
 }
-

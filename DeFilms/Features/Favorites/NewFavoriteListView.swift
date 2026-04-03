@@ -21,8 +21,8 @@ struct NewFavoriteListView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppSpacing.xl) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text(Localization.string("favorites.create.heading"))
                     .font(.title2.weight(.bold))
 
@@ -31,7 +31,7 @@ struct NewFavoriteListView: View {
                     .foregroundStyle(.secondary)
             }
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text(Localization.string("favorites.picker.placeholder"))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -40,10 +40,11 @@ struct NewFavoriteListView: View {
                     .textFieldStyle(.plain)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
+                    .accessibilityLabel(Localization.string("favorites.picker.placeholder"))
                     .padding(.horizontal, 16)
                     .frame(height: 54)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(AppPalette.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
                     .focused($isTextFieldFocused)
                     .submitLabel(.done)
                     .onSubmit(createList)
@@ -51,20 +52,16 @@ struct NewFavoriteListView: View {
 
             Button(action: createList) {
                 Text(Localization.string("favorites.action.create"))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color(.systemBackground))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(Color.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PrimaryProminentButtonStyle())
             .disabled(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             .opacity(listName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
+            .accessibilityLabel(Localization.string("favorites.action.create"))
 
             Spacer(minLength: 0)
         }
-        .padding(20)
+        .padding(AppSpacing.lg)
         .navigationTitle(Localization.string("favorites.create.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -74,7 +71,7 @@ struct NewFavoriteListView: View {
                 }
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(AppPalette.screenBackground)
         .task {
             isTextFieldFocused = true
         }

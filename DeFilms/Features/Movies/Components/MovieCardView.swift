@@ -11,9 +11,9 @@ struct MovieCardView: View {
     let movie: Movie
     var posterAspectRatio: CGFloat = 0.62
     var titleFont: Font = .subheadline
-    var contentSpacing: CGFloat = 14
-    var metadataSpacing: CGFloat = 4
-    var posterCornerRadius: CGFloat = 14
+    var contentSpacing: CGFloat = AppSpacing.sm
+    var metadataSpacing: CGFloat = AppSpacing.xxs
+    var posterCornerRadius: CGFloat = AppCornerRadius.sm
 
     @EnvironmentObject private var favoritesStore: FavoritesStore
 
@@ -31,8 +31,8 @@ struct MovieCardView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(.secondarySystemBackground),
-                                    Color(.tertiarySystemBackground)
+                                    AppPalette.cardBackground,
+                                    AppPalette.cardAccentBackground
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -45,7 +45,7 @@ struct MovieCardView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: posterCornerRadius, style: .continuous)
-                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                        .stroke(AppPalette.border, lineWidth: 1)
                 )
                 .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
                 .overlay(
@@ -61,9 +61,9 @@ struct MovieCardView: View {
                 )
 
                 favoriteButton
-                    .padding(8)
+                    .padding(AppSpacing.xs)
             }
-            .padding(.bottom, 6)
+            .padding(.bottom, AppSpacing.xs - 2)
 
             VStack(alignment: .leading, spacing: metadataSpacing) {
                 Text(movie.title)

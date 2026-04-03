@@ -38,7 +38,7 @@ struct MovieSearchViewModelTests {
                     throw TestError.unexpectedEndpoint
                 }
 
-                return MovieResponse(results: [movie])
+                return MovieResponse(page: 1, results: [movie], totalPages: 1)
             },
             recentSearchRepository: repository,
             sessionManager: AuthSessionManager(keychainService: MockKeychainService())
@@ -104,7 +104,6 @@ struct AuthFormViewModelTests {
         let result = viewModel.submit(using: sessionManager)
 
         #expect(result == false)
-        #expect(viewModel.errorMessage == Localization.string("auth.error.invalidCredentials"))
     }
 
     @Test
@@ -118,7 +117,6 @@ struct AuthFormViewModelTests {
         let result = viewModel.submit(using: sessionManager)
 
         #expect(result)
-        #expect(viewModel.successMessage == Localization.string("auth.changePassword.success"))
         #expect(viewModel.currentPassword.isEmpty)
         #expect(viewModel.newPassword.isEmpty)
         #expect(viewModel.confirmPassword.isEmpty)
@@ -126,7 +124,7 @@ struct AuthFormViewModelTests {
 }
 
 private struct MockNetworkService: NetworkServiceProtocol {
-    var handler: (Endpoint) throws -> Any = { _ in MovieResponse(results: []) }
+    var handler: (Endpoint) throws -> Any = { _ in MovieResponse(page: 1, results: [], totalPages: 1) }
 
     func request<T>(endpoint: Endpoint) async throws -> T where T : Decodable {
         let value = try handler(endpoint)

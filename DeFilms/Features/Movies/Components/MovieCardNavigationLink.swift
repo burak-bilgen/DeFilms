@@ -19,23 +19,12 @@ enum MovieCardStyle {
         }
     }
 
-    var titleHeight: CGFloat {
-        switch self {
-        case .grid:
-            return 0
-        case .rail:
-            return 0
-        case .search:
-            return 0
-        }
-    }
-
     var width: CGFloat? {
         switch self {
         case .grid:
             return nil
         case .rail:
-            return 146
+            return AppDimension.posterRailWidth
         case .search:
             return nil
         }
@@ -89,5 +78,8 @@ struct MovieCardNavigationLink: View {
             .frame(width: cardStyle.width)
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(movie.title), \(movie.releaseYear)")
+        .accessibilityHint(Localization.string("movies.accessibility.openDetails"))
     }
 }

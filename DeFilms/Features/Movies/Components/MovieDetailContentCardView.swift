@@ -39,11 +39,11 @@ struct MovieDetailContentCardView: View {
             }
 
         }
-        .padding(24)
+        .padding(AppSpacing.xl)
         .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
+            RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous)
                 .stroke(Color.primary.opacity(colorScheme == .dark ? 0.12 : 0.05), lineWidth: 1)
         )
         .shadow(color: .black.opacity(colorScheme == .dark ? 0.28 : 0.08), radius: 24, y: 12)
@@ -70,10 +70,6 @@ struct MovieDetailContentCardView: View {
         colorScheme == .dark ? .white.opacity(0.82) : .black.opacity(0.72)
     }
 
-    private var secondaryBodyColor: Color {
-        colorScheme == .dark ? .white.opacity(0.68) : .black.opacity(0.66)
-    }
-
     private var sectionTitleColor: Color {
         colorScheme == .dark ? .white.opacity(0.46) : .black.opacity(0.46)
     }
@@ -91,7 +87,7 @@ private struct MovieGenreBubbleWrapView: View {
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(Array(Array(items.prefix(6)).chunkedForGenreBubbles(into: 2).enumerated()), id: \.offset) { entry in
+                ForEach(Array(Array(items.prefix(6)).chunked(into: 2).enumerated()), id: \.offset) { entry in
                     HStack(spacing: 10) {
                         ForEach(entry.element, id: \.self) { item in
                             chip(item)
@@ -114,23 +110,6 @@ private struct MovieGenreBubbleWrapView: View {
                     .stroke(Color.primary.opacity(0.08), lineWidth: 1)
             )
             .clipShape(Capsule())
-    }
-}
-
-private extension Array {
-    func chunkedForGenreBubbles(into size: Int) -> [[Element]] {
-        guard size > 0 else { return [self] }
-
-        var result: [[Element]] = []
-        var index = startIndex
-
-        while index < endIndex {
-            let end = self.index(index, offsetBy: size, limitedBy: endIndex) ?? endIndex
-            result.append(Array(self[index..<end]))
-            index = end
-        }
-
-        return result
     }
 }
 

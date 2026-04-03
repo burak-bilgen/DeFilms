@@ -4,6 +4,7 @@
 "common.close" = "إغلاق";
 "common.done" = "تم";
 "common.retry" = "إعادة المحاولة";
+"common.selected" = "محدد";
 "common.tryAgain" = "حاول مرة أخرى";
 
 "tab.movies" = "الأفلام";
@@ -58,6 +59,8 @@
 "auth.error.accountExists" = "يوجد حساب لهذا البريد الإلكتروني بالفعل.";
 "auth.error.accountNotFound" = "لم يتم العثور على حساب لهذا البريد الإلكتروني.";
 "auth.error.invalidCredentials" = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+"auth.error.currentPasswordIncorrect" = "كلمة المرور الحالية غير صحيحة.";
+"auth.error.newPasswordMustDiffer" = "يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية.";
 "auth.error.notSignedIn" = "يجب تسجيل الدخول للمتابعة.";
 
 "favorites.title" = "المفضلة";
@@ -68,9 +71,8 @@
 "favorites.action.add" = "إضافة إلى المفضلة";
 "favorites.action.remove" = "إزالة من المفضلة";
 "favorites.action.create" = "إنشاء";
-"favorites.accessibility.add" = "أضف إلى المفضلة";
-"favorites.accessibility.remove" = "أزل من المفضلة";
 "favorites.accessibility.manage" = "إدارة قوائم المفضلة";
+"favorites.accessibility.listSummary" = "%@، %d أفلام";
 "favorites.defaultListName" = "المفضلة";
 "favorites.toast.listCreated" = "تم إنشاء قائمة المفضلة.";
 "favorites.toast.listRenamed" = "تمت إعادة تسمية قائمة المفضلة.";
@@ -141,7 +143,10 @@
 "movies.sort.dateDesc" = "التاريخ: الأحدث إلى الأقدم";
 "movies.sort.ratingDesc" = "حسب التقييم";
 "movies.action.searchAgain" = "ابحث مرة أخرى";
-"movies.action.openFavorites" = "افتح المفضلة";
+"movies.accessibility.searchField" = "حقل البحث عن فيلم";
+"movies.accessibility.clearSearch" = "مسح نص البحث";
+"movies.accessibility.recentSearch" = "بحث حديث، %@";
+"movies.accessibility.openDetails" = "افتح التفاصيل";
 "movies.message.contentUnavailable.title" = "المحتوى غير متاح";
 "movies.message.noResults.title" = "لا توجد نتائج";
 "movies.message.noResults.body" = "لم يتم العثور على أفلام لـ \"%@\".";

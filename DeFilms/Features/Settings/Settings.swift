@@ -73,7 +73,7 @@ struct SettingsView: View {
     }
 
     private var accountSection: some View {
-        Section(Localization.string("settings.section.account")) {
+        Section {
             if sessionManager.isSignedIn {
                 SettingsValueRow(
                     symbol: "person.crop.circle",
@@ -109,6 +109,12 @@ struct SettingsView: View {
                 }
                 .accessibilityIdentifier("settings.account.signUp")
             }
+        } header: {
+            Text(Localization.string("settings.section.account"))
+        } footer: {
+            if !sessionManager.isSignedIn {
+                Text(Localization.string("settings.account.signedOutDescription"))
+            }
         }
     }
 
@@ -133,6 +139,7 @@ private struct SettingsValueRow: View {
             Image(systemName: symbol)
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
+                .accessibilityHidden(true)
 
             Text(title)
 
@@ -142,6 +149,7 @@ private struct SettingsValueRow: View {
                 .foregroundStyle(.secondary)
         }
         .frame(minHeight: 28)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -154,9 +162,11 @@ private struct SettingsSimpleRow: View {
             Image(systemName: symbol)
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
+                .accessibilityHidden(true)
             Text(title)
         }
         .frame(minHeight: 28)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -187,6 +197,7 @@ private struct ThemeSelectionView: View {
                 }
             }
         }
+        .accessibilityValue(preferences.selectedTheme == theme ? Localization.string("common.selected") : "")
     }
 }
 
@@ -222,5 +233,6 @@ private struct LanguageSelectionView: View {
                 }
             }
         }
+        .accessibilityValue(preferences.selectedLanguage == language ? Localization.string("common.selected") : "")
     }
 }

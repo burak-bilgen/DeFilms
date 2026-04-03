@@ -37,41 +37,51 @@ struct FavoriteListPickerView: View {
                 .buttonStyle(.plain)
             }
 
-            ForEach(favoritesStore.lists) { list in
-                Button {
-                    if favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) {
-                        listPendingRemoval = list
-                    } else {
-                        favoritesStore.add(movie: movie, to: list.id)
-                    }
-                } label: {
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(list.name)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.primary)
-
-                            Text(Localization.string("favorites.count", list.movies.count))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+            if favoritesStore.lists.isEmpty {
+                MoviesMessageView(
+                    title: Localization.string("favorites.empty.title"),
+                    message: Localization.string("favorites.picker.empty"),
+                    buttonTitle: nil,
+                    action: nil
+                )
+            } else {
+                ForEach(favoritesStore.lists) { list in
+                    Button {
+                        if favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) {
+                            listPendingRemoval = list
+                        } else {
+                            favoritesStore.add(movie: movie, to: list.id)
                         }
+                    } label: {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(list.name)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
 
-                        Spacer()
+                                Text(Localization.string("favorites.count", list.movies.count))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
 
-                        Image(systemName: favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) ? "checkmark.circle.fill" : "plus.circle")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(
-                                favoritesStore.isMovieInList(movieID: movie.id, listID: list.id)
-                                    ? Color.primary
-                                    : .secondary
-                            )
+                            Spacer()
+
+                            Image(systemName: favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) ? "checkmark.circle.fill" : "plus.circle")
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(
+                                    favoritesStore.isMovieInList(movieID: movie.id, listID: list.id)
+                                        ? Color.primary
+                                        : .secondary
+                                )
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(Color(.secondarySystemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Localization.string("favorites.accessibility.listSummary", list.name, list.movies.count))
                 }
-                .buttonStyle(.plain)
             }
 
             Button {
@@ -89,6 +99,7 @@ struct FavoriteListPickerView: View {
         .padding(16)
         .frame(width: 300)
         .background(Color(.systemBackground))
+        .accessibilityElement(children: .contain)
         .confirmationDialog(
             Localization.string("favorites.remove.movie.title"),
             isPresented: Binding(

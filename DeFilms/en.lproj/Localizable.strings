@@ -4,6 +4,7 @@
 "common.close" = "Close";
 "common.done" = "Done";
 "common.retry" = "Retry";
+"common.selected" = "Selected";
 "common.tryAgain" = "Try Again";
 
 "tab.movies" = "Movies";
@@ -58,6 +59,8 @@
 "auth.error.accountExists" = "An account already exists for this email.";
 "auth.error.accountNotFound" = "No account was found for this email.";
 "auth.error.invalidCredentials" = "Email or password is incorrect.";
+"auth.error.currentPasswordIncorrect" = "Your current password is incorrect.";
+"auth.error.newPasswordMustDiffer" = "Your new password must be different from the current password.";
 "auth.error.notSignedIn" = "You must be signed in to continue.";
 
 "favorites.title" = "Favorites";
@@ -68,9 +71,8 @@
 "favorites.action.add" = "Add Favorite";
 "favorites.action.remove" = "Remove Favorite";
 "favorites.action.create" = "Create";
-"favorites.accessibility.add" = "Add to favorites";
-"favorites.accessibility.remove" = "Remove from favorites";
 "favorites.accessibility.manage" = "Manage favorite lists";
+"favorites.accessibility.listSummary" = "%@, %d movies";
 "favorites.defaultListName" = "Favorites";
 "favorites.toast.listCreated" = "Favorite list created.";
 "favorites.toast.listRenamed" = "Favorite list renamed.";
@@ -141,7 +143,10 @@
 "movies.sort.dateDesc" = "Date: New to Old";
 "movies.sort.ratingDesc" = "Rating";
 "movies.action.searchAgain" = "Search Again";
-"movies.action.openFavorites" = "Open favorites";
+"movies.accessibility.searchField" = "Movie search field";
+"movies.accessibility.clearSearch" = "Clear search text";
+"movies.accessibility.recentSearch" = "Recent search, %@";
+"movies.accessibility.openDetails" = "Open details";
 "movies.message.contentUnavailable.title" = "Content Unavailable";
 "movies.message.noResults.title" = "No Results";
 "movies.message.noResults.body" = "No movies found for \"%@\".";
