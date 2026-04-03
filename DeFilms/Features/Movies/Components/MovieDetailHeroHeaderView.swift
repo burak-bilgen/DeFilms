@@ -20,8 +20,8 @@ struct MovieDetailHeroHeaderView: View {
 
         VStack(spacing: 24) {
             topBar
-                .padding(.horizontal, 20)
-                .padding(.top, 30)
+                .padding(.horizontal, 30)
+                .padding(.top, 40)
                 .offset(y: collapseProgress * 8)
 
             Spacer()
@@ -64,12 +64,21 @@ struct MovieDetailHeroHeaderView: View {
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if !viewModel.heroFacts.isEmpty {
-                    heroFacts
+                HStack {
+                    if !viewModel.heroFacts.isEmpty {
+                        heroFacts
+                    }
+                    
+                    MovieDetailRatingBadge(ratingText: viewModel.ratingText, style: .hero)
+                        .padding(.leading, 16)
                 }
 
-                heroActions
+                if viewModel.hasTrailer {
+                    trailerButton
+                        .padding(.leading, -6)
+                }
             }
+            .padding(.bottom, 10)
 
             Spacer(minLength: 0)
         }
@@ -85,43 +94,13 @@ struct MovieDetailHeroHeaderView: View {
         }
     }
 
-    private var heroActions: some View {
-        HStack(spacing: 12) {
-            if viewModel.hasTrailer {
-                trailerButton
-            }
-
-            if viewModel.imdbURL != nil {
-                imdbButton
-            }
-
-            Spacer(minLength: 0)
-
-            MovieDetailRatingBadge(ratingText: viewModel.ratingText, style: .hero)
-                .padding(.leading, 8)
-        }
-    }
-
     private var trailerButton: some View {
         Button {
             viewModel.presentTrailer()
         } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "play.fill")
-                    .font(.subheadline.weight(.bold))
-
-                Text(Localization.string("movies.detail.trailer.watch"))
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 18)
-            .frame(height: 44)
-            .background(Color.black.opacity(0.32))
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            detailActionButtonLabel(
+                title: Localization.string("movies.detail.trailer.watch"),
+                systemImage: "play.rectangle.fill"
             )
         }
         .buttonStyle(.plain)
@@ -132,20 +111,35 @@ struct MovieDetailHeroHeaderView: View {
             guard let imdbURL = viewModel.imdbURL else { return }
             openURL(imdbURL)
         } label: {
-            Text(Localization.string("movies.detail.imdb"))
-                .font(.system(size: 13, weight: .bold, design: .rounded))
-                .lineLimit(1)
-            .foregroundStyle(.white)
-            .padding(.horizontal, 18)
-            .frame(height: 44)
-            .background(Color.white.opacity(0.14))
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            detailActionButtonLabel(
+                title: Localization.string("movies.detail.imdb"),
+                systemImage: nil
             )
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func detailActionButtonLabel(title: String, systemImage: String?) -> some View {
+        HStack(spacing: 8) {
+            if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.subheadline.weight(.bold))
+            }
+
+            Text(title)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .lineLimit(1)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 18)
+        .frame(height: 44)
+        .background(Color.black.opacity(0.28))
+        .clipShape(Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
     }
 
     private func topBarButton(systemImage: String, action: @escaping () -> Void) -> some View {

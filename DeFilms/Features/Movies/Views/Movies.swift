@@ -30,23 +30,23 @@ struct MoviesView: View {
             headerBar
                 .padding(.horizontal)
 
-            searchSection
-                .padding(.horizontal)
-
-            if !viewModel.shouldShowBrowseContent {
-                searchControlsRow
-                    .padding(.horizontal)
-            }
-
             ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 15) {
+                    searchSection
+                        .padding(.horizontal)
+
+                    if !viewModel.shouldShowBrowseContent {
+                        searchControlsRow
+                            .padding(.horizontal)
+                    }
+                    
                     if viewModel.shouldShowBrowseContent {
                         browseContent
                     } else {
                         searchContent
                     }
                 }
-                .padding(.top, viewModel.shouldShowBrowseContent ? 4 : 0)
+                .padding(.top, viewModel.shouldShowBrowseContent ? 25 : 0)
                 .padding(.bottom, 28)
             }
             .scrollDismissesKeyboard(.interactively)
@@ -83,7 +83,7 @@ struct MoviesView: View {
             Image("AppLogo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 90)
+                .frame(height: 70)
                 .padding(.leading, -4)
                 .padding(.top, -12)
                 .accessibilityLabel(Localization.string("app.logo"))

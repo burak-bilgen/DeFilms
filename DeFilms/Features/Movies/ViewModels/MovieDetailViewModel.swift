@@ -13,6 +13,7 @@ final class MovieDetailViewModel: ObservableObject {
     @Published private(set) var detail: MovieDetail?
     @Published private(set) var trailer: MovieVideo?
     @Published private(set) var gallery: [MovieImageAsset] = []
+    @Published private(set) var directors: [MovieCrewMember] = []
     @Published private(set) var cast: [MovieCastMember] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
@@ -115,6 +116,7 @@ final class MovieDetailViewModel: ObservableObject {
         errorMessage = nil
         trailer = nil
         gallery = []
+        directors = []
         cast = []
 
         do {
@@ -163,8 +165,11 @@ final class MovieDetailViewModel: ObservableObject {
             let creditsResponse: MovieCreditsResponse = try await networkService.request(
                 endpoint: TMDBEndpoint.movieCredits(movieID: movie.id)
             )
+            let primaryDirectors = Array(creditsResponse.crew.filter { $0.job == "Director" }.prefix(3))
             let primaryCast = Array(creditsResponse.cast.prefix(6))
+            directors = primaryDirectors
             cast = primaryCast
+            await enrichDirectorsWithIMDb(primaryDirectors)
             await enrichCastWithIMDb(primaryCast)
         } catch {
             AppLogger.log("Credits load failed for movie \(movie.id)", category: .movie, level: .error)
@@ -199,33 +204,41 @@ final class MovieDetailViewModel: ObservableObject {
     }
 
     private func enrichCastWithIMDb(_ castMembers: [MovieCastMember]) async {
-        let enrichedCast = await withTaskGroup(of: MovieCastMember.self) { group in
-            for member in castMembers {
-                group.addTask { [networkService] in
-                    do {
-                        let response: PersonExternalIDsResponse = try await networkService.request(
-                            endpoint: TMDBEndpoint.personExternalIDs(personID: member.id)
-                        )
-                        var updatedMember = member
-                        updatedMember.imdbID = response.imdbID
-                        return updatedMember
-                    } catch {
-                        return member
-                    }
-                }
-            }
+        var enrichedCast: [MovieCastMember] = []
 
-            var collectedMembers: [MovieCastMember] = []
-            for await member in group {
-                collectedMembers.append(member)
+        for member in castMembers {
+            do {
+                let response: PersonExternalIDsResponse = try await networkService.request(
+                    endpoint: TMDBEndpoint.personExternalIDs(personID: member.id)
+                )
+                var updatedMember = member
+                updatedMember.imdbID = response.imdbID
+                enrichedCast.append(updatedMember)
+            } catch {
+                enrichedCast.append(member)
             }
-            return collectedMembers
         }
 
-        let castOrder = Dictionary(uniqueKeysWithValues: castMembers.enumerated().map { ($0.element.id, $0.offset) })
-        cast = enrichedCast.sorted { lhs, rhs in
-            (castOrder[lhs.id] ?? 0) < (castOrder[rhs.id] ?? 0)
+        cast = enrichedCast
+    }
+
+    private func enrichDirectorsWithIMDb(_ crewMembers: [MovieCrewMember]) async {
+        var enrichedDirectors: [MovieCrewMember] = []
+
+        for member in crewMembers {
+            do {
+                let response: PersonExternalIDsResponse = try await networkService.request(
+                    endpoint: TMDBEndpoint.personExternalIDs(personID: member.id)
+                )
+                var updatedMember = member
+                updatedMember.imdbID = response.imdbID
+                enrichedDirectors.append(updatedMember)
+            } catch {
+                enrichedDirectors.append(member)
+            }
         }
+
+        directors = enrichedDirectors
     }
 }
 

@@ -41,9 +41,10 @@ struct MovieImageResponse: Codable {
 
 struct MovieCreditsResponse: Codable {
     let cast: [MovieCastMember]
+    let crew: [MovieCrewMember]
 }
 
-struct MovieCastMember: Codable, Equatable {
+struct MovieCastMember: Codable, Equatable, Identifiable {
     let id: Int
     let name: String
     let character: String?
@@ -71,6 +72,29 @@ struct PersonExternalIDsResponse: Codable {
 
     enum CodingKeys: String, CodingKey {
         case imdbID = "imdb_id"
+    }
+}
+
+struct MovieCrewMember: Codable, Equatable, Identifiable {
+    let id: Int
+    let name: String
+    let job: String
+    let profilePath: String?
+    var imdbID: String? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, job
+        case profilePath = "profile_path"
+    }
+
+    var imageURL: URL? {
+        guard let profilePath else { return nil }
+        return URL(string: APIConfig.imageBaseURL + profilePath)
+    }
+
+    var imdbURL: URL? {
+        guard let imdbID, imdbID.isEmpty == false else { return nil }
+        return URL(string: "https://www.imdb.com/name/\(imdbID)")
     }
 }
 

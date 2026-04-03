@@ -152,6 +152,7 @@
 "movies.detail.overview.empty" = "Bu film için özet bilgisi bulunmuyor.";
 "movies.detail.gallery" = "Sahneler";
 "movies.detail.cast" = "Oyuncular";
+"movies.detail.director" = "Yönetmen";
 "movies.detail.genres" = "Turler";
 "movies.detail.rating" = "Puan %@";
 "movies.detail.info.release" = "YAYIN";
@@ -163,9 +164,8 @@
 "movies.detail.runtimeHero" = "Sure: %@";
 "movies.detail.releaseLabel" = "Yayin: %@";
 "movies.detail.runtimeLabel" = "Sure: %@";
-"movies.detail.trailer.watch" = "FRAGMANI IZLE";
-"movies.detail.trailer.unavailable" = "FRAGMAN YOK";
+"movies.detail.trailer.watch" = "FRAGMAN";
 "movies.detail.trailer.missing" = "Bu film icin uygun bir fragman bulunmuyor.";
-"movies.detail.imdb" = "IMDb";
+"movies.detail.imdb" = "IMDB";
 "movies.runtime.hoursMinutes" = "%d sa %d dk";
 "movies.runtime.minutes" = "%d dk";

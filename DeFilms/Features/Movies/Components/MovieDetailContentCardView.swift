@@ -8,6 +8,7 @@ import SwiftUI
 struct MovieDetailContentCardView: View {
     @ObservedObject var viewModel: MovieDetailViewModel
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -24,6 +25,12 @@ struct MovieDetailContentCardView: View {
                 )
             }
 
+            if !viewModel.genreNames.isEmpty {
+                detailSection(title: Localization.string("movies.detail.genres")) {
+                    WrapChipsView(items: Array(viewModel.genreNames.prefix(5)))
+                }
+            }
+
             detailSection(title: Localization.string("movies.detail.overview")) {
                 Text(viewModel.overview)
                     .font(.system(size: 17, weight: .regular, design: .rounded))
@@ -32,19 +39,41 @@ struct MovieDetailContentCardView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-//            if let castLine = viewModel.castLine {
-//                detailSection(title: Localization.string("movies.detail.cast")) {
-//                    Text(castLine)
-//                        .font(.system(size: 15, weight: .medium, design: .rounded))
-//                        .foregroundStyle(secondaryBodyColor)
-//                        .lineSpacing(4)
-//                        .fixedSize(horizontal: false, vertical: true)
-//                }
-//            }
+            if !viewModel.directors.isEmpty {
+                detailSection(title: Localization.string("movies.detail.director")) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .top, spacing: 14) {
+                            ForEach(viewModel.directors) { member in
+                                CastBubbleView(
+                                    name: member.name,
+                                    imageURL: member.imageURL,
+                                    imdbURL: member.imdbURL
+                                ) { url in
+                                    openURL(url)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+            }
 
-            if !viewModel.genreNames.isEmpty {
-                detailSection(title: Localization.string("movies.detail.genres")) {
-                    WrapChipsView(items: Array(viewModel.genreNames.prefix(5)))
+            if !viewModel.cast.isEmpty {
+                detailSection(title: Localization.string("movies.detail.cast")) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .top, spacing: 14) {
+                            ForEach(viewModel.cast) { member in
+                                CastBubbleView(
+                                    name: member.name,
+                                    imageURL: member.imageURL,
+                                    imdbURL: member.imdbURL
+                                ) { url in
+                                    openURL(url)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    }
                 }
             }
         }
@@ -85,6 +114,46 @@ struct MovieDetailContentCardView: View {
 
     private var sectionTitleColor: Color {
         colorScheme == .dark ? .white.opacity(0.46) : .black.opacity(0.46)
+    }
+}
+
+private struct CastBubbleView: View {
+    let name: String
+    let imageURL: URL?
+    let imdbURL: URL?
+    let openIMDb: (URL) -> Void
+
+    var body: some View {
+        Button {
+            guard let imdbURL else { return }
+            openIMDb(imdbURL)
+        } label: {
+            VStack(spacing: 8) {
+                PosterImageView(
+                    url: imageURL,
+                    cornerRadius: 22,
+                    placeholderSystemImage: "person.fill"
+                )
+                .frame(width: 72, height: 72)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Color.primary.opacity(0.08), lineWidth: 1))
+
+                Text(name)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 82, height: 32, alignment: .top)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 12)
+            .frame(width: 102, height: 136, alignment: .top)
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(imdbURL == nil)
+        .opacity(imdbURL == nil ? 0.88 : 1)
     }
 }
 

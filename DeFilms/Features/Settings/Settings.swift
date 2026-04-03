@@ -106,10 +106,6 @@ struct SettingsView: View {
                     SettingsSimpleRow(symbol: "person.crop.circle.badge.plus", title: Localization.string("auth.signUp"))
                 }
                 .accessibilityIdentifier("settings.account.signUp")
-
-                Text(Localization.string("settings.account.signedOutDescription"))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
             }
         }
     }

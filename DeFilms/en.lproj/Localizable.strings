@@ -152,6 +152,7 @@
 "movies.detail.overview.empty" = "No overview is available for this movie.";
 "movies.detail.gallery" = "Scenes";
 "movies.detail.cast" = "Cast";
+"movies.detail.director" = "Director";
 "movies.detail.genres" = "Genres";
 "movies.detail.rating" = "Rating %@";
 "movies.detail.info.release" = "RELEASE";
@@ -164,8 +165,7 @@
 "movies.detail.releaseLabel" = "Release: %@";
 "movies.detail.runtimeLabel" = "Runtime: %@";
 "movies.detail.trailer.watch" = "WATCH TRAILER";
-"movies.detail.trailer.unavailable" = "TRAILER UNAVAILABLE";
 "movies.detail.trailer.missing" = "A trailer is not available for this movie.";
-"movies.detail.imdb" = "IMDb";
+"movies.detail.imdb" = "IMDB";
 "movies.runtime.hoursMinutes" = "%dh %dm";
 "movies.runtime.minutes" = "%dm";
