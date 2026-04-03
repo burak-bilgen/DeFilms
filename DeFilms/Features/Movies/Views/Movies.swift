@@ -53,16 +53,6 @@ struct MoviesView: View {
         .padding(.top, 8)
         .background(Color(.systemGroupedBackground))
         .contentShape(Rectangle())
-        .navigationTitle(Localization.string("tab.movies"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: openFavorites) {
-                    Image(systemName: "rectangle.stack.badge.play")
-                }
-                .accessibilityLabel(Localization.string("movies.action.openFavorites"))
-            }
-        }
         .onTapGesture {
             isSearchFocused = false
         }
