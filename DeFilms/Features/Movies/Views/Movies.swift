@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct MoviesView: View {
+    @EnvironmentObject private var coordinator: NavigationCoordinator<MovieRoute>
     @ObservedObject var viewModel: MovieSearchViewModel
+    let openFavorites: () -> Void
     @State private var isFilterSheetPresented = false
     @FocusState private var isSearchFocused: Bool
     @EnvironmentObject private var preferences: AppPreferences
@@ -18,57 +20,63 @@ struct MoviesView: View {
         GridItem(.flexible(), spacing: 16)
     ]
 
-    init(viewModel: MovieSearchViewModel) {
+    init(viewModel: MovieSearchViewModel, openFavorites: @escaping () -> Void) {
         self.viewModel = viewModel
+        self.openFavorites = openFavorites
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 12) {
-                headerBar
+        VStack(spacing: 12) {
+            headerBar
+                .padding(.horizontal)
+
+            searchSection
+                .padding(.horizontal)
+
+            if !viewModel.shouldShowBrowseContent {
+                searchControlsRow
                     .padding(.horizontal)
+            }
 
-                searchSection
-                    .padding(.horizontal)
-
-                if !viewModel.shouldShowBrowseContent {
-                    searchControlsRow
-                        .padding(.horizontal)
-                }
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 28) {
-                        if viewModel.shouldShowBrowseContent {
-                            browseContent
-                        } else {
-                            searchContent
-                        }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    if viewModel.shouldShowBrowseContent {
+                        browseContent
+                    } else {
+                        searchContent
                     }
-                    .padding(.bottom, 28)
                 }
-                .scrollDismissesKeyboard(.interactively)
+                .padding(.bottom, 28)
             }
-            .padding(.top, 8)
-            .background(Color(.systemGroupedBackground))
-            .contentShape(Rectangle())
-            .onTapGesture {
-                isSearchFocused = false
-            }
-            .task {
-                await viewModel.loadBrowseContentIfNeeded()
-            }
-            .navigationDestination(for: Movie.self) { movie in
-                MovieDetailView(movie: movie)
-            }
-            .onChange(of: viewModel.query) { newValue in
-                if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    viewModel.clearSearch()
+            .scrollDismissesKeyboard(.interactively)
+        }
+        .padding(.top, 8)
+        .background(Color(.systemGroupedBackground))
+        .contentShape(Rectangle())
+        .navigationTitle(Localization.string("tab.movies"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: openFavorites) {
+                    Image(systemName: "rectangle.stack.badge.play")
                 }
+                .accessibilityLabel(Localization.string("movies.action.openFavorites"))
             }
-            .onChange(of: preferences.selectedLanguage.rawValue) { _ in
-                Task {
-                    await viewModel.reloadForLanguageChange()
-                }
+        }
+        .onTapGesture {
+            isSearchFocused = false
+        }
+        .task {
+            await viewModel.loadBrowseContentIfNeeded()
+        }
+        .onChange(of: viewModel.query) { newValue in
+            if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                viewModel.clearSearch()
+            }
+        }
+        .onChange(of: preferences.selectedLanguage.rawValue) { _ in
+            Task {
+                await viewModel.reloadForLanguageChange()
             }
         }
         .sheet(isPresented: $isFilterSheetPresented) {
@@ -208,7 +216,9 @@ struct MoviesView: View {
             } else {
                 LazyVGrid(columns: searchColumns, spacing: 18) {
                     ForEach(viewModel.filteredSearchResults) { movie in
-                        MovieCardNavigationLink(movie: movie, cardStyle: .grid)
+                        MovieCardNavigationLink(movie: movie, cardStyle: .grid) {
+                            coordinator.push(.detail(movie))
+                        }
                     }
                 }
                 .padding(.horizontal, 16)

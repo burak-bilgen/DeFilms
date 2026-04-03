@@ -72,6 +72,10 @@
 "favorites.accessibility.manage" = "Favori listelerini yönet";
 "favorites.defaultListName" = "Favoriler";
 "favorites.toast.listCreated" = "Favori listesi oluşturuldu.";
+"favorites.toast.listRenamed" = "Favori listesi yeniden adlandırıldı.";
+"favorites.toast.listDeleted" = "Favori listesi silindi.";
+"favorites.toast.movieMoved" = "Film başka bir listeye taşındı.";
+"favorites.toast.duplicateList" = "Bu isimde bir liste zaten mevcut.";
 "favorites.toast.genericError" = "Favoriler güncellenemedi.";
 "favorites.picker.title" = "Favori Listeleri";
 "favorites.picker.subtitle" = "Bu film için bir veya birden fazla liste seç.";
@@ -94,6 +98,18 @@
 "favorites.list.empty.inline" = "Henüz film yok. Arama sonuçlarından veya detay ekranından film ekleyebilirsin.";
 "favorites.list.unavailable.title" = "Liste Bulunamadı";
 "favorites.list.unavailable.message" = "Bu favori listesine şu anda ulaşılamıyor.";
+"favorites.rename.title" = "Listeyi Yeniden Adlandır";
+"favorites.rename.confirm" = "Kaydet";
+"favorites.delete.title" = "Listeyi Sil";
+"favorites.delete.confirm" = "Listeyi Sil";
+"favorites.delete.message" = "\"%@\" kalıcı olarak silinecek.";
+"favorites.manage.movie" = "Filmi Yönet";
+"favorites.remove.movie.title" = "Filmi Çıkar";
+"favorites.remove.movie.confirm" = "Çıkar";
+"favorites.remove.movie.message" = "\"%@\" bu listeden çıkarılacak.";
+"favorites.remove.from.list.message" = "Bu filmi \"%@\" listesinden çıkarmak istiyor musun?";
+"favorites.move.title" = "Filmi Taşı";
+"favorites.move.message" = "\"%@\" için hedef liste seç.";
 
 "movies.section.popular" = "Popüler";
 "movies.section.upcoming" = "Yakında";
@@ -121,6 +137,7 @@
 "movies.sort.dateDesc" = "Tarih: Yeniden Eskiye";
 "movies.sort.ratingDesc" = "Puana Göre";
 "movies.action.searchAgain" = "Tekrar Ara";
+"movies.action.openFavorites" = "Favorileri Aç";
 "movies.message.contentUnavailable.title" = "İçerik Kullanılamıyor";
 "movies.message.noResults.title" = "Sonuç Yok";
 "movies.message.noResults.body" = "\"%@\" için film bulunamadı.";

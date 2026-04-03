@@ -9,6 +9,16 @@ import Combine
 import CryptoKit
 import Foundation
 
+protocol AuthSessionManaging: AnyObject {
+    var session: AuthSession? { get }
+    var isSignedIn: Bool { get }
+    var currentUserIdentifier: String { get }
+    func signUp(email: String, password: String, confirmPassword: String) throws
+    func signIn(email: String, password: String) throws
+    func changePassword(currentPassword: String, newPassword: String, confirmPassword: String) throws
+    func signOut()
+}
+
 struct AuthSession: Equatable {
     let email: String
     let token: String
@@ -19,7 +29,7 @@ struct StoredAccount: Codable, Equatable {
     var passwordHash: String
 }
 
-final class AuthSessionManager: ObservableObject {
+final class AuthSessionManager: ObservableObject, AuthSessionManaging {
     static let shared = AuthSessionManager(keychainService: KeychainService.shared)
 
     @Published private(set) var session: AuthSession?

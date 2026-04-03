@@ -72,6 +72,10 @@
 "favorites.accessibility.manage" = "Manage favorite lists";
 "favorites.defaultListName" = "Favorites";
 "favorites.toast.listCreated" = "Favorite list created.";
+"favorites.toast.listRenamed" = "Favorite list renamed.";
+"favorites.toast.listDeleted" = "Favorite list deleted.";
+"favorites.toast.movieMoved" = "Movie moved to another list.";
+"favorites.toast.duplicateList" = "A list with this name already exists.";
 "favorites.toast.genericError" = "Favorites could not be updated.";
 "favorites.picker.title" = "Favorite Lists";
 "favorites.picker.subtitle" = "Choose one or more lists for this movie.";
@@ -94,6 +98,18 @@
 "favorites.list.empty.inline" = "No movies yet. Add movies from search results or movie details.";
 "favorites.list.unavailable.title" = "List Unavailable";
 "favorites.list.unavailable.message" = "This favorite list could not be found.";
+"favorites.rename.title" = "Rename List";
+"favorites.rename.confirm" = "Save";
+"favorites.delete.title" = "Delete List";
+"favorites.delete.confirm" = "Delete List";
+"favorites.delete.message" = "\"%@\" will be removed permanently.";
+"favorites.manage.movie" = "Manage Movie";
+"favorites.remove.movie.title" = "Remove Movie";
+"favorites.remove.movie.confirm" = "Remove";
+"favorites.remove.movie.message" = "\"%@\" will be removed from this list.";
+"favorites.remove.from.list.message" = "Remove this movie from \"%@\"?";
+"favorites.move.title" = "Move Movie";
+"favorites.move.message" = "Choose a destination list for \"%@\".";
 
 "movies.section.popular" = "Popular";
 "movies.section.upcoming" = "Upcoming";
@@ -121,6 +137,7 @@
 "movies.sort.dateDesc" = "Date: New to Old";
 "movies.sort.ratingDesc" = "Rating";
 "movies.action.searchAgain" = "Search Again";
+"movies.action.openFavorites" = "Open favorites";
 "movies.message.contentUnavailable.title" = "Content Unavailable";
 "movies.message.noResults.title" = "No Results";
 "movies.message.noResults.body" = "No movies found for \"%@\".";

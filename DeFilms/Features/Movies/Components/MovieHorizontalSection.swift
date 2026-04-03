@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct MovieHorizontalSection: View {
+    @EnvironmentObject private var coordinator: NavigationCoordinator<MovieRoute>
     let title: String
     let movies: [Movie]
 
@@ -18,7 +19,9 @@ struct MovieHorizontalSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 14) {
                     ForEach(movies) { movie in
-                        MovieCardNavigationLink(movie: movie, cardStyle: .rail)
+                        MovieCardNavigationLink(movie: movie, cardStyle: .rail) {
+                            coordinator.push(.detail(movie))
+                        }
                     }
                 }
                 .padding(.horizontal, 16)

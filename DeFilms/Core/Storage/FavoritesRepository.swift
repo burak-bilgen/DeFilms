@@ -11,9 +11,12 @@ import Foundation
 protocol FavoritesRepositoryProtocol {
     func fetchLists(for userIdentifier: String) throws -> [FavoriteList]
     func createList(named name: String, userIdentifier: String) throws -> FavoriteList
+    func renameList(listID: UUID, name: String, userIdentifier: String) throws
+    func deleteList(listID: UUID, userIdentifier: String) throws
     func add(movie: Movie, to listID: UUID, userIdentifier: String) throws
     func remove(movieID: Int, from listID: UUID, userIdentifier: String) throws
     func remove(movieID: Int, userIdentifier: String) throws
+    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) throws
 }
 
 final class FavoritesRepository: FavoritesRepositoryProtocol {
@@ -48,6 +51,22 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         try context.save()
         AppLogger.log("Persisted favorite list \(name)", category: .persistence, level: .success)
         return mapList(entity)
+    }
+
+    func renameList(listID: UUID, name: String, userIdentifier: String) throws {
+        let context = persistenceController.viewContext
+        guard let list = try fetchListEntity(listID: listID, userIdentifier: userIdentifier, context: context) else { return }
+        list.name = name
+        try context.save()
+        AppLogger.log("Renamed favorite list \(listID.uuidString)", category: .persistence, level: .success)
+    }
+
+    func deleteList(listID: UUID, userIdentifier: String) throws {
+        let context = persistenceController.viewContext
+        guard let list = try fetchListEntity(listID: listID, userIdentifier: userIdentifier, context: context) else { return }
+        context.delete(list)
+        try context.save()
+        AppLogger.log("Deleted favorite list \(listID.uuidString)", category: .persistence, level: .success)
     }
 
     func add(movie: Movie, to listID: UUID, userIdentifier: String) throws {
@@ -95,6 +114,31 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         }
         try context.save()
         AppLogger.log("Deleted favorite movie \(movieID) from all lists", category: .persistence, level: .success)
+    }
+
+    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) throws {
+        let context = persistenceController.viewContext
+        guard
+            let sourceList = try fetchListEntity(listID: sourceListID, userIdentifier: userIdentifier, context: context),
+            let destinationList = try fetchListEntity(listID: destinationListID, userIdentifier: userIdentifier, context: context),
+            let movieEntity = sourceList.movies.first(where: { $0.movieID == Int64(movieID) })
+        else {
+            return
+        }
+
+        if destinationList.movies.contains(where: { $0.movieID == Int64(movieID) }) == false {
+            let copiedMovie = FavoriteMovieEntity(context: context)
+            copiedMovie.movieID = movieEntity.movieID
+            copiedMovie.title = movieEntity.title
+            copiedMovie.posterPath = movieEntity.posterPath
+            copiedMovie.releaseDate = movieEntity.releaseDate
+            copiedMovie.voteAverage = movieEntity.voteAverage
+            copiedMovie.list = destinationList
+        }
+
+        context.delete(movieEntity)
+        try context.save()
+        AppLogger.log("Moved favorite movie \(movieID)", category: .persistence, level: .success)
     }
 
     private func fetchListEntity(listID: UUID, userIdentifier: String, context: NSManagedObjectContext) throws -> FavoriteListEntity? {

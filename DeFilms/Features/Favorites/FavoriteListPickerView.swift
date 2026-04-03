@@ -14,6 +14,7 @@ struct FavoriteListPickerView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var isCreateListPresented = false
+    @State private var listPendingRemoval: FavoriteList?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -39,7 +40,7 @@ struct FavoriteListPickerView: View {
             ForEach(favoritesStore.lists) { list in
                 Button {
                     if favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) {
-                        favoritesStore.remove(movieID: movie.id, from: list.id)
+                        listPendingRemoval = list
                     } else {
                         favoritesStore.add(movie: movie, to: list.id)
                     }
@@ -88,6 +89,30 @@ struct FavoriteListPickerView: View {
         .padding(16)
         .frame(width: 300)
         .background(Color(.systemBackground))
+        .confirmationDialog(
+            Localization.string("favorites.remove.movie.title"),
+            isPresented: Binding(
+                get: { listPendingRemoval != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        listPendingRemoval = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
+                if let listPendingRemoval {
+                    favoritesStore.remove(movieID: movie.id, from: listPendingRemoval.id)
+                    self.listPendingRemoval = nil
+                }
+            }
+            Button(Localization.string("common.cancel"), role: .cancel) {
+                listPendingRemoval = nil
+            }
+        } message: {
+            Text(Localization.string("favorites.remove.from.list.message", listPendingRemoval?.name ?? ""))
+        }
         .sheet(isPresented: $isCreateListPresented) {
             NavigationStack {
                 NewFavoriteListView(movie: movie)

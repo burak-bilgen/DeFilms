@@ -1,36 +1,63 @@
-//
-//  DeFilmsTests.swift
-//  DeFilmsTests
-//
-//  Created by Burak on 2.04.2026.
-//
-
 import XCTest
 @testable import DeFilms
 
+@MainActor
 final class DeFilmsTests: XCTestCase {
+    func testAuthSessionManagerSignsUpSignsOutAndRestoresSession() throws {
+        let keychain = InMemoryKeychainService()
+        let sessionManager = AuthSessionManager(keychainService: keychain)
 
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
+
+        XCTAssertTrue(sessionManager.isSignedIn)
+        XCTAssertEqual(sessionManager.session?.email, "user@example.com")
+
+        let restoredSessionManager = AuthSessionManager(keychainService: keychain)
+        XCTAssertEqual(restoredSessionManager.session?.email, "user@example.com")
+
+        restoredSessionManager.signOut()
+        XCTAssertFalse(restoredSessionManager.isSignedIn)
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    func testSettingsViewModelSignsOutThroughBoundSession() {
+        let sessionManager = MockBoundAuthSessionManager()
+        let viewModel = SettingsViewModel()
+
+        viewModel.bind(sessionManager: sessionManager)
+        viewModel.signOut()
+
+        XCTAssertTrue(sessionManager.didSignOut)
+    }
+}
+
+private final class InMemoryKeychainService: KeychainServicing {
+    private var storage: [String: Data] = [:]
+
+    func data(for account: String) throws -> Data? {
+        storage[account]
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    func save(_ data: Data, for account: String) throws {
+        storage[account] = data
     }
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
+    func delete(account: String) throws {
+        storage.removeValue(forKey: account)
     }
+}
 
+private final class MockBoundAuthSessionManager: AuthSessionManaging {
+    var session: AuthSession? = AuthSession(email: "bound@example.com", token: "token")
+    var isSignedIn: Bool { session != nil }
+    var currentUserIdentifier: String { session?.email ?? "guest" }
+    private(set) var didSignOut = false
+
+    func signUp(email: String, password: String, confirmPassword: String) throws {}
+    func signIn(email: String, password: String) throws {}
+    func changePassword(currentPassword: String, newPassword: String, confirmPassword: String) throws {}
+
+    func signOut() {
+        didSignOut = true
+        session = nil
+    }
 }

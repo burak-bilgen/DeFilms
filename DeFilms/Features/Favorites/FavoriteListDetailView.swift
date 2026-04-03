@@ -6,18 +6,23 @@
 import SwiftUI
 
 struct FavoriteListDetailView: View {
-    let listID: UUID
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var coordinator: NavigationCoordinator<FavoritesRoute>
 
-    @EnvironmentObject private var favoritesStore: FavoritesStore
-
+    @ObservedObject var viewModel: FavoriteListDetailViewModel
     private let columns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
+    @State private var renameText: String = ""
+    @State private var isRenamePresented = false
+    @State private var isDeletePresented = false
+    @State private var moviePendingRemoval: FavoriteMovie?
+    @State private var moviePendingMove: FavoriteMovie?
 
     var body: some View {
         Group {
-            if let list = favoritesStore.list(withID: listID) {
+            if let list = viewModel.list {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
                         FavoriteListDetailHeader(list: list)
@@ -29,7 +34,12 @@ struct FavoriteListDetailView: View {
                         } else {
                             LazyVGrid(columns: columns, spacing: 18) {
                                 ForEach(list.movies) { movie in
-                                    MovieCardNavigationLink(movie: movie.asMovie, cardStyle: .grid)
+                                    FavoriteMovieGridItem(
+                                        movie: movie,
+                                        openMovie: { coordinator.push(.movie(movie.asMovie)) },
+                                        moveMovie: { moviePendingMove = movie },
+                                        removeMovie: { moviePendingRemoval = movie }
+                                    )
                                 }
                             }
                             .padding(.horizontal, 16)
@@ -40,6 +50,22 @@ struct FavoriteListDetailView: View {
                 .background(Color(.systemGroupedBackground))
                 .navigationTitle(list.name)
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Button(Localization.string("favorites.rename.title")) {
+                                renameText = list.name
+                                isRenamePresented = true
+                            }
+
+                            Button(Localization.string("favorites.delete.confirm"), role: .destructive) {
+                                isDeletePresented = true
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                    }
+                }
             } else {
                 MoviesMessageView(
                     title: Localization.string("favorites.list.unavailable.title"),
@@ -50,7 +76,101 @@ struct FavoriteListDetailView: View {
                 .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(.systemGroupedBackground))
+                .onAppear {
+                    dismiss()
+                }
             }
+        }
+        .alert(Localization.string("favorites.rename.title"), isPresented: $isRenamePresented) {
+            TextField(Localization.string("favorites.picker.placeholder"), text: $renameText)
+            Button(Localization.string("common.cancel"), role: .cancel) {}
+            Button(Localization.string("favorites.rename.confirm")) {
+                _ = viewModel.renameList(name: renameText)
+            }
+        }
+        .confirmationDialog(Localization.string("favorites.delete.title"), isPresented: $isDeletePresented, titleVisibility: .visible) {
+            Button(Localization.string("favorites.delete.confirm"), role: .destructive) {
+                viewModel.deleteList()
+                dismiss()
+            }
+            Button(Localization.string("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(Localization.string("favorites.delete.message", viewModel.list?.name ?? ""))
+        }
+        .confirmationDialog(
+            Localization.string("favorites.remove.movie.title"),
+            isPresented: Binding(
+                get: { moviePendingRemoval != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        moviePendingRemoval = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
+                if let moviePendingRemoval {
+                    viewModel.remove(movieID: moviePendingRemoval.id)
+                    self.moviePendingRemoval = nil
+                }
+            }
+            Button(Localization.string("common.cancel"), role: .cancel) {
+                moviePendingRemoval = nil
+            }
+        } message: {
+            Text(Localization.string("favorites.remove.movie.message", moviePendingRemoval?.title ?? ""))
+        }
+        .confirmationDialog(
+            Localization.string("favorites.move.title"),
+            isPresented: Binding(
+                get: { moviePendingMove != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        moviePendingMove = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            ForEach(viewModel.destinationLists) { destination in
+                Button(destination.name) {
+                    if let moviePendingMove {
+                        viewModel.move(movieID: moviePendingMove.id, to: destination.id)
+                        self.moviePendingMove = nil
+                    }
+                }
+            }
+            Button(Localization.string("common.cancel"), role: .cancel) {
+                moviePendingMove = nil
+            }
+        } message: {
+            Text(Localization.string("favorites.move.message", moviePendingMove?.title ?? ""))
+        }
+    }
+}
+
+private struct FavoriteMovieGridItem: View {
+    let movie: FavoriteMovie
+    let openMovie: () -> Void
+    let moveMovie: () -> Void
+    let removeMovie: () -> Void
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 10) {
+            Button(action: openMovie) {
+                MovieCardView(movie: movie.asMovie)
+            }
+            .buttonStyle(.plain)
+
+            Menu {
+                Button(Localization.string("favorites.move.title"), action: moveMovie)
+                Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive, action: removeMovie)
+            } label: {
+                Label(Localization.string("favorites.manage.movie"), systemImage: "ellipsis.circle")
+                    .font(.caption.weight(.semibold))
+            }
+            .tint(.primary)
         }
     }
 }

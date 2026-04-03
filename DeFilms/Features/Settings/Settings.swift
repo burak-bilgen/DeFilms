@@ -27,13 +27,16 @@ struct SettingsView: View {
             .navigationTitle(Localization.string("settings.title"))
             .confirmationDialog(Localization.string("settings.account.logout"), isPresented: $showLogoutConfirmation, titleVisibility: .visible) {
                 Button(Localization.string("settings.account.logout"), role: .destructive) {
-                    sessionManager.signOut()
+                    viewModel.signOut()
                 }
 
                 Button(Localization.string("common.cancel"), role: .cancel) {}
             } message: {
                 Text(Localization.string("settings.account.logout.message"))
             }
+        }
+        .task {
+            viewModel.bind(sessionManager: sessionManager)
         }
     }
 
@@ -71,7 +74,7 @@ struct SettingsView: View {
                 SettingsValueRow(
                     symbol: "person.crop.circle",
                     title: Localization.string("settings.account.status"),
-                    value: sessionManager.session?.email ?? ""
+                    value: viewModel.signedInEmail ?? ""
                 )
 
                 NavigationLink {

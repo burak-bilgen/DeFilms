@@ -8,6 +8,7 @@
 import Combine
 import Foundation
 
+@MainActor
 final class FavoritesStore: ObservableObject {
     @Published private(set) var lists: [FavoriteList] = []
 
@@ -75,6 +76,51 @@ final class FavoritesStore: ObservableObject {
             AppLogger.log("Failed to remove movie \(movieID) from list", category: .favorites, level: .error)
             ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
             return
+        }
+    }
+
+    func renameList(listID: UUID, name: String) -> Bool {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+
+        if let existingList = existingList(named: trimmed), existingList.id != listID {
+            ToastCenter.shared.showError(Localization.string("favorites.toast.duplicateList"))
+            return false
+        }
+
+        do {
+            try repository.renameList(listID: listID, name: trimmed, userIdentifier: currentUserIdentifier)
+            reloadLists()
+            ToastCenter.shared.showSuccess(Localization.string("favorites.toast.listRenamed"))
+            return true
+        } catch {
+            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            return false
+        }
+    }
+
+    func deleteList(listID: UUID) {
+        do {
+            try repository.deleteList(listID: listID, userIdentifier: currentUserIdentifier)
+            reloadLists()
+            ToastCenter.shared.showSuccess(Localization.string("favorites.toast.listDeleted"))
+        } catch {
+            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+        }
+    }
+
+    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) {
+        do {
+            try repository.move(
+                movieID: movieID,
+                from: sourceListID,
+                to: destinationListID,
+                userIdentifier: currentUserIdentifier
+            )
+            reloadLists()
+            ToastCenter.shared.showSuccess(Localization.string("favorites.toast.movieMoved"))
+        } catch {
+            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
         }
     }
 

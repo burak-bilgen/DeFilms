@@ -17,22 +17,20 @@ struct SignInView: View {
     @EnvironmentObject private var sessionManager: AuthSessionManager
     @Environment(\.dismiss) private var dismiss
 
-    @State private var email = ""
-    @State private var password = ""
-    @State private var errorMessage: String?
+    @StateObject private var viewModel = SignInViewModel()
 
     var body: some View {
         AuthFormContainer(title: Localization.string("auth.signIn")) {
             Section {
-                TextField(Localization.string("auth.email"), text: $email)
+                TextField(Localization.string("auth.email"), text: $viewModel.email)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
-                SecureField(Localization.string("auth.password"), text: $password)
+                SecureField(Localization.string("auth.password"), text: $viewModel.password)
             }
 
-            if let errorMessage {
+            if let errorMessage = viewModel.errorMessage {
                 Section {
                     Text(errorMessage)
                         .foregroundStyle(.red)
@@ -41,14 +39,8 @@ struct SignInView: View {
 
             Section {
                 Button(Localization.string("auth.signIn")) {
-                    do {
-                        try sessionManager.signIn(email: email, password: password)
-                        ToastCenter.shared.showSuccess(Localization.string("auth.toast.signedIn"))
+                    if viewModel.submit(using: sessionManager) {
                         dismiss()
-                    } catch {
-                        let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("auth.error.generic")
-                        errorMessage = message
-                        ToastCenter.shared.showError(message)
                     }
                 }
             }
@@ -60,24 +52,21 @@ struct SignUpView: View {
     @EnvironmentObject private var sessionManager: AuthSessionManager
     @Environment(\.dismiss) private var dismiss
 
-    @State private var email = ""
-    @State private var password = ""
-    @State private var confirmPassword = ""
-    @State private var errorMessage: String?
+    @StateObject private var viewModel = SignUpViewModel()
 
     var body: some View {
         AuthFormContainer(title: Localization.string("auth.signUp")) {
             Section {
-                TextField(Localization.string("auth.email"), text: $email)
+                TextField(Localization.string("auth.email"), text: $viewModel.email)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
-                SecureField(Localization.string("auth.password"), text: $password)
-                SecureField(Localization.string("auth.confirmPassword"), text: $confirmPassword)
+                SecureField(Localization.string("auth.password"), text: $viewModel.password)
+                SecureField(Localization.string("auth.confirmPassword"), text: $viewModel.confirmPassword)
             }
 
-            if let errorMessage {
+            if let errorMessage = viewModel.errorMessage {
                 Section {
                     Text(errorMessage)
                         .foregroundStyle(.red)
@@ -86,14 +75,8 @@ struct SignUpView: View {
 
             Section {
                 Button(Localization.string("auth.createAccount")) {
-                    do {
-                        try sessionManager.signUp(email: email, password: password, confirmPassword: confirmPassword)
-                        ToastCenter.shared.showSuccess(Localization.string("auth.toast.accountCreated"))
+                    if viewModel.submit(using: sessionManager) {
                         dismiss()
-                    } catch {
-                        let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("auth.error.generic")
-                        errorMessage = message
-                        ToastCenter.shared.showError(message)
                     }
                 }
             }
@@ -105,28 +88,24 @@ struct ChangePasswordView: View {
     @EnvironmentObject private var sessionManager: AuthSessionManager
     @Environment(\.dismiss) private var dismiss
 
-    @State private var currentPassword = ""
-    @State private var newPassword = ""
-    @State private var confirmPassword = ""
-    @State private var errorMessage: String?
-    @State private var successMessage: String?
+    @StateObject private var viewModel = ChangePasswordViewModel()
 
     var body: some View {
         AuthFormContainer(title: Localization.string("auth.changePassword")) {
             Section {
-                SecureField(Localization.string("auth.currentPassword"), text: $currentPassword)
-                SecureField(Localization.string("auth.newPassword"), text: $newPassword)
-                SecureField(Localization.string("auth.confirmPassword"), text: $confirmPassword)
+                SecureField(Localization.string("auth.currentPassword"), text: $viewModel.currentPassword)
+                SecureField(Localization.string("auth.newPassword"), text: $viewModel.newPassword)
+                SecureField(Localization.string("auth.confirmPassword"), text: $viewModel.confirmPassword)
             }
 
-            if let errorMessage {
+            if let errorMessage = viewModel.errorMessage {
                 Section {
                     Text(errorMessage)
                         .foregroundStyle(.red)
                 }
             }
 
-            if let successMessage {
+            if let successMessage = viewModel.successMessage {
                 Section {
                     Text(successMessage)
                         .foregroundStyle(.green)
@@ -135,24 +114,7 @@ struct ChangePasswordView: View {
 
             Section {
                 Button(Localization.string("auth.changePassword")) {
-                    do {
-                        try sessionManager.changePassword(
-                            currentPassword: currentPassword,
-                            newPassword: newPassword,
-                            confirmPassword: confirmPassword
-                        )
-                        let success = Localization.string("auth.changePassword.success")
-                        successMessage = success
-                        ToastCenter.shared.showSuccess(success)
-                        errorMessage = nil
-                        currentPassword = ""
-                        newPassword = ""
-                        confirmPassword = ""
-                    } catch {
-                        let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("auth.error.generic")
-                        errorMessage = message
-                        ToastCenter.shared.showError(message)
-                    }
+                    _ = viewModel.submit(using: sessionManager)
                 }
             }
         }

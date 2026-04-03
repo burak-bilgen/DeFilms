@@ -67,9 +67,18 @@ enum MovieCardStyle {
 struct MovieCardNavigationLink: View {
     let movie: Movie
     let cardStyle: MovieCardStyle
+    let action: (() -> Void)?
+
+    init(movie: Movie, cardStyle: MovieCardStyle, action: (() -> Void)? = nil) {
+        self.movie = movie
+        self.cardStyle = cardStyle
+        self.action = action
+    }
 
     var body: some View {
-        NavigationLink(value: movie) {
+        Button(action: {
+            action?()
+        }) {
             MovieCardView(
                 movie: movie,
                 titleFont: cardStyle.titleFont,
