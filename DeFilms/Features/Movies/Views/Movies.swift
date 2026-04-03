@@ -10,6 +10,7 @@ import SwiftUI
 struct MoviesView: View {
     @EnvironmentObject private var coordinator: NavigationCoordinator<MovieRoute>
     @ObservedObject var viewModel: MovieSearchViewModel
+    let openFavorites: () -> Void
     @State private var isFilterSheetPresented = false
     @FocusState private var isSearchFocused: Bool
     @EnvironmentObject private var preferences: AppPreferences
@@ -18,8 +19,9 @@ struct MoviesView: View {
         GridItem(.adaptive(minimum: AppDimension.posterRailWidth, maximum: AppDimension.posterRailWidth), spacing: AppSpacing.xxxl, alignment: .top)
     ]
 
-    init(viewModel: MovieSearchViewModel) {
+    init(viewModel: MovieSearchViewModel, openFavorites: @escaping () -> Void) {
         self.viewModel = viewModel
+        self.openFavorites = openFavorites
     }
 
     var body: some View {
@@ -86,6 +88,21 @@ struct MoviesView: View {
                 .accessibilityLabel(Localization.string("app.logo"))
 
             Spacer()
+
+            Button(action: openFavorites) {
+                Image(systemName: "rectangle.stack.badge.play")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 42, height: 42)
+                    .background(AppPalette.cardBackground)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(AppPalette.border, lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Localization.string("favorites.navigate"))
         }
     }
 

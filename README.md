@@ -1,57 +1,56 @@
 # DeFilms
 
-DeFilms, TMDB API uzerinden film arama, favori liste yonetimi ve temel hesap/oturum akislari sunan SwiftUI tabanli bir iOS uygulamasidir. Proje iOS 16+ hedefler ve Swift Concurrency, MVVM, Core Data tabanli persistence ve route-coordinator yaklasimi kullanir.
+DeFilms, TMDB API uzerinden film arama, detay goruntuleme ve coklu favori listesi yonetimi sunan SwiftUI tabanli bir iOS uygulamasidir. Proje iOS 16+ hedefler ve MVVM, Swift Concurrency, protokol tabanli servis/repository katmani ve tekrar kullanilabilir coordinator yapisi kullanir.
 
 ## Kurulum
 
-1. Xcode 16+ ile projeyi acin.
-2. TMDB API anahtarini `DeFilms/Core/Network/APIConfig.swift` icin beklenen kaynakta tanimlayin.
-3. `DeFilms` scheme'ini secip uygulamayi simulator veya cihazda calistirin.
-4. Testler icin `DeFilmsTests` target'indaki testleri veya scheme uzerinden tum testleri kosun.
+1. Xcode 16 veya daha guncel bir surumle projeyi acin.
+2. `DeFilms/Info.plist` icine `TMDBApiKey` anahtariyla gecerli bir TMDB API key ekleyin.
+3. `DeFilms` scheme'ini secin ve uygulamayi simulator ya da cihazda calistirin.
+4. Test dogrulamasi icin test navigator veya aktif scheme uzerinden testleri calistirin.
 
 ## Mimari
 
-- UI katmani SwiftUI view'lar ile kuruldu.
-- Is kurallari ve ekran durumlari ViewModel katmaninda tutulur.
-- Navigation, tab bazli route coordinator yapisina tasindi:
-  - `MovieRoute`
-  - `FavoritesRoute`
-  - `NavigationCoordinator<Route>`
-- Ag katmani `NetworkServiceProtocol` ile soyutlandi.
-- Veri saklama Core Data repository katmanlari ile yapiliyor:
-  - `FavoritesRepository`
-  - `RecentSearchRepository`
-- Session ve yerel hesap yonetimi `AuthSessionManager` uzerinden ilerliyor.
+- UI katmani `SwiftUI` ile kuruludur.
+- Durum yonetimi `ObservableObject`, `@StateObject` ve `@ObservedObject` ile MVVM uzerinden ilerler.
+- Ag istekleri `URLSession`, `Codable` ve `async/await` ile yonetilir.
+- Navigasyon `NavigationCoordinator<Route>` ile route bazli, tekrar kullanilabilir bir coordinator yapisi kullanir.
+- Favoriler ve arama gecmisi repository/store katmanlari ile yerel olarak saklanir.
+- Tema, dil ve oturum bilgisi environment object yapisi ile uygulama geneline yayilir.
 
-## Uygulama Kapsami
+## Ozellikler
 
-- Filmler sekmesinde arama, validasyon, son 10 arama gecmisi, filtreleme, siralama ve detay gecisi bulunur.
-- Favoriler sekmesinde liste olusturma, yeniden adlandirma, silme, film cikarimi ve listeler arasi tasima desteklenir.
-- Ayarlar sekmesinde tema, dil, uygulama versiyonu ve yerel auth akislari bulunur.
-- Hata durumlari toast/snackbar benzeri bildirimler ile kullaniciya gosterilir.
+- Film arama, bos sorgu validasyonu ve iki sutunlu sonuc listesi
+- Trend, populer, vizyondaki, yakinda ve en cok oy alan browse bolumleri
+- Yil, puan ve tur filtreleri ile siralama secenekleri
+- Son 10 aramanin cihazda tutulmasi
+- Film detay, oyuncu, yonetmen ve fragman akislari
+- Coklu favori listesi olusturma, yeniden adlandirma, silme ve tasima
+- Light/Dark mode ile Ingilizce, Turkce ve Arapca lokalizasyon
+- Yerel hesap olusturma, giris, sifre degistirme ve oturum yonetimi
 
 ## Testler
 
-Eklenen hedef testler:
+Projede `Testing` tabanli ViewModel testleri bulunur:
 
-- `MovieSearchViewModelTests.emptyQueryShowsValidationError()`
-- `MovieSearchViewModelTests.successfulSearchStoresHistoryAndResults()`
-- `FavoritesViewModelTests.createRenameAndDeleteListUpdatesPublishedLists()`
+- `MovieSearchViewModelTests.emptyQueryShowsValidationError`
+- `MovieSearchViewModelTests.successfulSearchStoresHistoryAndResults`
+- `FavoritesViewModelTests.createRenameAndDeleteListUpdatesPublishedLists`
+- `FavoritesViewModelTests.storeAdoptsLegacyGuestListsIntoSignedInAccountScope`
+- `AuthFormViewModelTests.signInViewModelPublishesLocalizedErrorOnFailure`
+- `AuthFormViewModelTests.changePasswordViewModelClearsFieldsOnSuccess`
 
-Ornek sonuc:
+Ornek test ozeti:
 
 ```text
-3 tests: 3 passed, 0 failed
+MovieSearchViewModelTests: validation, history persistence, loaded state
+FavoritesViewModelTests: list CRUD, guest-to-account adoption
+AuthFormViewModelTests: sign-in failure and password-change success
 ```
 
-## Bilinen Noktalar
+## Bilinen Noktalar ve Gelistirme Onerileri
 
-- Auth akisleri yerel keychain tabanli demo mantigi ile calisir; gercek backend entegrasyonu yoktur.
-- UI testleri su an temel iskelet seviyesindedir, kritik kullanici akislari icin genisletilebilir.
-- Asset catalog icinde eski iOS icon boyutlarina dair Xcode remark'lari vardir; davranissal hata olusturmaz ama temizlenebilir.
-
-## Gelistirme Onerileri
-
-- Settings/account formlarini da ayri ViewModel katmanlarina tasiyarak MVVM ayrimini daha da sertlestirin.
-- Favori ve arama senaryolari icin repository seviyesinde daha fazla test ekleyin.
-- Kritik akislara XCUI testleri ekleyin: arama, liste olusturma, film tasima, auth.
+- `TMDBApiKey` tanimli degilse uygulama bilincli olarak kullaniciya hata mesaji gosterir.
+- Kimlik dogrulama su an cihaz ici keychain tabanlidir; gercek backend entegrasyonu sonraki mantikli adimdir.
+- UI test kapsami temel launch smoke testlerinin otesine tasinabilir.
+- Teslimata 2-3 ekran goruntusu veya kisa demo videosu eklenmesi faydali olur.

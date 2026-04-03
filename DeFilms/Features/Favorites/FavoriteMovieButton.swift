@@ -18,17 +18,42 @@ struct FavoriteMovieButton: View {
 
     @State private var isPickerPresented = false
     @State private var isCreateListPresented = false
+    @State private var listPendingRemoval: FavoriteList?
 
     var body: some View {
         Button(action: handleTap) {
             iconLabel
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Localization.string("favorites.accessibility.manage"))
+        .accessibilityLabel(accessibilityLabel)
         .popover(isPresented: $isPickerPresented, attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
             FavoriteListPickerView(movie: movie)
                 .environmentObject(favoritesStore)
                 .presentationCompactAdaptation(.popover)
+        }
+        .confirmationDialog(
+            Localization.string("favorites.remove.movie.title"),
+            isPresented: Binding(
+                get: { listPendingRemoval != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        listPendingRemoval = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(Localization.string("favorites.action.remove"), role: .destructive) {
+                guard let listPendingRemoval else { return }
+                favoritesStore.remove(movieID: movie.id, from: listPendingRemoval.id)
+                self.listPendingRemoval = nil
+            }
+
+            Button(Localization.string("common.cancel"), role: .cancel) {
+                listPendingRemoval = nil
+            }
+        } message: {
+            Text(Localization.string("favorites.remove.from.list.message", listPendingRemoval?.name ?? ""))
         }
         .sheet(isPresented: $isCreateListPresented) {
             NavigationStack {
@@ -78,9 +103,33 @@ struct FavoriteMovieButton: View {
         }
     }
 
+    private var accessibilityLabel: String {
+        if favoritesStore.isMovieInAnyList(movieID: movie.id) {
+            return Localization.string("favorites.action.remove")
+        }
+
+        return Localization.string("favorites.action.add")
+    }
+
     private func handleTap() {
+        let containingLists = favoritesStore.lists.filter { list in
+            list.movies.contains { $0.id == movie.id }
+        }
+
+        if containingLists.count == 1 {
+            listPendingRemoval = containingLists[0]
+            return
+        }
+
+        if containingLists.count > 1 {
+            isPickerPresented = true
+            return
+        }
+
         if favoritesStore.lists.isEmpty {
             isCreateListPresented = true
+        } else if favoritesStore.lists.count == 1, let list = favoritesStore.lists.first {
+            favoritesStore.add(movie: movie, to: list.id)
         } else {
             isPickerPresented = true
         }

@@ -64,6 +64,7 @@
 "auth.error.notSignedIn" = "You must be signed in to continue.";
 
 "favorites.title" = "Favorites";
+"favorites.navigate" = "Open favorites";
 "favorites.empty.title" = "No Favorites Yet";
 "favorites.empty.signedIn" = "Create a list from any movie and it will appear here.";
 "favorites.empty.signedOut" = "Add movies to your guest list or sign in to keep them for your account.";

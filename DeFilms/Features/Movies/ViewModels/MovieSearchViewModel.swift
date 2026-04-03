@@ -251,12 +251,19 @@ final class MovieSearchViewModel: ObservableObject {
 
         do {
             AppLogger.log("Browse loading started", category: .movie)
-            trendingTodayMovies = try await fetchMovies(for: TMDBEndpoint.trendingMovies(window: .day, page: 1))
-            trendingThisWeekMovies = try await fetchMovies(for: TMDBEndpoint.trendingMovies(window: .week, page: 1))
-            popularMovies = try await fetchMovies(for: TMDBEndpoint.popularMovies(page: 1))
-            upcomingMovies = try await fetchMovies(for: TMDBEndpoint.upcomingMovies(page: 1))
-            nowPlayingMovies = try await fetchMovies(for: TMDBEndpoint.nowPlayingMovies(page: 1))
-            topRatedMovies = try await fetchMovies(for: TMDBEndpoint.topRatedMovies(page: 1))
+            async let trendingToday = fetchMovies(for: TMDBEndpoint.trendingMovies(window: .day, page: 1))
+            async let trendingThisWeek = fetchMovies(for: TMDBEndpoint.trendingMovies(window: .week, page: 1))
+            async let popular = fetchMovies(for: TMDBEndpoint.popularMovies(page: 1))
+            async let upcoming = fetchMovies(for: TMDBEndpoint.upcomingMovies(page: 1))
+            async let nowPlaying = fetchMovies(for: TMDBEndpoint.nowPlayingMovies(page: 1))
+            async let topRated = fetchMovies(for: TMDBEndpoint.topRatedMovies(page: 1))
+
+            trendingTodayMovies = try await trendingToday
+            trendingThisWeekMovies = try await trendingThisWeek
+            popularMovies = try await popular
+            upcomingMovies = try await upcoming
+            nowPlayingMovies = try await nowPlaying
+            topRatedMovies = try await topRated
             hasLoadedBrowseContent = true
             lastLoadedLanguage = AppPreferences.persistedLanguage
             screenState = .browse

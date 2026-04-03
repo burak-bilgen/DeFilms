@@ -23,7 +23,10 @@ struct MainTabView: View {
         TabView(selection: $selection) {
             NavigationStack(path: $movieCoordinator.path) {
                 MoviesView(
-                    viewModel: moviesViewModel
+                    viewModel: moviesViewModel,
+                    openFavorites: {
+                        selection = .favorites
+                    }
                 )
                 .navigationDestination(for: MovieRoute.self) { route in
                     switch route {

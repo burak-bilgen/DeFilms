@@ -64,6 +64,7 @@
 "auth.error.notSignedIn" = "Devam etmek için giriş yapmalısın.";
 
 "favorites.title" = "Favoriler";
+"favorites.navigate" = "Favorileri aç";
 "favorites.empty.title" = "Henüz Favori Yok";
 "favorites.empty.signedIn" = "Herhangi bir filmden liste oluşturduğunda burada görünecek.";
 "favorites.empty.signedOut" = "Filmleri misafir listene ekleyebilir veya hesabında saklamak için giriş yapabilirsin.";

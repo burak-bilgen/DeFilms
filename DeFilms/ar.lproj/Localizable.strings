@@ -64,6 +64,7 @@
 "auth.error.notSignedIn" = "يجب تسجيل الدخول للمتابعة.";
 
 "favorites.title" = "المفضلة";
+"favorites.navigate" = "افتح المفضلة";
 "favorites.empty.title" = "لا توجد مفضلات بعد";
 "favorites.empty.signedIn" = "أنشئ قائمة من أي فيلم وستظهر هنا.";
 "favorites.empty.signedOut" = "أضف الأفلام إلى قائمتك كضيف أو سجّل الدخول للاحتفاظ بها في حسابك.";
