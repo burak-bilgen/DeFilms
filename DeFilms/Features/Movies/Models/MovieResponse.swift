@@ -11,6 +11,56 @@ struct MovieResponse: Codable {
     let results: [Movie]
 }
 
+struct MovieVideoResponse: Codable {
+    let results: [MovieVideo]
+}
+
+struct MovieVideo: Codable, Equatable {
+    let key: String
+    let name: String
+    let site: String
+    let type: String
+    let official: Bool
+
+    var watchURL: URL? {
+        switch site.lowercased() {
+        case "youtube":
+            return URL(string: "https://www.youtube.com/watch?v=\(key)")
+        case "vimeo":
+            return URL(string: "https://vimeo.com/\(key)")
+        default:
+            return nil
+        }
+    }
+}
+
+struct MovieImageResponse: Codable {
+    let backdrops: [MovieImageAsset]
+    let posters: [MovieImageAsset]
+}
+
+struct MovieCreditsResponse: Codable {
+    let cast: [MovieCastMember]
+}
+
+struct MovieCastMember: Codable, Equatable {
+    let id: Int
+    let name: String
+    let character: String?
+}
+
+struct MovieImageAsset: Codable, Equatable {
+    let filePath: String
+
+    enum CodingKeys: String, CodingKey {
+        case filePath = "file_path"
+    }
+
+    var imageURL: URL? {
+        URL(string: APIConfig.imageBaseURL + filePath)
+    }
+}
+
 struct MovieDetail: Codable, Equatable {
     let id: Int
     let title: String

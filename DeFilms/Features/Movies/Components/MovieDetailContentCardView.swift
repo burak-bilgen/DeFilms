@@ -6,15 +6,10 @@
 import SwiftUI
 
 struct MovieDetailContentCardView: View {
-    let movie: Movie
     @ObservedObject var viewModel: MovieDetailViewModel
-
-    @EnvironmentObject private var favoritesStore: FavoritesStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            headerSection
-
             if let errorMessage = viewModel.errorMessage {
                 MoviesMessageView(
                     title: Localization.string("movies.detail.limited.title"),
@@ -28,117 +23,77 @@ struct MovieDetailContentCardView: View {
                 )
             }
 
-            MovieDetailOverviewSectionView(overview: viewModel.overview)
+            detailSection(title: Localization.string("movies.detail.overview")) {
+                Text(viewModel.overview)
+                    .font(.system(size: 17, weight: .regular, design: .rounded))
+                    .foregroundStyle(Color.black.opacity(0.72))
+                    .lineSpacing(6)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let castLine = viewModel.castLine {
+                detailSection(title: Localization.string("movies.detail.cast")) {
+                    Text(castLine)
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(Color.black.opacity(0.66))
+                        .lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            if !viewModel.genreNames.isEmpty {
+                detailSection(title: Localization.string("movies.detail.genres")) {
+                    WrapChipsView(items: Array(viewModel.genreNames.prefix(5)))
+                }
+            }
         }
         .padding(24)
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .shadow(color: .black.opacity(0.08), radius: 22, y: 10)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 24, y: 12)
     }
 
-    private var headerSection: some View {
-        HStack(alignment: .top, spacing: 18) {
-            PosterImageView(
-                url: viewModel.posterURL,
-                cornerRadius: 20,
-                placeholderSystemImage: "photo"
-            )
-            .frame(width: 118)
-            .aspectRatio(2.0 / 3.0, contentMode: .fit)
-            .shadow(color: .black.opacity(0.14), radius: 14, y: 10)
-
-            VStack(alignment: .leading, spacing: 14) {
-                Text(viewModel.title)
-                    .font(.system(.title2, design: .rounded, weight: .bold))
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                MovieDetailMetadataChipsView(viewModel: viewModel)
-
-                if !viewModel.genreNames.isEmpty {
-                    WrapChipsView(items: viewModel.genreNames)
-                }
-
-                favoriteButton
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    private var favoriteButton: some View {
-        Button(
-            favoritesStore.isMovieInAnyList(movieID: movie.id)
-                ? Localization.string("favorites.action.remove")
-                : Localization.string("favorites.action.add")
-        ) {
-            favoritesStore.toggleFavorite(movie: movie)
-        }
-        .font(.subheadline.weight(.semibold))
-        .foregroundStyle(.white)
-        .padding(.horizontal, 18)
-        .frame(height: 44)
-        .background(Color.primary)
-        .clipShape(Capsule())
-    }
-}
-
-private struct MovieDetailMetadataChipsView: View {
-    @ObservedObject var viewModel: MovieDetailViewModel
-
-    var body: some View {
-        ViewThatFits(in: .vertical) {
-            HStack(spacing: 8) {
-                chipItems
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    chip(MovieMetaChip(title: viewModel.releaseYear, systemImage: "calendar", style: .light))
-                    if let rating = viewModel.ratingText {
-                        chip(MovieMetaChip(title: rating, systemImage: "star.fill", style: .light))
-                    }
-                }
-
-                if let runtime = viewModel.runtimeText {
-                    HStack(spacing: 8) {
-                        chip(MovieMetaChip(title: runtime, systemImage: "clock", style: .light))
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var chipItems: some View {
-        chip(MovieMetaChip(title: viewModel.releaseYear, systemImage: "calendar", style: .light))
-
-        if let rating = viewModel.ratingText {
-            chip(MovieMetaChip(title: rating, systemImage: "star.fill", style: .light))
-        }
-
-        if let runtime = viewModel.runtimeText {
-            chip(MovieMetaChip(title: runtime, systemImage: "clock", style: .light))
-        }
-    }
-
-    private func chip<T: View>(_ content: T) -> some View {
-        content.fixedSize()
-    }
-}
-
-struct MovieDetailOverviewSectionView: View {
-    let overview: String
-
-    var body: some View {
+    private func detailSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(Localization.string("movies.detail.overview"))
-                .font(.headline)
+            Text(title)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .tracking(0.8)
+                .foregroundStyle(Color.black.opacity(0.46))
 
-            Text(overview)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .lineSpacing(5)
-                .fixedSize(horizontal: false, vertical: true)
+            content()
         }
+    }
+}
+
+struct MovieDetailRatingBadge: View {
+    enum Style {
+        case card
+        case hero
+    }
+
+    let ratingText: String?
+    var style: Style = .card
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(style == .hero ? Color.white.opacity(0.18) : Color.white)
+            Circle()
+                .stroke(borderColor, lineWidth: style == .hero ? 1 : 2)
+
+            Text(ratingText ?? "--")
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(textColor)
+        }
+        .frame(width: 60, height: 60)
+        .accessibilityLabel(Localization.string("movies.detail.rating", ratingText ?? "--"))
+    }
+
+    private var textColor: Color {
+        style == .hero ? .white : .black
+    }
+
+    private var borderColor: Color {
+        style == .hero ? Color.white.opacity(0.35) : Color.black.opacity(0.72)
     }
 }

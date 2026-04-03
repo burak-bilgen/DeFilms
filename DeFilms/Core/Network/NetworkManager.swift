@@ -29,7 +29,10 @@ final class NetworkManager: NetworkServiceProtocol {
         var queryItems = endpoint.queryItems
         
         queryItems.append(URLQueryItem(name: "api_key", value: apiKey))
-        queryItems.append(URLQueryItem(name: "language", value: AppPreferences.persistedLanguage.tmdbLanguageCode))
+
+        if !queryItems.contains(where: { $0.name == "language" }) {
+            queryItems.append(URLQueryItem(name: "language", value: AppPreferences.persistedLanguage.tmdbLanguageCode))
+        }
         
         urlComponents.queryItems = queryItems
 

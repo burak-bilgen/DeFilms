@@ -49,5 +49,22 @@ struct MoviesSearchBar: View {
             .background(Color.primary)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
+        .padding(10)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(.secondarySystemBackground),
+                    Color(.tertiarySystemBackground)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 6)
     }
 }

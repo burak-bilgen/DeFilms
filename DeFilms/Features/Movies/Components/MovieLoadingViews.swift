@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SkeletonBlock: View {
     var cornerRadius: CGFloat = 14
+
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .fill(
@@ -22,7 +23,7 @@ struct SkeletonBlock: View {
                     endPoint: .bottomTrailing
                 )
             )
-            .redacted(reason: .placeholder)
+            .shimmering()
     }
 }
 
@@ -54,7 +55,7 @@ struct MovieSectionSkeletonView: View {
                 HStack(spacing: 14) {
                     ForEach(0..<5, id: \.self) { _ in
                         MovieCardSkeletonView()
-                            .frame(width: 150)
+                            .frame(width: 146)
                     }
                 }
             }
@@ -77,53 +78,84 @@ struct MovieGridSkeletonView: View {
 struct MovieDetailSkeletonView: View {
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            VStack(spacing: 20) {
                 SkeletonBlock(cornerRadius: 0)
-                    .frame(height: 360)
+                    .frame(height: 420)
 
-                VStack(alignment: .leading, spacing: 18) {
-                    HStack(alignment: .top, spacing: 18) {
-                        SkeletonBlock(cornerRadius: 20)
-                            .frame(width: 118, height: 177)
-
-                        VStack(alignment: .leading, spacing: 10) {
-                            SkeletonBlock(cornerRadius: 8)
-                                .frame(height: 28)
-
-                            SkeletonBlock(cornerRadius: 8)
-                                .frame(width: 140, height: 18)
-
-                            HStack(spacing: 8) {
-                                SkeletonBlock(cornerRadius: 999)
-                                .frame(width: 82, height: 32)
-
-                                SkeletonBlock(cornerRadius: 999)
-                                    .frame(width: 82, height: 32)
-                            }
-
-                            SkeletonBlock(cornerRadius: 999)
-                                .frame(width: 140, height: 44)
+                VStack(alignment: .leading, spacing: 20) {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        ForEach(0..<4, id: \.self) { _ in
+                            SkeletonBlock(cornerRadius: 18)
+                                .frame(height: 82)
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 10) {
                         SkeletonBlock(cornerRadius: 8)
-                            .frame(width: 100, height: 18)
+                            .frame(width: 90, height: 12)
 
-                        ForEach(0..<4, id: \.self) { _ in
+                        ForEach(0..<5, id: \.self) { index in
                             SkeletonBlock(cornerRadius: 8)
                                 .frame(height: 14)
+                                .padding(.trailing, index == 4 ? 56 : 0)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        SkeletonBlock(cornerRadius: 8)
+                            .frame(width: 72, height: 12)
+                        ForEach(0..<2, id: \.self) { index in
+                            SkeletonBlock(cornerRadius: 8)
+                                .frame(height: 14)
+                                .padding(.trailing, index == 1 ? 78 : 0)
                         }
                     }
                 }
                 .padding(24)
                 .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-                .padding(.horizontal, 16)
-                .offset(y: -42)
-                .padding(.bottom, -42)
+                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .padding(.horizontal, 18)
             }
         }
         .ignoresSafeArea(edges: .top)
+    }
+}
+
+private struct ShimmerModifier: ViewModifier {
+    @State private var isAnimating = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                GeometryReader { geometry in
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            Color.white.opacity(0.35),
+                            .clear
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .frame(width: geometry.size.width * 1.4)
+                    .rotationEffect(.degrees(12))
+                    .offset(x: isAnimating ? geometry.size.width * 1.6 : -geometry.size.width * 1.6)
+                    .blendMode(.screen)
+                    .animation(
+                        .linear(duration: 1.15).repeatForever(autoreverses: false),
+                        value: isAnimating
+                    )
+                    .onAppear {
+                        isAnimating = true
+                    }
+                }
+                .clipped()
+            }
+    }
+}
+
+extension View {
+    func shimmering() -> some View {
+        modifier(ShimmerModifier())
     }
 }

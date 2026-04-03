@@ -14,6 +14,9 @@ enum TMDBEndpoint: Endpoint {
     case nowPlayingMovies(page: Int)
     case topRatedMovies(page: Int)
     case movieDetails(movieID: Int)
+    case movieVideos(movieID: Int, languageCode: String?)
+    case movieImages(movieID: Int)
+    case movieCredits(movieID: Int)
     case genreList
 
     var path: String {
@@ -30,6 +33,12 @@ enum TMDBEndpoint: Endpoint {
             return "/movie/top_rated"
         case let .movieDetails(movieID):
             return "/movie/\(movieID)"
+        case let .movieVideos(movieID, _):
+            return "/movie/\(movieID)/videos"
+        case let .movieImages(movieID):
+            return "/movie/\(movieID)/images"
+        case let .movieCredits(movieID):
+            return "/movie/\(movieID)/credits"
         case .genreList:
             return "/genre/movie/list"
         }
@@ -63,6 +72,20 @@ enum TMDBEndpoint: Endpoint {
                 URLQueryItem(name: "page", value: String(page))
             ]
         case .movieDetails:
+            return []
+        case let .movieVideos(_, languageCode):
+            guard let languageCode else { return [] }
+            return [
+                URLQueryItem(name: "language", value: languageCode)
+            ]
+        case .movieImages:
+            return [
+                URLQueryItem(
+                    name: "include_image_language",
+                    value: "\(AppPreferences.persistedLanguage.rawValue),en,null"
+                )
+            ]
+        case .movieCredits:
             return []
         case .genreList:
             return []

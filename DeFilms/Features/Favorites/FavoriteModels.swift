@@ -29,6 +29,24 @@ struct FavoriteMovie: Identifiable, Codable, Equatable {
         self.releaseDate = releaseDate
         self.voteAverage = voteAverage
     }
+
+    var releaseYear: String {
+        guard let releaseDate, releaseDate.count >= 4 else { return "--" }
+        return String(releaseDate.prefix(4))
+    }
+
+    var asMovie: Movie {
+        Movie(
+            id: id,
+            title: title,
+            overview: nil,
+            posterPath: posterPath,
+            backdropPath: nil,
+            releaseDate: releaseDate,
+            voteAverage: voteAverage,
+            genreIDs: nil
+        )
+    }
 }
 
 struct FavoriteList: Identifiable, Codable, Equatable {

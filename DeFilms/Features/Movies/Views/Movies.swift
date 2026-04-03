@@ -24,7 +24,7 @@ struct MoviesView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 18) {
+            VStack(spacing: 12) {
                 headerBar
                     .padding(.horizontal)
 

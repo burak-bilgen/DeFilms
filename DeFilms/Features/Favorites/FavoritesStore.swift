@@ -13,7 +13,6 @@ final class FavoritesStore: ObservableObject {
 
     private let repository: FavoritesRepositoryProtocol
     private let sessionManager: AuthSessionManager
-    private let defaultListNameKey = "favorites.defaultListName"
     private var cancellables: Set<AnyCancellable> = []
 
     init(
@@ -36,6 +35,10 @@ final class FavoritesStore: ObservableObject {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             return nil
+        }
+
+        if let existingList = existingList(named: trimmed) {
+            return existingList
         }
 
         do {
@@ -86,33 +89,24 @@ final class FavoritesStore: ObservableObject {
         return list.movies.contains { $0.id == movieID }
     }
 
-    func toggleFavorite(movie: Movie) {
-        if isMovieInAnyList(movieID: movie.id) {
-            remove(movieID: movie.id)
-        } else {
-            let listID = defaultList().id
-            add(movie: movie, to: listID)
-        }
+    func listIDs(containing movieID: Int) -> Set<UUID> {
+        Set(
+            lists.compactMap { list in
+                list.movies.contains(where: { $0.id == movieID }) ? list.id : nil
+            }
+        )
     }
 
-    func remove(movieID: Int) {
-        do {
-            try repository.remove(movieID: movieID, userIdentifier: currentUserIdentifier)
-            reloadLists()
-            AppLogger.log("Removed movie \(movieID) from all lists", category: .favorites, level: .success)
-        } catch {
-            AppLogger.log("Failed to remove movie \(movieID) from favorites", category: .favorites, level: .error)
-            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
-            return
-        }
+    func existingList(named name: String) -> FavoriteList? {
+        lists.first { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }
     }
 
-    func defaultList() -> FavoriteList {
-        if let list = lists.first(where: { $0.name.localizedCaseInsensitiveCompare(Localization.string(defaultListNameKey)) == .orderedSame }) {
-            return list
-        }
+    var totalMovieCount: Int {
+        lists.reduce(0) { $0 + $1.movies.count }
+    }
 
-        return createList(named: Localization.string(defaultListNameKey)) ?? FavoriteList(id: UUID(), name: Localization.string(defaultListNameKey), movies: [])
+    func list(withID listID: UUID) -> FavoriteList? {
+        lists.first(where: { $0.id == listID })
     }
 
     private var currentUserIdentifier: String {

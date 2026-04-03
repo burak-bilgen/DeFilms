@@ -23,7 +23,7 @@ enum MovieCardStyle {
         case .grid:
             return 38
         case .rail:
-            return 32
+            return 28
         }
     }
 
@@ -32,7 +32,34 @@ enum MovieCardStyle {
         case .grid:
             return nil
         case .rail:
-            return 150
+            return 146
+        }
+    }
+
+    var contentSpacing: CGFloat {
+        switch self {
+        case .grid:
+            return 12
+        case .rail:
+            return 3
+        }
+    }
+
+    var metadataSpacing: CGFloat {
+        switch self {
+        case .grid:
+            return 2
+        case .rail:
+            return 0
+        }
+    }
+
+    var posterCornerRadius: CGFloat {
+        switch self {
+        case .grid:
+            return 14
+        case .rail:
+            return 18
         }
     }
 }
@@ -46,7 +73,10 @@ struct MovieCardNavigationLink: View {
             MovieCardView(
                 movie: movie,
                 titleFont: cardStyle.titleFont,
-                titleAreaHeight: cardStyle.titleHeight
+                titleAreaHeight: cardStyle.titleHeight,
+                contentSpacing: cardStyle.contentSpacing,
+                metadataSpacing: cardStyle.metadataSpacing,
+                posterCornerRadius: cardStyle.posterCornerRadius
             )
             .frame(width: cardStyle.width)
         }

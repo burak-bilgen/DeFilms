@@ -13,61 +13,84 @@ struct FavoriteListPickerView: View {
     @EnvironmentObject private var favoritesStore: FavoritesStore
     @Environment(\.dismiss) private var dismiss
 
-    @State private var newListName: String = ""
+    @State private var isCreateListPresented = false
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section(Localization.string("favorites.picker.section.lists")) {
-                    if favoritesStore.lists.isEmpty {
-                        Text(Localization.string("favorites.picker.empty"))
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(favoritesStore.lists) { list in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(list.name)
-                                        .font(.headline)
-                                    Text(Localization.string("favorites.count", list.movies.count))
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                if favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) {
-                                    Button(Localization.string("favorites.action.remove")) {
-                                        favoritesStore.remove(movieID: movie.id, from: list.id)
-                                    }
-                                    .buttonStyle(.bordered)
-                                } else {
-                                    Button(Localization.string("favorites.action.add")) {
-                                        favoritesStore.add(movie: movie, to: list.id)
-                                    }
-                                    .buttonStyle(.borderedProminent)
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    }
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(Localization.string("favorites.picker.title"))
+                        .font(.headline.weight(.bold))
+
+                    Text(Localization.string("favorites.picker.subtitle"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
-                Section(Localization.string("favorites.picker.section.newList")) {
-                    HStack {
-                        TextField(Localization.string("favorites.picker.placeholder"), text: $newListName)
-                        Button(Localization.string("favorites.action.create")) {
-                            if let list = favoritesStore.createList(named: newListName) {
-                                favoritesStore.add(movie: movie, to: list.id)
-                                newListName = ""
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                    }
+                Spacer()
+
+                Button(Localization.string("common.done")) {
+                    dismiss()
                 }
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.plain)
             }
-            .navigationTitle(Localization.string("favorites.picker.title"))
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(Localization.string("common.close")) { dismiss() }
+
+            ForEach(favoritesStore.lists) { list in
+                Button {
+                    if favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) {
+                        favoritesStore.remove(movieID: movie.id, from: list.id)
+                    } else {
+                        favoritesStore.add(movie: movie, to: list.id)
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(list.name)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+
+                            Text(Localization.string("favorites.count", list.movies.count))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) ? "checkmark.circle.fill" : "plus.circle")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(
+                                favoritesStore.isMovieInList(movieID: movie.id, listID: list.id)
+                                    ? Color.accentColor
+                                    : .secondary
+                            )
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
+                .buttonStyle(.plain)
+            }
+
+            Button {
+                isCreateListPresented = true
+            } label: {
+                Label(Localization.string("favorites.picker.newList"), systemImage: "plus")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .background(Color.primary.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .frame(width: 300)
+        .background(Color(.systemBackground))
+        .sheet(isPresented: $isCreateListPresented) {
+            NavigationStack {
+                NewFavoriteListView(movie: movie)
             }
         }
     }

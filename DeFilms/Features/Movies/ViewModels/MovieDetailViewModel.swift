@@ -11,8 +11,12 @@ import Foundation
 @MainActor
 final class MovieDetailViewModel: ObservableObject {
     @Published private(set) var detail: MovieDetail?
+    @Published private(set) var trailer: MovieVideo?
+    @Published private(set) var gallery: [MovieImageAsset] = []
+    @Published private(set) var cast: [MovieCastMember] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
+    @Published var isTrailerPresented = false
 
     let movie: Movie
 
@@ -59,6 +63,49 @@ final class MovieDetailViewModel: ObservableObject {
         detail?.genres.map(\.name) ?? []
     }
 
+    var heroSubtitle: String? {
+        runtimeText.map { Localization.string("movies.detail.runtimeHero", $0) }
+    }
+
+    var heroFacts: [String] {
+        [releaseYear, runtimeText]
+            .compactMap { value in
+                guard let value, !value.isEmpty, value != "--" else { return nil }
+                return value
+            }
+    }
+
+    var galleryURLs: [URL] {
+        let galleryURLs = gallery.compactMap(\.imageURL)
+
+        if !galleryURLs.isEmpty {
+            return galleryURLs
+        }
+
+        return [movie.backdropURL, detail?.backdropURL, movie.posterURL, detail?.posterURL]
+            .compactMap { $0 }
+            .uniqued()
+    }
+
+    var trailerURL: URL? {
+        trailer?.watchURL
+    }
+
+    var hasTrailer: Bool {
+        trailerURL != nil
+    }
+
+    var trailerButtonTitle: String {
+        hasTrailer
+            ? Localization.string("movies.detail.trailer.watch")
+            : Localization.string("movies.detail.trailer.unavailable")
+    }
+
+    var castLine: String? {
+        guard !cast.isEmpty else { return nil }
+        return cast.prefix(6).map(\.name).joined(separator: ", ")
+    }
+
     func loadIfNeeded() async {
         guard !hasLoaded else { return }
         hasLoaded = true
@@ -73,13 +120,20 @@ final class MovieDetailViewModel: ObservableObject {
     func load() async {
         isLoading = true
         errorMessage = nil
+        trailer = nil
+        gallery = []
+        cast = []
 
         do {
             AppLogger.log("Loading detail for movie \(movie.id)", category: .movie)
-            let response: MovieDetail = try await networkService.request(
+            async let imagesTask: Void = loadImages()
+            async let castTask: Void = loadCast()
+            async let trailerTask: Void = loadTrailer()
+
+            detail = try await networkService.request(
                 endpoint: TMDBEndpoint.movieDetails(movieID: movie.id)
             )
-            detail = response
+            _ = await (imagesTask, castTask, trailerTask)
             AppLogger.log("Loaded detail for movie \(movie.id)", category: .movie, level: .success)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.detail.error")
@@ -89,5 +143,71 @@ final class MovieDetailViewModel: ObservableObject {
         }
 
         isLoading = false
+    }
+
+    func presentTrailer() {
+        guard hasTrailer else {
+            ToastCenter.shared.showError(Localization.string("movies.detail.trailer.missing"))
+            return
+        }
+
+        isTrailerPresented = true
+    }
+
+    private func loadImages() async {
+        do {
+            let imagesResponse: MovieImageResponse = try await networkService.request(
+                endpoint: TMDBEndpoint.movieImages(movieID: movie.id)
+            )
+            gallery = Array(imagesResponse.backdrops.prefix(6))
+        } catch {
+            AppLogger.log("Image load failed for movie \(movie.id)", category: .movie, level: .error)
+        }
+    }
+
+    private func loadCast() async {
+        do {
+            let creditsResponse: MovieCreditsResponse = try await networkService.request(
+                endpoint: TMDBEndpoint.movieCredits(movieID: movie.id)
+            )
+            cast = Array(creditsResponse.cast.prefix(6))
+        } catch {
+            AppLogger.log("Credits load failed for movie \(movie.id)", category: .movie, level: .error)
+        }
+    }
+
+    private func loadTrailer() async {
+        do {
+            let localizedVideos: MovieVideoResponse = try await networkService.request(
+                endpoint: TMDBEndpoint.movieVideos(movieID: movie.id, languageCode: nil)
+            )
+            trailer = selectPreferredTrailer(from: localizedVideos.results)
+
+            if trailer == nil, AppPreferences.persistedLanguage != .english {
+                let fallbackVideos: MovieVideoResponse = try await networkService.request(
+                    endpoint: TMDBEndpoint.movieVideos(movieID: movie.id, languageCode: AppLanguage.english.tmdbLanguageCode)
+                )
+                trailer = selectPreferredTrailer(from: fallbackVideos.results)
+            }
+        } catch {
+            AppLogger.log("Trailer load failed for movie \(movie.id)", category: .movie, level: .error)
+        }
+    }
+
+    private func selectPreferredTrailer(from videos: [MovieVideo]) -> MovieVideo? {
+        let youtubeVideos = videos.filter { $0.watchURL != nil }
+
+        return youtubeVideos.first(where: { $0.type == "Trailer" && $0.official }) ??
+            youtubeVideos.first(where: { $0.type == "Trailer" }) ??
+            youtubeVideos.first(where: { $0.official }) ??
+            youtubeVideos.first
+    }
+}
+
+private extension Array where Element: Hashable {
+    func uniqued() -> [Element] {
+        var seen = Set<Element>()
+
+        return filter { seen.insert($0).inserted }
     }
 }
