@@ -7,12 +7,18 @@ import SwiftUI
 
 struct NewFavoriteListView: View {
     let movie: Movie?
+    let onListCreated: ((FavoriteList) -> Void)?
 
     @EnvironmentObject private var favoritesStore: FavoritesStore
     @Environment(\.dismiss) private var dismiss
 
     @FocusState private var isTextFieldFocused: Bool
     @State private var listName: String = ""
+
+    init(movie: Movie?, onListCreated: ((FavoriteList) -> Void)? = nil) {
+        self.movie = movie
+        self.onListCreated = onListCreated
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -77,6 +83,7 @@ struct NewFavoriteListView: View {
         if let movie {
             favoritesStore.add(movie: movie, to: list.id)
         }
+        onListCreated?(list)
         dismiss()
     }
 }

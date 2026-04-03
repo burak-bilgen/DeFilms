@@ -75,6 +75,21 @@ struct FavoritesViewModelTests {
         viewModel.deleteList(listID: created!.id)
         #expect(viewModel.lists.isEmpty)
     }
+
+    @Test
+    func storeAdoptsLegacyGuestListsIntoSignedInAccountScope() throws {
+        let repository = MockFavoritesRepository()
+        let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
+        let store = FavoritesStore(repository: repository, sessionManager: sessionManager)
+
+        try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
+
+        #expect(repository.lastAdoptedUserIdentifier == sessionManager.currentUserIdentifier)
+        #expect(repository.lastLegacyUserIdentifiers.contains("guest"))
+        #expect(repository.lastLegacyUserIdentifiers.contains(sessionManager.guestUserIdentifier))
+        #expect(repository.lastLegacyUserIdentifiers.contains("user@example.com"))
+        _ = store
+    }
 }
 
 @MainActor
@@ -138,9 +153,16 @@ private final class MockRecentSearchRepository: RecentSearchRepositoryProtocol {
 
 private final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     var lists: [FavoriteList] = []
+    private(set) var lastAdoptedUserIdentifier: String?
+    private(set) var lastLegacyUserIdentifiers: [String] = []
 
     func fetchLists(for userIdentifier: String) throws -> [FavoriteList] {
         lists
+    }
+
+    func adoptListsIfNeeded(for userIdentifier: String, from legacyUserIdentifiers: [String]) throws {
+        lastAdoptedUserIdentifier = userIdentifier
+        lastLegacyUserIdentifiers = legacyUserIdentifiers
     }
 
     func createList(named name: String, userIdentifier: String) throws -> FavoriteList {
@@ -186,7 +208,15 @@ private final class MockKeychainService: KeychainServicing {
 private final class MockAuthSessionManager: AuthSessionManaging {
     var session: AuthSession?
     var isSignedIn: Bool { session != nil }
-    var currentUserIdentifier: String { session?.email ?? "guest" }
+    var currentUserIdentifier: String { session?.userIdentifier ?? guestUserIdentifier }
+    var guestUserIdentifier: String = "guest-device-id"
+    var legacyUserIdentifiers: [String] {
+        var identifiers = ["guest", guestUserIdentifier]
+        if let session {
+            identifiers.append(session.email.lowercased())
+        }
+        return identifiers.filter { $0 != currentUserIdentifier }
+    }
 
     var signUpError: Error?
     var signInError: Error?
@@ -194,7 +224,7 @@ private final class MockAuthSessionManager: AuthSessionManaging {
     private(set) var didSignOut = false
 
     init(
-        session: AuthSession? = AuthSession(email: "user@example.com", token: "token"),
+        session: AuthSession? = AuthSession(email: "user@example.com", token: "token", userIdentifier: "user-id"),
         signUpError: Error? = nil,
         signInError: Error? = nil,
         changePasswordError: Error? = nil
@@ -211,7 +241,7 @@ private final class MockAuthSessionManager: AuthSessionManaging {
 
     func signIn(email: String, password: String) throws {
         if let signInError { throw signInError }
-        session = AuthSession(email: email, token: "token")
+        session = AuthSession(email: email, token: "token", userIdentifier: "user-id")
     }
 
     func changePassword(currentPassword: String, newPassword: String, confirmPassword: String) throws {

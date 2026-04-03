@@ -26,7 +26,7 @@ struct MoviesView: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 6) {
             headerBar
                 .padding(.horizontal)
 
@@ -50,7 +50,7 @@ struct MoviesView: View {
             }
             .scrollDismissesKeyboard(.interactively)
         }
-        .padding(.top, 8)
+        .padding(.top, 0)
         .background(Color(.systemGroupedBackground))
         .contentShape(Rectangle())
         .onTapGesture {
@@ -82,8 +82,9 @@ struct MoviesView: View {
             Image("AppLogo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 70)
+                .frame(height: 84)
                 .padding(.leading, -4)
+                .padding(.top, -6)
                 .accessibilityLabel(Localization.string("app.logo"))
 
             Spacer()

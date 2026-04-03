@@ -11,9 +11,11 @@ final class DeFilmsTests: XCTestCase {
 
         XCTAssertTrue(sessionManager.isSignedIn)
         XCTAssertEqual(sessionManager.session?.email, "user@example.com")
+        XCTAssertNotEqual(sessionManager.currentUserIdentifier, "user@example.com")
 
         let restoredSessionManager = AuthSessionManager(keychainService: keychain)
         XCTAssertEqual(restoredSessionManager.session?.email, "user@example.com")
+        XCTAssertEqual(restoredSessionManager.currentUserIdentifier, sessionManager.currentUserIdentifier)
 
         restoredSessionManager.signOut()
         XCTAssertFalse(restoredSessionManager.isSignedIn)
@@ -47,9 +49,11 @@ private final class InMemoryKeychainService: KeychainServicing {
 }
 
 private final class MockBoundAuthSessionManager: AuthSessionManaging {
-    var session: AuthSession? = AuthSession(email: "bound@example.com", token: "token")
+    var session: AuthSession? = AuthSession(email: "bound@example.com", token: "token", userIdentifier: "bound-user-id")
     var isSignedIn: Bool { session != nil }
-    var currentUserIdentifier: String { session?.email ?? "guest" }
+    var currentUserIdentifier: String { session?.userIdentifier ?? guestUserIdentifier }
+    let guestUserIdentifier: String = "guest-device-id"
+    var legacyUserIdentifiers: [String] { ["guest", guestUserIdentifier, "bound@example.com"] }
     private(set) var didSignOut = false
 
     func signUp(email: String, password: String, confirmPassword: String) throws {}

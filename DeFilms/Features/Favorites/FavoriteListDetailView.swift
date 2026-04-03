@@ -19,6 +19,7 @@ struct FavoriteListDetailView: View {
     @State private var isDeletePresented = false
     @State private var moviePendingRemoval: FavoriteMovie?
     @State private var moviePendingMove: FavoriteMovie?
+    @State private var isCreateListForMovePresented = false
 
     var body: some View {
         Group {
@@ -133,11 +134,17 @@ struct FavoriteListDetailView: View {
             ),
             titleVisibility: .visible
         ) {
-            ForEach(viewModel.destinationLists) { destination in
-                Button(destination.name) {
-                    if let moviePendingMove {
-                        viewModel.move(movieID: moviePendingMove.id, to: destination.id)
-                        self.moviePendingMove = nil
+            if viewModel.destinationLists.isEmpty {
+                Button(Localization.string("favorites.create.title")) {
+                    isCreateListForMovePresented = true
+                }
+            } else {
+                ForEach(viewModel.destinationLists) { destination in
+                    Button(destination.name) {
+                        if let moviePendingMove {
+                            viewModel.move(movieID: moviePendingMove.id, to: destination.id)
+                            self.moviePendingMove = nil
+                        }
                     }
                 }
             }
@@ -145,7 +152,22 @@ struct FavoriteListDetailView: View {
                 moviePendingMove = nil
             }
         } message: {
-            Text(Localization.string("favorites.move.message", moviePendingMove?.title ?? ""))
+            Text(
+                viewModel.destinationLists.isEmpty
+                    ? Localization.string("favorites.create.subtitle.movie")
+                    : Localization.string("favorites.move.message", moviePendingMove?.title ?? "")
+            )
+        }
+        .sheet(isPresented: $isCreateListForMovePresented, onDismiss: {
+            moviePendingMove = nil
+        }) {
+            if let moviePendingMove {
+                NavigationStack {
+                    NewFavoriteListView(movie: moviePendingMove.asMovie) { _ in
+                        viewModel.remove(movieID: moviePendingMove.id)
+                    }
+                }
+            }
         }
     }
 }

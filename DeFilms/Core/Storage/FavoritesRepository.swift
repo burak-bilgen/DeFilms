@@ -10,6 +10,7 @@ import Foundation
 
 protocol FavoritesRepositoryProtocol {
     func fetchLists(for userIdentifier: String) throws -> [FavoriteList]
+    func adoptListsIfNeeded(for userIdentifier: String, from legacyUserIdentifiers: [String]) throws
     func createList(named name: String, userIdentifier: String) throws -> FavoriteList
     func renameList(listID: UUID, name: String, userIdentifier: String) throws
     func deleteList(listID: UUID, userIdentifier: String) throws
@@ -38,6 +39,42 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
 
         AppLogger.log("Fetching favorite lists for \(userIdentifier)", category: .persistence)
         return try persistenceController.viewContext.fetch(request).map(mapList)
+    }
+
+    func adoptListsIfNeeded(for userIdentifier: String, from legacyUserIdentifiers: [String]) throws {
+        let sourceIdentifiers = Array(Set(legacyUserIdentifiers)).filter { $0 != userIdentifier }
+        guard sourceIdentifiers.isEmpty == false else { return }
+
+        let context = persistenceController.viewContext
+        var destinationLists = try fetchListEntities(for: userIdentifier, context: context)
+        var destinationListsByName = Dictionary(
+            uniqueKeysWithValues: destinationLists.map { ($0.name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current), $0) }
+        )
+        var didChange = false
+
+        for sourceIdentifier in sourceIdentifiers {
+            let sourceLists = try fetchListEntities(for: sourceIdentifier, context: context)
+
+            for sourceList in sourceLists {
+                let normalizedName = sourceList.name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+
+                if let destinationList = destinationListsByName[normalizedName] {
+                    mergeMovies(from: sourceList, into: destinationList, context: context)
+                    context.delete(sourceList)
+                } else {
+                    sourceList.userIdentifier = userIdentifier
+                    destinationLists.append(sourceList)
+                    destinationListsByName[normalizedName] = sourceList
+                }
+
+                didChange = true
+            }
+        }
+
+        if didChange {
+            try context.save()
+            AppLogger.log("Adopted favorite lists for \(userIdentifier)", category: .persistence, level: .success)
+        }
     }
 
     func createList(named name: String, userIdentifier: String) throws -> FavoriteList {
@@ -126,17 +163,12 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
             return
         }
 
-        if destinationList.movies.contains(where: { $0.movieID == Int64(movieID) }) == false {
-            let copiedMovie = FavoriteMovieEntity(context: context)
-            copiedMovie.movieID = movieEntity.movieID
-            copiedMovie.title = movieEntity.title
-            copiedMovie.posterPath = movieEntity.posterPath
-            copiedMovie.releaseDate = movieEntity.releaseDate
-            copiedMovie.voteAverage = movieEntity.voteAverage
-            copiedMovie.list = destinationList
+        if destinationList.movies.contains(where: { $0.movieID == Int64(movieID) }) {
+            context.delete(movieEntity)
+        } else {
+            movieEntity.list = destinationList
         }
 
-        context.delete(movieEntity)
         try context.save()
         AppLogger.log("Moved favorite movie \(movieID)", category: .persistence, level: .success)
     }
@@ -146,6 +178,27 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         request.fetchLimit = 1
         request.predicate = NSPredicate(format: "id == %@ AND userIdentifier == %@", listID as CVarArg, userIdentifier)
         return try context.fetch(request).first
+    }
+
+    private func fetchListEntities(for userIdentifier: String, context: NSManagedObjectContext) throws -> [FavoriteListEntity] {
+        let request = FavoriteListEntity.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
+        request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
+        return try context.fetch(request)
+    }
+
+    private func mergeMovies(from sourceList: FavoriteListEntity, into destinationList: FavoriteListEntity, context: NSManagedObjectContext) {
+        let existingMovieIDs = Set(destinationList.movies.map(\.movieID))
+        let sourceMovies = Array(sourceList.movies)
+
+        for movie in sourceMovies {
+            guard existingMovieIDs.contains(movie.movieID) == false else { continue }
+            movie.list = destinationList
+        }
+
+        for duplicateMovie in sourceMovies where existingMovieIDs.contains(duplicateMovie.movieID) {
+            context.delete(duplicateMovie)
+        }
     }
 
     private func migrateLegacyFavoritesIfNeeded() {

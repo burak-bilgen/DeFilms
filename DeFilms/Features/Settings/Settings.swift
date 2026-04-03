@@ -51,6 +51,7 @@ struct SettingsView: View {
                     value: Localization.string("theme.\(preferences.selectedTheme.rawValue)")
                 )
             }
+            .accessibilityIdentifier("settings.appearance.row")
         }
     }
 
@@ -65,6 +66,7 @@ struct SettingsView: View {
                     value: Localization.string("language.\(preferences.selectedLanguage.rawValue)")
                 )
             }
+            .accessibilityIdentifier("settings.language.row")
         }
     }
 
@@ -82,24 +84,28 @@ struct SettingsView: View {
                 } label: {
                     SettingsSimpleRow(symbol: "key.fill", title: Localization.string("auth.changePassword"))
                 }
+                .accessibilityIdentifier("settings.account.changePassword")
 
                 Button(role: .destructive) {
                     showLogoutConfirmation = true
                 } label: {
                     SettingsSimpleRow(symbol: "rectangle.portrait.and.arrow.right", title: Localization.string("settings.account.logout"))
                 }
+                .accessibilityIdentifier("settings.account.logout")
             } else {
                 NavigationLink {
                     SignInView()
                 } label: {
                     SettingsSimpleRow(symbol: "person.badge.key", title: Localization.string("auth.signIn"))
                 }
+                .accessibilityIdentifier("settings.account.signIn")
 
                 NavigationLink {
                     SignUpView()
                 } label: {
                     SettingsSimpleRow(symbol: "person.crop.circle.badge.plus", title: Localization.string("auth.signUp"))
                 }
+                .accessibilityIdentifier("settings.account.signUp")
 
                 Text(Localization.string("settings.account.signedOutDescription"))
                     .font(.footnote)

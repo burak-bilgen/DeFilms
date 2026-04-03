@@ -23,6 +23,7 @@ struct MoviesSearchBar: View {
                     .submitLabel(.search)
                     .focused(isFocused)
                     .onSubmit(onSubmit)
+                    .accessibilityIdentifier("movies.search.textField")
 
                 if !text.isEmpty {
                     Button {
@@ -32,12 +33,12 @@ struct MoviesSearchBar: View {
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("movies.search.clearButton")
                 }
             }
             .frame(maxWidth: .infinity)
             .frame(height: 54)
             .padding(.horizontal, 16)
-            .background(Color(.secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             Button(Localization.string("movies.search.action")) {
@@ -48,6 +49,7 @@ struct MoviesSearchBar: View {
             .frame(width: 76, height: 54)
             .background(Color.primary)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .accessibilityIdentifier("movies.search.submitButton")
         }
         .padding(10)
         .background(

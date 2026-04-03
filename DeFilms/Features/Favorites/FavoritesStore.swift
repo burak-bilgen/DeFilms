@@ -160,6 +160,10 @@ final class FavoritesStore: ObservableObject {
     }
 
     private func reloadLists() {
+        try? repository.adoptListsIfNeeded(
+            for: currentUserIdentifier,
+            from: sessionManager.legacyUserIdentifiers
+        )
         lists = (try? repository.fetchLists(for: currentUserIdentifier)) ?? []
         AppLogger.log("Favorites reloaded for \(currentUserIdentifier)", category: .favorites)
     }
