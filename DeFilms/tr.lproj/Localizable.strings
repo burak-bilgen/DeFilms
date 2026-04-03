@@ -22,6 +22,7 @@
 
 "language.en" = "İngilizce";
 "language.tr" = "Türkçe";
+"language.ar" = "Arapça";
 
 "settings.title" = "Ayarlar";
 "settings.section.appearance" = "Görünüm";
@@ -136,6 +137,7 @@
 "movies.sort.reset" = "Sıralamayı Sıfırla";
 "movies.sort.titleAsc" = "Alfabetik A-Z";
 "movies.sort.titleDesc" = "Alfabetik Z-A";
+"movies.sort.dateAsc" = "Tarih: Eskiden Yeniye";
 "movies.sort.dateDesc" = "Tarih: Yeniden Eskiye";
 "movies.sort.ratingDesc" = "Puana Göre";
 "movies.action.searchAgain" = "Tekrar Ara";

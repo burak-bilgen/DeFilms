@@ -29,6 +29,8 @@ final class MovieSearchViewModel: ObservableObject {
     @Published var minRating: Double = 0
     @Published var selectedGenreID: Int?
     @Published var sortOption: MovieSortOption = .titleAsc
+    @Published private(set) var isSearchActive = false
+    @Published private(set) var isLoadingNextSearchPage = false
     @Published private(set) var popularMovies: [Movie] = []
     @Published private(set) var upcomingMovies: [Movie] = []
     @Published private(set) var nowPlayingMovies: [Movie] = []
@@ -46,6 +48,10 @@ final class MovieSearchViewModel: ObservableObject {
     private let sessionManager: AuthSessionManager
     private let historyLimit = 10
     private var hasLoadedBrowseContent = false
+    private var lastLoadedLanguage: AppLanguage?
+    private var lastExecutedSearchQuery: String?
+    private var currentSearchPage = 0
+    private var totalSearchPages = 1
     private var cancellables: Set<AnyCancellable> = []
 
     init(
@@ -60,6 +66,17 @@ final class MovieSearchViewModel: ObservableObject {
         sessionManager.$session
             .sink { [weak self] _ in
                 self?.loadHistory()
+            }
+            .store(in: &cancellables)
+
+        $query
+            .removeDuplicates()
+            .debounce(for: .milliseconds(450), scheduler: RunLoop.main)
+            .sink { [weak self] newValue in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.handleDebouncedQueryChange(newValue)
+                }
             }
             .store(in: &cancellables)
 
@@ -79,7 +96,7 @@ final class MovieSearchViewModel: ObservableObject {
     }
 
     var shouldShowBrowseContent: Bool {
-        query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !isSearchActive
     }
 
     var filteredSearchResults: [Movie] {
@@ -103,6 +120,8 @@ final class MovieSearchViewModel: ObservableObject {
             results.sort { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
         case .titleDesc:
             results.sort { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedDescending }
+        case .dateAsc:
+            results.sort { ($0.releaseDateValue ?? .distantFuture) < ($1.releaseDateValue ?? .distantFuture) }
         case .dateDesc:
             results.sort { ($0.releaseDateValue ?? .distantPast) > ($1.releaseDateValue ?? .distantPast) }
         case .ratingDesc:
@@ -112,8 +131,12 @@ final class MovieSearchViewModel: ObservableObject {
         return results
     }
 
-    func loadBrowseContentIfNeeded() async {
-        guard !hasLoadedBrowseContent else { return }
+    var canLoadMoreSearchResults: Bool {
+        isSearchActive && currentSearchPage < totalSearchPages
+    }
+
+    func loadBrowseContentIfNeeded(for language: AppLanguage) async {
+        guard !hasLoadedBrowseContent || lastLoadedLanguage != language else { return }
         await loadBrowseContent()
     }
 
@@ -122,18 +145,24 @@ final class MovieSearchViewModel: ObservableObject {
         await loadBrowseContent()
     }
 
-    func search() async {
+    func search(force: Bool = false) async {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedQuery.isEmpty else {
             let message = Localization.string("movies.search.validation.empty")
             errorMessage = message
             searchResults = []
+            currentSearchPage = 0
+            totalSearchPages = 1
+            isSearchActive = false
             screenState = .browse
             ToastCenter.shared.showError(message)
             return
         }
 
+        guard force || trimmedQuery != lastExecutedSearchQuery else { return }
+
         query = trimmedQuery
+        isSearchActive = true
         screenState = .searching
 
         do {
@@ -142,6 +171,10 @@ final class MovieSearchViewModel: ObservableObject {
                 endpoint: TMDBEndpoint.searchMovie(query: trimmedQuery, page: 1)
             )
             searchResults = response.results
+            currentSearchPage = response.page
+            totalSearchPages = max(response.totalPages, 1)
+            lastExecutedSearchQuery = trimmedQuery
+            lastLoadedLanguage = AppPreferences.persistedLanguage
             try recentSearchRepository.addSearch(trimmedQuery, for: sessionManager.currentUserIdentifier, limit: historyLimit)
             loadHistory()
             screenState = filteredSearchResults.isEmpty ? .emptyResults : .loadedResults
@@ -150,6 +183,8 @@ final class MovieSearchViewModel: ObservableObject {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.search.error.generic")
             errorMessage = message
             searchResults = []
+            currentSearchPage = 0
+            totalSearchPages = 1
             screenState = .error(message: message)
             ToastCenter.shared.showError(message)
             AppLogger.log("Search failed for '\(trimmedQuery)'", category: .search, level: .error)
@@ -159,6 +194,10 @@ final class MovieSearchViewModel: ObservableObject {
     func clearSearch() {
         query = ""
         searchResults = []
+        lastExecutedSearchQuery = nil
+        currentSearchPage = 0
+        totalSearchPages = 1
+        isSearchActive = false
         resetFiltersAndSort()
         screenState = .browse
     }
@@ -175,13 +214,19 @@ final class MovieSearchViewModel: ObservableObject {
         }
     }
 
-    func reloadForLanguageChange() async {
+    func reloadForLanguageChange(to language: AppLanguage) async {
+        guard lastLoadedLanguage != language else { return }
         hasLoadedBrowseContent = false
+        genres = []
+        errorMessage = nil
+        lastExecutedSearchQuery = nil
+        currentSearchPage = 0
+        totalSearchPages = 1
 
         if shouldShowBrowseContent {
             await loadBrowseContent()
         } else {
-            await search()
+            await search(force: true)
         }
     }
 
@@ -219,6 +264,7 @@ final class MovieSearchViewModel: ObservableObject {
             nowPlayingMovies = try await fetchMovies(for: TMDBEndpoint.nowPlayingMovies(page: 1))
             topRatedMovies = try await fetchMovies(for: TMDBEndpoint.topRatedMovies(page: 1))
             hasLoadedBrowseContent = true
+            lastLoadedLanguage = AppPreferences.persistedLanguage
             screenState = .browse
             AppLogger.log("Browse loading completed", category: .movie, level: .success)
         } catch {
@@ -234,6 +280,46 @@ final class MovieSearchViewModel: ObservableObject {
         searchHistory = (try? recentSearchRepository.fetchRecentSearches(for: sessionManager.currentUserIdentifier, limit: historyLimit)) ?? []
     }
 
+    private func handleDebouncedQueryChange(_ value: String) async {
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedValue.isEmpty else { return }
+        await search()
+    }
+
+    func loadNextSearchPageIfNeeded(currentMovie: Movie, displayedMovies: [Movie]) async {
+        guard canLoadMoreSearchResults, !isLoadingNextSearchPage else { return }
+        guard let currentIndex = displayedMovies.firstIndex(where: { $0.id == currentMovie.id }) else { return }
+
+        let thresholdIndex = max(displayedMovies.count - 6, 0)
+        guard currentIndex >= thresholdIndex else { return }
+
+        await loadNextSearchPage()
+    }
+
+    private func loadNextSearchPage() async {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedQuery.isEmpty, currentSearchPage < totalSearchPages else { return }
+
+        isLoadingNextSearchPage = true
+        defer { isLoadingNextSearchPage = false }
+
+        do {
+            let nextPage = currentSearchPage + 1
+            let response: MovieResponse = try await networkService.request(
+                endpoint: TMDBEndpoint.searchMovie(query: trimmedQuery, page: nextPage)
+            )
+
+            currentSearchPage = response.page
+            totalSearchPages = max(response.totalPages, 1)
+            searchResults.append(contentsOf: response.results.filter { candidate in
+                !searchResults.contains(where: { $0.id == candidate.id })
+            })
+        } catch {
+            AppLogger.log("Pagination failed for '\(trimmedQuery)'", category: .search, level: .error)
+        }
+    }
+
     private func fetchMovies(for endpoint: TMDBEndpoint) async throws -> [Movie] {
         let response: MovieResponse = try await networkService.request(endpoint: endpoint)
         return response.results
@@ -243,6 +329,7 @@ final class MovieSearchViewModel: ObservableObject {
 enum MovieSortOption: String, CaseIterable, Identifiable {
     case titleAsc
     case titleDesc
+    case dateAsc
     case dateDesc
     case ratingDesc
 
@@ -254,6 +341,8 @@ enum MovieSortOption: String, CaseIterable, Identifiable {
             return Localization.string("movies.sort.titleAsc")
         case .titleDesc:
             return Localization.string("movies.sort.titleDesc")
+        case .dateAsc:
+            return Localization.string("movies.sort.dateAsc")
         case .dateDesc:
             return Localization.string("movies.sort.dateDesc")
         case .ratingDesc:

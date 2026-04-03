@@ -12,8 +12,6 @@ struct MovieDetailHeroHeaderView: View {
     let scrollOffset: CGFloat
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
-
     var body: some View {
         let collapseProgress = min(max(-scrollOffset / (heroHeight * 0.55), 0), 1)
         let contentOpacity = Double(1 - (collapseProgress * 0.22))
@@ -37,14 +35,20 @@ struct MovieDetailHeroHeaderView: View {
     }
 
     private var topBar: some View {
-        HStack {
+        HStack(alignment: .top) {
             topBarButton(systemImage: "chevron.left") {
                 dismiss()
             }
 
             Spacer()
 
-            FavoriteMovieButton(movie: movie, style: .hero)
+            VStack(spacing: 10) {
+                FavoriteMovieButton(movie: movie, style: .hero)
+
+                if let imdbURL = viewModel.imdbURL {
+                    imdbShareButton(url: imdbURL)
+                }
+            }
         }
     }
 
@@ -106,15 +110,9 @@ struct MovieDetailHeroHeaderView: View {
         .buttonStyle(.plain)
     }
 
-    private var imdbButton: some View {
-        Button {
-            guard let imdbURL = viewModel.imdbURL else { return }
-            openURL(imdbURL)
-        } label: {
-            detailActionButtonLabel(
-                title: Localization.string("movies.detail.imdb"),
-                systemImage: nil
-            )
+    private func imdbShareButton(url: URL) -> some View {
+        ShareLink(item: url) {
+            topBarIconButtonLabel(systemImage: "square.and.arrow.up")
         }
         .buttonStyle(.plain)
     }
@@ -144,17 +142,21 @@ struct MovieDetailHeroHeaderView: View {
 
     private func topBarButton(systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.white)
-                .frame(width: 42, height: 42)
-                .background(
-                    Circle()
-                        .fill(Color.black.opacity(0.22))
-                )
-                .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
+            topBarIconButtonLabel(systemImage: systemImage)
         }
         .buttonStyle(.plain)
+    }
+
+    private func topBarIconButtonLabel(systemImage: String) -> some View {
+        Image(systemName: systemImage)
+            .font(.headline.weight(.semibold))
+            .foregroundStyle(.white)
+            .frame(width: 42, height: 42)
+            .background(
+                Circle()
+                    .fill(Color.black.opacity(0.22))
+            )
+            .clipShape(Circle())
+            .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
     }
 }

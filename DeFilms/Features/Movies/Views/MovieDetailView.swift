@@ -45,6 +45,20 @@ struct MovieDetailView: View {
 
                             MovieDetailContentCardView(viewModel: viewModel)
                                 .padding(.horizontal, 18)
+
+                            if !viewModel.directors.isEmpty {
+                                MoviePeopleCarouselSection(
+                                    title: Localization.string("movies.detail.director"),
+                                    members: viewModel.directors
+                                )
+                            }
+
+                            if !viewModel.cast.isEmpty {
+                                MoviePeopleCarouselSection(
+                                    title: Localization.string("movies.detail.cast"),
+                                    members: viewModel.cast
+                                )
+                            }
                         }
                         .padding(.bottom, 30)
                     }
@@ -67,6 +81,7 @@ struct MovieDetailView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .statusBar(hidden: true)
         .task {
             await viewModel.loadIfNeeded()
         }

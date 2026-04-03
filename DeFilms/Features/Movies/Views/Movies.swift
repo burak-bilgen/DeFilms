@@ -58,16 +58,16 @@ struct MoviesView: View {
             isSearchFocused = false
         }
         .task {
-            await viewModel.loadBrowseContentIfNeeded()
+            await viewModel.loadBrowseContentIfNeeded(for: preferences.selectedLanguage)
+        }
+        .onChange(of: preferences.selectedLanguage) { newLanguage in
+            Task {
+                await viewModel.reloadForLanguageChange(to: newLanguage)
+            }
         }
         .onChange(of: viewModel.query) { newValue in
             if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 viewModel.clearSearch()
-            }
-        }
-        .onChange(of: preferences.selectedLanguage.rawValue) { _ in
-            Task {
-                await viewModel.reloadForLanguageChange()
             }
         }
         .sheet(isPresented: $isFilterSheetPresented) {
@@ -191,38 +191,54 @@ struct MoviesView: View {
 
     @ViewBuilder
     private var searchContent: some View {
+        let displayedMovies = viewModel.filteredSearchResults
+
         switch viewModel.screenState {
         case .searching:
             MovieGridSkeletonView(columns: searchColumns)
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
         case .loadedResults:
-            if viewModel.filteredSearchResults.isEmpty {
-                MoviesMessageView(
+            if displayedMovies.isEmpty {
+                MovieSearchEmptyStateView(
                     title: Localization.string("movies.message.filteredEmpty.title"),
                     message: Localization.string("movies.message.filteredEmpty.body"),
                     buttonTitle: Localization.string("movies.filter.reset"),
                     action: viewModel.resetFiltersAndSort
                 )
                 .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, minHeight: 420, alignment: .center)
             } else {
                 LazyVGrid(columns: searchColumns, spacing: 24) {
-                    ForEach(viewModel.filteredSearchResults) { movie in
-                        MovieCardNavigationLink(movie: movie, cardStyle: .grid) {
+                    ForEach(displayedMovies) { movie in
+                        MovieCardNavigationLink(movie: movie, cardStyle: .search) {
                             coordinator.push(.detail(movie))
                         }
+                        .onAppear {
+                            Task {
+                                await viewModel.loadNextSearchPageIfNeeded(currentMovie: movie, displayedMovies: displayedMovies)
+                            }
+                        }
+                    }
+
+                    if viewModel.isLoadingNextSearchPage {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .gridCellColumns(searchColumns.count)
                     }
                 }
                 .padding(.horizontal, 16)
             }
         case .emptyResults:
-            MoviesMessageView(
+            MovieSearchEmptyStateView(
                 title: Localization.string("movies.message.noResults.title"),
                 message: Localization.string("movies.message.noResults.body", viewModel.query),
                 buttonTitle: nil,
                 action: nil
             )
             .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, minHeight: 420, alignment: .center)
         case let .error(message):
             MoviesMessageView(
                 title: Localization.string("movies.message.searchFailed.title"),
@@ -240,7 +256,7 @@ struct MoviesView: View {
         Task {
             isSearchFocused = false
             AppLogger.log("Search submitted from UI", category: .search)
-            await viewModel.search()
+            await viewModel.search(force: true)
         }
     }
 
@@ -269,3 +285,19 @@ struct MoviesView: View {
         }
     }
 }
+private struct MovieSearchEmptyStateView: View {
+    let title: String
+    let message: String
+    let buttonTitle: String?
+    let action: (() -> Void)?
+
+    var body: some View {
+        MoviesMessageView(
+            title: title,
+            message: message,
+            buttonTitle: buttonTitle,
+            action: action
+        )
+    }
+}
+

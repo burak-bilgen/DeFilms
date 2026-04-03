@@ -30,6 +30,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
 enum AppLanguage: String, CaseIterable, Identifiable {
     case english = "en"
     case turkish = "tr"
+    case arabic = "ar"
 
     var id: String { rawValue }
 
@@ -43,6 +44,17 @@ enum AppLanguage: String, CaseIterable, Identifiable {
             return "en-US"
         case .turkish:
             return "tr-TR"
+        case .arabic:
+            return "ar-SA"
+        }
+    }
+
+    var layoutDirection: LayoutDirection {
+        switch self {
+        case .arabic:
+            return .rightToLeft
+        case .english, .turkish:
+            return .leftToRight
         }
     }
 }
@@ -85,5 +97,13 @@ final class AppPreferences: ObservableObject {
 
     var locale: Locale {
         selectedLanguage.locale
+    }
+
+    var layoutDirection: LayoutDirection {
+        selectedLanguage.layoutDirection
+    }
+
+    var interfaceLayoutID: String {
+        "\(selectedLanguage.rawValue)-\(layoutDirection == .rightToLeft ? "rtl" : "ltr")"
     }
 }

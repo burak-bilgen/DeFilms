@@ -8,7 +8,6 @@ import SwiftUI
 struct MovieDetailContentCardView: View {
     @ObservedObject var viewModel: MovieDetailViewModel
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.openURL) private var openURL
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -27,7 +26,7 @@ struct MovieDetailContentCardView: View {
 
             if !viewModel.genreNames.isEmpty {
                 detailSection(title: Localization.string("movies.detail.genres")) {
-                    WrapChipsView(items: Array(viewModel.genreNames.prefix(5)))
+                    MovieGenreBubbleWrapView(items: Array(viewModel.genreNames.prefix(5)))
                 }
             }
 
@@ -39,43 +38,6 @@ struct MovieDetailContentCardView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if !viewModel.directors.isEmpty {
-                detailSection(title: Localization.string("movies.detail.director")) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .top, spacing: 14) {
-                            ForEach(viewModel.directors) { member in
-                                CastBubbleView(
-                                    name: member.name,
-                                    imageURL: member.imageURL,
-                                    imdbURL: member.imdbURL
-                                ) { url in
-                                    openURL(url)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 2)
-                    }
-                }
-            }
-
-            if !viewModel.cast.isEmpty {
-                detailSection(title: Localization.string("movies.detail.cast")) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(alignment: .top, spacing: 14) {
-                            ForEach(viewModel.cast) { member in
-                                CastBubbleView(
-                                    name: member.name,
-                                    imageURL: member.imageURL,
-                                    imdbURL: member.imdbURL
-                                ) { url in
-                                    openURL(url)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 2)
-                    }
-                }
-            }
         }
         .padding(24)
         .background(cardBackground)
@@ -114,6 +76,134 @@ struct MovieDetailContentCardView: View {
 
     private var sectionTitleColor: Color {
         colorScheme == .dark ? .white.opacity(0.46) : .black.opacity(0.46)
+    }
+}
+
+private struct MovieGenreBubbleWrapView: View {
+    let items: [String]
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            HStack(spacing: 10) {
+                ForEach(items.prefix(3), id: \.self) { item in
+                    chip(item)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(Array(Array(items.prefix(6)).chunkedForGenreBubbles(into: 2).enumerated()), id: \.offset) { entry in
+                    HStack(spacing: 10) {
+                        ForEach(entry.element, id: \.self) { item in
+                            chip(item)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func chip(_ item: String) -> some View {
+        Text(item)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.primary.opacity(0.86))
+            .padding(.horizontal, 14)
+            .frame(height: 34)
+            .background(Color(.secondarySystemBackground))
+            .overlay(
+                Capsule()
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            )
+            .clipShape(Capsule())
+    }
+}
+
+private extension Array {
+    func chunkedForGenreBubbles(into size: Int) -> [[Element]] {
+        guard size > 0 else { return [self] }
+
+        var result: [[Element]] = []
+        var index = startIndex
+
+        while index < endIndex {
+            let end = self.index(index, offsetBy: size, limitedBy: endIndex) ?? endIndex
+            result.append(Array(self[index..<end]))
+            index = end
+        }
+
+        return result
+    }
+}
+
+struct MoviePeopleCarouselSection: View {
+    let title: String
+    let people: [PersonItem]
+
+    @Environment(\.openURL) private var openURL
+
+    @MainActor
+    init(title: String, members: [MovieCrewMember]) {
+        self.title = title
+        self.people = members.map(PersonItem.init)
+    }
+
+    @MainActor
+    init(title: String, members: [MovieCastMember]) {
+        self.title = title
+        self.people = members.map(PersonItem.init)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .tracking(0.8)
+                .foregroundStyle(.primary.opacity(0.78))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(Capsule())
+                .padding(.horizontal, 18)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 14) {
+                    ForEach(people) { person in
+                        CastBubbleView(
+                            name: person.name,
+                            imageURL: person.imageURL,
+                            imdbURL: person.imdbURL
+                        ) { url in
+                            openURL(url)
+                        }
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+extension MoviePeopleCarouselSection {
+    struct PersonItem: Identifiable {
+        let id: Int
+        let name: String
+        let imageURL: URL?
+        let imdbURL: URL?
+
+        init(member: MovieCrewMember) {
+            id = member.id
+            name = member.name
+            imageURL = member.imageURL
+            imdbURL = member.imdbURL
+        }
+
+        init(member: MovieCastMember) {
+            id = member.id
+            name = member.name
+            imageURL = member.imageURL
+            imdbURL = member.imdbURL
+        }
     }
 }
 

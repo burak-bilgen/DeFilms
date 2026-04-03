@@ -51,7 +51,7 @@ struct ToastModifier: ViewModifier {
             .overlay(alignment: .bottom) {
                 if let item {
                     ToastView(item: item)
-                        .padding(.bottom, 16)
+                        .padding(.bottom, 84)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }

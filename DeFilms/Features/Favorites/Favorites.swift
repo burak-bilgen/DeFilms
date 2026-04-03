@@ -58,16 +58,6 @@ struct FavoritesView: View {
             }
         }
         .navigationTitle(Localization.string("favorites.title"))
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    isCreateListPresented = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .accessibilityLabel(Localization.string("favorites.create.title"))
-            }
-        }
         .alert(
             Localization.string("favorites.rename.title"),
             isPresented: Binding(

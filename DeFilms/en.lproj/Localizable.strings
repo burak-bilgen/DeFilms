@@ -22,6 +22,7 @@
 
 "language.en" = "English";
 "language.tr" = "Turkish";
+"language.ar" = "Arabic";
 
 "settings.title" = "Settings";
 "settings.section.appearance" = "Appearance";
@@ -136,6 +137,7 @@
 "movies.sort.reset" = "Reset Sorting";
 "movies.sort.titleAsc" = "Alphabetical A-Z";
 "movies.sort.titleDesc" = "Alphabetical Z-A";
+"movies.sort.dateAsc" = "Date: Old to New";
 "movies.sort.dateDesc" = "Date: New to Old";
 "movies.sort.ratingDesc" = "Rating";
 "movies.action.searchAgain" = "Search Again";

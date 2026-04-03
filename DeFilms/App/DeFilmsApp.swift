@@ -37,6 +37,7 @@ struct DeFilmsApp: App {
             MainTabView()
                 .environment(\.managedObjectContext, persistenceController.viewContext)
                 .environment(\.locale, preferences.locale)
+                .environment(\.layoutDirection, preferences.layoutDirection)
                 .preferredColorScheme(preferences.colorScheme)
                 .environmentObject(preferences)
                 .environmentObject(sessionManager)

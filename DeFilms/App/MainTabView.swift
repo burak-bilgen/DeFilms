@@ -67,7 +67,7 @@ struct MainTabView: View {
                     Label(Localization.string("tab.settings"), systemImage: selection == .settings ? "gearshape.fill" : "gearshape")
                 }
         }
-        .id(preferences.selectedLanguage.rawValue)
+        .id(preferences.interfaceLayoutID)
         .tint(.primary)
     }
 }

@@ -8,12 +8,13 @@ import SwiftUI
 enum MovieCardStyle {
     case grid
     case rail
+    case search
 
     var titleFont: Font {
         switch self {
         case .grid:
             return .subheadline
-        case .rail:
+        case .rail, .search:
             return .footnote
         }
     }
@@ -24,6 +25,8 @@ enum MovieCardStyle {
             return 0
         case .rail:
             return 0
+        case .search:
+            return 0
         }
     }
 
@@ -33,6 +36,8 @@ enum MovieCardStyle {
             return nil
         case .rail:
             return 146
+        case .search:
+            return nil
         }
     }
 
@@ -40,7 +45,7 @@ enum MovieCardStyle {
         switch self {
         case .grid:
             return 12
-        case .rail:
+        case .rail, .search:
             return 3
         }
     }
@@ -53,7 +58,7 @@ enum MovieCardStyle {
         switch self {
         case .grid:
             return 14
-        case .rail:
+        case .rail, .search:
             return 18
         }
     }

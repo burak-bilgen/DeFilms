@@ -25,7 +25,7 @@ struct SettingsView: View {
             }
             .listStyle(.insetGrouped)
             .navigationTitle(Localization.string("settings.title"))
-            .confirmationDialog(Localization.string("settings.account.logout"), isPresented: $showLogoutConfirmation, titleVisibility: .visible) {
+            .alert(Localization.string("settings.account.logout"), isPresented: $showLogoutConfirmation) {
                 Button(Localization.string("settings.account.logout"), role: .destructive) {
                     viewModel.signOut()
                 }
@@ -35,6 +35,8 @@ struct SettingsView: View {
                 Text(Localization.string("settings.account.logout.message"))
             }
         }
+        .id(preferences.interfaceLayoutID)
+        .environment(\.layoutDirection, preferences.layoutDirection)
         .task {
             viewModel.bind(sessionManager: sessionManager)
         }
@@ -195,6 +197,7 @@ private struct LanguageSelectionView: View {
         List {
             languageRow(.english)
             languageRow(.turkish)
+            languageRow(.arabic)
         }
         .navigationTitle(Localization.string("settings.language.appLanguage"))
         .navigationBarTitleDisplayMode(.inline)
