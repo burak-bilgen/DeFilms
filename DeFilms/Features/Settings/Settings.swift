@@ -185,7 +185,7 @@ private struct ThemeSelectionView: View {
                 Spacer()
                 if preferences.selectedTheme == theme {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(.primary)
                 }
             }
         }
@@ -219,7 +219,7 @@ private struct LanguageSelectionView: View {
                 Spacer()
                 if preferences.selectedLanguage == language {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(.primary)
                 }
             }
         }

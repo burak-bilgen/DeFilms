@@ -33,6 +33,8 @@ final class MovieSearchViewModel: ObservableObject {
     @Published private(set) var upcomingMovies: [Movie] = []
     @Published private(set) var nowPlayingMovies: [Movie] = []
     @Published private(set) var topRatedMovies: [Movie] = []
+    @Published private(set) var trendingTodayMovies: [Movie] = []
+    @Published private(set) var trendingThisWeekMovies: [Movie] = []
     @Published private(set) var searchResults: [Movie] = []
     @Published private(set) var genres: [MovieGenre] = []
     @Published private(set) var screenState: MoviesScreenState = .browse
@@ -66,6 +68,8 @@ final class MovieSearchViewModel: ObservableObject {
 
     var browseSections: [MovieBrowseSection] {
         [
+            MovieBrowseSection(id: "trending-today", movies: trendingTodayMovies),
+            MovieBrowseSection(id: "trending-week", movies: trendingThisWeekMovies),
             MovieBrowseSection(id: "popular", movies: popularMovies),
             MovieBrowseSection(id: "upcoming", movies: upcomingMovies),
             MovieBrowseSection(id: "now-playing", movies: nowPlayingMovies),
@@ -208,6 +212,8 @@ final class MovieSearchViewModel: ObservableObject {
 
         do {
             AppLogger.log("Browse loading started", category: .movie)
+            trendingTodayMovies = try await fetchMovies(for: TMDBEndpoint.trendingMovies(window: .day, page: 1))
+            trendingThisWeekMovies = try await fetchMovies(for: TMDBEndpoint.trendingMovies(window: .week, page: 1))
             popularMovies = try await fetchMovies(for: TMDBEndpoint.popularMovies(page: 1))
             upcomingMovies = try await fetchMovies(for: TMDBEndpoint.upcomingMovies(page: 1))
             nowPlayingMovies = try await fetchMovies(for: TMDBEndpoint.nowPlayingMovies(page: 1))

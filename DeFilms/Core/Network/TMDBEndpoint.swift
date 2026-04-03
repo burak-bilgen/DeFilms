@@ -8,15 +8,22 @@
 import Foundation
 
 enum TMDBEndpoint: Endpoint {
+    enum TrendingWindow: String {
+        case day
+        case week
+    }
+
     case searchMovie(query: String, page: Int)
     case popularMovies(page: Int)
     case upcomingMovies(page: Int)
     case nowPlayingMovies(page: Int)
     case topRatedMovies(page: Int)
+    case trendingMovies(window: TrendingWindow, page: Int)
     case movieDetails(movieID: Int)
     case movieVideos(movieID: Int, languageCode: String?)
     case movieImages(movieID: Int)
     case movieCredits(movieID: Int)
+    case personExternalIDs(personID: Int)
     case genreList
 
     var path: String {
@@ -31,6 +38,8 @@ enum TMDBEndpoint: Endpoint {
             return "/movie/now_playing"
         case .topRatedMovies:
             return "/movie/top_rated"
+        case let .trendingMovies(window, _):
+            return "/trending/movie/\(window.rawValue)"
         case let .movieDetails(movieID):
             return "/movie/\(movieID)"
         case let .movieVideos(movieID, _):
@@ -39,6 +48,8 @@ enum TMDBEndpoint: Endpoint {
             return "/movie/\(movieID)/images"
         case let .movieCredits(movieID):
             return "/movie/\(movieID)/credits"
+        case let .personExternalIDs(personID):
+            return "/person/\(personID)/external_ids"
         case .genreList:
             return "/genre/movie/list"
         }
@@ -71,6 +82,10 @@ enum TMDBEndpoint: Endpoint {
             return [
                 URLQueryItem(name: "page", value: String(page))
             ]
+        case let .trendingMovies(_, page):
+            return [
+                URLQueryItem(name: "page", value: String(page))
+            ]
         case .movieDetails:
             return []
         case let .movieVideos(_, languageCode):
@@ -86,6 +101,8 @@ enum TMDBEndpoint: Endpoint {
                 )
             ]
         case .movieCredits:
+            return []
+        case .personExternalIDs:
             return []
         case .genreList:
             return []

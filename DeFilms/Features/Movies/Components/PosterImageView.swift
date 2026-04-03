@@ -14,7 +14,14 @@ struct PosterImageView: View {
     let placeholderSystemImage: String
 
     @State private var image: UIImage?
-    @State private var isLoading = false
+    @State private var isLoading: Bool
+
+    init(url: URL?, cornerRadius: CGFloat, placeholderSystemImage: String) {
+        self.url = url
+        self.cornerRadius = cornerRadius
+        self.placeholderSystemImage = placeholderSystemImage
+        _isLoading = State(initialValue: url != nil)
+    }
 
     var body: some View {
         Group {
@@ -45,27 +52,7 @@ struct PosterImageView: View {
     }
 
     private var loadingPlaceholder: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.gray.opacity(0.14),
-                            Color.gray.opacity(0.22),
-                            Color.gray.opacity(0.14)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .shimmering()
-
-            VStack(spacing: 8) {
-                Image(systemName: placeholderSystemImage)
-                    .font(.title2)
-                    .foregroundStyle(.secondary.opacity(0.75))
-            }
-        }
+        SkeletonBlock(cornerRadius: cornerRadius)
     }
 
     private func loadImage() async {

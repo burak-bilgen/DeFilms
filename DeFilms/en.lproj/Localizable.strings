@@ -112,6 +112,8 @@
 "favorites.move.message" = "Choose a destination list for \"%@\".";
 
 "movies.section.popular" = "Popular";
+"movies.section.trendingToday" = "Trending Today";
+"movies.section.trendingWeek" = "Trending This Week";
 "movies.section.upcoming" = "Upcoming";
 "movies.section.nowPlaying" = "Now Playing";
 "movies.section.topRated" = "Top Rated";
@@ -164,5 +166,6 @@
 "movies.detail.trailer.watch" = "WATCH TRAILER";
 "movies.detail.trailer.unavailable" = "TRAILER UNAVAILABLE";
 "movies.detail.trailer.missing" = "A trailer is not available for this movie.";
+"movies.detail.imdb" = "IMDb";
 "movies.runtime.hoursMinutes" = "%dh %dm";
 "movies.runtime.minutes" = "%dm";

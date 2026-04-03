@@ -38,6 +38,8 @@ struct NewFavoriteListView: View {
 
                 TextField(Localization.string("favorites.picker.placeholder"), text: $listName)
                     .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
                     .padding(.horizontal, 16)
                     .frame(height: 54)
                     .background(Color(.secondarySystemBackground))

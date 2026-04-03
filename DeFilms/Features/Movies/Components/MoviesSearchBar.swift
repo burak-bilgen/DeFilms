@@ -20,6 +20,8 @@ struct MoviesSearchBar: View {
 
                 TextField(Localization.string("movies.search.placeholder"), text: $text)
                     .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
                     .submitLabel(.search)
                     .focused(isFocused)
                     .onSubmit(onSubmit)
@@ -37,7 +39,7 @@ struct MoviesSearchBar: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 54)
+            .frame(height: 44)
             .padding(.horizontal, 16)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
@@ -46,12 +48,12 @@ struct MoviesSearchBar: View {
             }
             .font(.subheadline.weight(.semibold))
             .foregroundStyle(Color(.systemBackground))
-            .frame(width: 76, height: 54)
+            .frame(width: 78, height: 44)
             .background(Color.primary)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .accessibilityIdentifier("movies.search.submitButton")
         }
-        .padding(10)
+        .padding(6)
         .background(
             LinearGradient(
                 colors: [

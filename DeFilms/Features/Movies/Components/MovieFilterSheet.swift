@@ -14,6 +14,8 @@ struct MovieFilterSheet: View {
             Section(Localization.string("movies.filter.title")) {
                 TextField(Localization.string("movies.filter.year"), text: $viewModel.filterYear)
                     .keyboardType(.numberPad)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
                     .onChange(of: viewModel.filterYear) { newValue in
                         viewModel.filterYear = String(newValue.filter(\.isNumber).prefix(4))
                     }

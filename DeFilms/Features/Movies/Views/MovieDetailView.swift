@@ -12,6 +12,7 @@ struct MovieDetailView: View {
 
     @StateObject private var viewModel: MovieDetailViewModel
     @EnvironmentObject private var preferences: AppPreferences
+    @Environment(\.colorScheme) private var colorScheme
     @State private var scrollOffset: CGFloat = 0
 
     init(movie: Movie) {
@@ -52,9 +53,9 @@ struct MovieDetailView: View {
                 .background(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.08, green: 0.09, blue: 0.12),
-                            Color(red: 0.95, green: 0.95, blue: 0.96),
-                            Color.white
+                            topBackgroundColor,
+                            middleBackgroundColor,
+                            bottomBackgroundColor
                         ],
                         startPoint: .top,
                         endPoint: .bottom
@@ -91,6 +92,22 @@ struct MovieDetailView: View {
                 )
         }
         .frame(height: 0)
+    }
+
+    private var topBackgroundColor: Color {
+        colorScheme == .dark
+            ? Color(red: 0.05, green: 0.06, blue: 0.08)
+            : Color(red: 0.08, green: 0.09, blue: 0.12)
+    }
+
+    private var middleBackgroundColor: Color {
+        colorScheme == .dark
+            ? Color(red: 0.11, green: 0.12, blue: 0.15)
+            : Color(red: 0.95, green: 0.95, blue: 0.96)
+    }
+
+    private var bottomBackgroundColor: Color {
+        colorScheme == .dark ? Color.black : Color(.systemBackground)
     }
 }
 

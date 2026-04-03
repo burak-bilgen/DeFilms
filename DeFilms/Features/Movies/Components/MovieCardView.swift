@@ -9,11 +9,10 @@ import SwiftUI
 
 struct MovieCardView: View {
     let movie: Movie
-    var posterAspectRatio: CGFloat = 2.0 / 3.0
+    var posterAspectRatio: CGFloat = 0.62
     var titleFont: Font = .subheadline
-    var titleAreaHeight: CGFloat = 36
-    var contentSpacing: CGFloat = 12
-    var metadataSpacing: CGFloat = 2
+    var contentSpacing: CGFloat = 14
+    var metadataSpacing: CGFloat = 4
     var posterCornerRadius: CGFloat = 14
 
     @EnvironmentObject private var favoritesStore: FavoritesStore
@@ -62,9 +61,9 @@ struct MovieCardView: View {
                 )
 
                 favoriteButton
-                    .padding(9)
+                    .padding(8)
             }
-            .padding(.bottom, 4)
+            .padding(.bottom, 6)
 
             VStack(alignment: .leading, spacing: metadataSpacing) {
                 Text(movie.title)
@@ -72,14 +71,12 @@ struct MovieCardView: View {
                     .fontWeight(.semibold)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .lineSpacing(-1)
-                    .frame(maxWidth: .infinity, minHeight: titleAreaHeight, maxHeight: titleAreaHeight, alignment: .topLeading)
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
                     .foregroundStyle(.primary)
 
                 Text(movie.releaseYear)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(.top, -5)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

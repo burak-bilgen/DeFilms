@@ -16,20 +16,17 @@ struct SearchHistoryView: View {
             if !history.isEmpty {
                 Text(Localization.string("movies.recentSearches"))
                     .font(.headline)
+                    .padding(.horizontal, 16)
 
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 12) {
                         ForEach(history, id: \.self) { item in
                             Button {
                                 onSelect(item)
                             } label: {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "clock.arrow.circlepath")
-                                        .font(.caption)
-                                    Text(item)
-                                        .font(.subheadline)
-                                        .lineLimit(1)
-                                }
+                                Text(item)
+                                    .font(.subheadline)
+                                    .lineLimit(1)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
                                 .background(Color.gray.opacity(0.12))
@@ -39,6 +36,7 @@ struct SearchHistoryView: View {
                             .foregroundStyle(.primary)
                         }
                     }
+                    .padding(.horizontal, 16)
                 }
             }
         }

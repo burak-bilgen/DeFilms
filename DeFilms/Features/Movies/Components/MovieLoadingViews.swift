@@ -9,21 +9,20 @@ import SwiftUI
 
 struct SkeletonBlock: View {
     var cornerRadius: CGFloat = 14
+    @State private var isActive = false
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Color.gray.opacity(0.18),
-                        Color.gray.opacity(0.3),
-                        Color.gray.opacity(0.18)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+            .fill(Color(.secondarySystemFill))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(Color.white.opacity(0.22))
+                    .opacity(isActive ? 0.38 : 0.12)
             )
-            .shimmering()
+            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: isActive)
+            .onAppear {
+                isActive = true
+            }
     }
 }
 
@@ -118,44 +117,5 @@ struct MovieDetailSkeletonView: View {
             }
         }
         .ignoresSafeArea(edges: .top)
-    }
-}
-
-private struct ShimmerModifier: ViewModifier {
-    @State private var isAnimating = false
-
-    func body(content: Content) -> some View {
-        content
-            .overlay {
-                GeometryReader { geometry in
-                    LinearGradient(
-                        colors: [
-                            .clear,
-                            Color.white.opacity(0.35),
-                            .clear
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .frame(width: geometry.size.width * 1.4)
-                    .rotationEffect(.degrees(12))
-                    .offset(x: isAnimating ? geometry.size.width * 1.6 : -geometry.size.width * 1.6)
-                    .blendMode(.screen)
-                    .animation(
-                        .linear(duration: 1.15).repeatForever(autoreverses: false),
-                        value: isAnimating
-                    )
-                    .onAppear {
-                        isAnimating = true
-                    }
-                }
-                .clipped()
-            }
-    }
-}
-
-extension View {
-    func shimmering() -> some View {
-        modifier(ShimmerModifier())
     }
 }

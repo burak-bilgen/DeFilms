@@ -112,6 +112,8 @@
 "favorites.move.message" = "\"%@\" için hedef liste seç.";
 
 "movies.section.popular" = "Popüler";
+"movies.section.trendingToday" = "Bugün Trend";
+"movies.section.trendingWeek" = "Bu Hafta Trend";
 "movies.section.upcoming" = "Yakında";
 "movies.section.nowPlaying" = "Vizyonda";
 "movies.section.topRated" = "En Beğenilenler";
@@ -164,5 +166,6 @@
 "movies.detail.trailer.watch" = "FRAGMANI IZLE";
 "movies.detail.trailer.unavailable" = "FRAGMAN YOK";
 "movies.detail.trailer.missing" = "Bu film icin uygun bir fragman bulunmuyor.";
+"movies.detail.imdb" = "IMDb";
 "movies.runtime.hoursMinutes" = "%d sa %d dk";
 "movies.runtime.minutes" = "%d dk";

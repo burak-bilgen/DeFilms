@@ -16,8 +16,8 @@ struct MoviesView: View {
     @EnvironmentObject private var preferences: AppPreferences
 
     private let searchColumns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
+        GridItem(.flexible(), spacing: 24),
+        GridItem(.flexible(), spacing: 24)
     ]
 
     init(viewModel: MovieSearchViewModel, openFavorites: @escaping () -> Void) {
@@ -26,7 +26,7 @@ struct MoviesView: View {
     }
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 2) {
             headerBar
                 .padding(.horizontal)
 
@@ -46,6 +46,7 @@ struct MoviesView: View {
                         searchContent
                     }
                 }
+                .padding(.top, viewModel.shouldShowBrowseContent ? 4 : 0)
                 .padding(.bottom, 28)
             }
             .scrollDismissesKeyboard(.interactively)
@@ -82,9 +83,9 @@ struct MoviesView: View {
             Image("AppLogo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 84)
+                .frame(height: 90)
                 .padding(.leading, -4)
-                .padding(.top, -6)
+                .padding(.top, -12)
                 .accessibilityLabel(Localization.string("app.logo"))
 
             Spacer()
@@ -161,7 +162,7 @@ struct MoviesView: View {
                     await viewModel.selectRecentSearch(selected)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.bottom, -8)
         }
 
         switch viewModel.screenState {
@@ -205,7 +206,7 @@ struct MoviesView: View {
                 )
                 .padding(.horizontal, 16)
             } else {
-                LazyVGrid(columns: searchColumns, spacing: 18) {
+                LazyVGrid(columns: searchColumns, spacing: 24) {
                     ForEach(viewModel.filteredSearchResults) { movie in
                         MovieCardNavigationLink(movie: movie, cardStyle: .grid) {
                             coordinator.push(.detail(movie))
@@ -251,6 +252,10 @@ struct MoviesView: View {
 
     private func localizedBrowseTitle(for sectionID: String) -> String {
         switch sectionID {
+        case "trending-today":
+            return Localization.string("movies.section.trendingToday")
+        case "trending-week":
+            return Localization.string("movies.section.trendingWeek")
         case "popular":
             return Localization.string("movies.section.popular")
         case "upcoming":

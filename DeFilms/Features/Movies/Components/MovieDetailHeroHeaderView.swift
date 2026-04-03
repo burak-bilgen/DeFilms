@@ -12,6 +12,7 @@ struct MovieDetailHeroHeaderView: View {
     let scrollOffset: CGFloat
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         let collapseProgress = min(max(-scrollOffset / (heroHeight * 0.55), 0), 1)
@@ -20,7 +21,7 @@ struct MovieDetailHeroHeaderView: View {
         VStack(spacing: 24) {
             topBar
                 .padding(.horizontal, 20)
-                .padding(.top, 18)
+                .padding(.top, 30)
                 .offset(y: collapseProgress * 8)
 
             Spacer()
@@ -67,11 +68,7 @@ struct MovieDetailHeroHeaderView: View {
                     heroFacts
                 }
 
-                HStack(spacing: 12) {
-                    MovieDetailRatingBadge(ratingText: viewModel.ratingText, style: .hero)
-
-                    trailerButton
-                }
+                heroActions
             }
 
             Spacer(minLength: 0)
@@ -88,6 +85,23 @@ struct MovieDetailHeroHeaderView: View {
         }
     }
 
+    private var heroActions: some View {
+        HStack(spacing: 12) {
+            if viewModel.hasTrailer {
+                trailerButton
+            }
+
+            if viewModel.imdbURL != nil {
+                imdbButton
+            }
+
+            Spacer(minLength: 0)
+
+            MovieDetailRatingBadge(ratingText: viewModel.ratingText, style: .hero)
+                .padding(.leading, 8)
+        }
+    }
+
     private var trailerButton: some View {
         Button {
             viewModel.presentTrailer()
@@ -96,22 +110,42 @@ struct MovieDetailHeroHeaderView: View {
                 Image(systemName: "play.fill")
                     .font(.subheadline.weight(.bold))
 
-                Text(viewModel.trailerButtonTitle)
+                Text(Localization.string("movies.detail.trailer.watch"))
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .lineLimit(1)
             }
-            .foregroundStyle(viewModel.hasTrailer ? .white : Color.white.opacity(0.5))
-            .padding(.horizontal, 16)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 18)
             .frame(height: 44)
-            .background(Color.black.opacity(0.34))
+            .background(Color.black.opacity(0.32))
             .clipShape(Capsule())
             .overlay(
                 Capsule()
-                    .stroke(Color.white.opacity(0.22), lineWidth: 1)
+                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
-        .disabled(!viewModel.hasTrailer)
+    }
+
+    private var imdbButton: some View {
+        Button {
+            guard let imdbURL = viewModel.imdbURL else { return }
+            openURL(imdbURL)
+        } label: {
+            Text(Localization.string("movies.detail.imdb"))
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .lineLimit(1)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 18)
+            .frame(height: 44)
+            .background(Color.white.opacity(0.14))
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private func topBarButton(systemImage: String, action: @escaping () -> Void) -> some View {

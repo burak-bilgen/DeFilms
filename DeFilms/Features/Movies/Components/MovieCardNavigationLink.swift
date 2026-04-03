@@ -21,9 +21,9 @@ enum MovieCardStyle {
     var titleHeight: CGFloat {
         switch self {
         case .grid:
-            return 38
+            return 0
         case .rail:
-            return 28
+            return 0
         }
     }
 
@@ -46,12 +46,7 @@ enum MovieCardStyle {
     }
 
     var metadataSpacing: CGFloat {
-        switch self {
-        case .grid:
-            return 2
-        case .rail:
-            return 0
-        }
+        4
     }
 
     var posterCornerRadius: CGFloat {
@@ -82,7 +77,6 @@ struct MovieCardNavigationLink: View {
             MovieCardView(
                 movie: movie,
                 titleFont: cardStyle.titleFont,
-                titleAreaHeight: cardStyle.titleHeight,
                 contentSpacing: cardStyle.contentSpacing,
                 metadataSpacing: cardStyle.metadataSpacing,
                 posterCornerRadius: cardStyle.posterCornerRadius

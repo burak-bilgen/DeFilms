@@ -17,7 +17,7 @@ struct MovieHorizontalSection: View {
                 .padding(.horizontal, 16)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 14) {
+                HStack(alignment: .top, spacing: 22) {
                     ForEach(movies) { movie in
                         MovieCardNavigationLink(movie: movie, cardStyle: .rail) {
                             coordinator.push(.detail(movie))

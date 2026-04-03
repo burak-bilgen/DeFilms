@@ -84,6 +84,8 @@ struct FavoriteListDetailView: View {
         }
         .alert(Localization.string("favorites.rename.title"), isPresented: $isRenamePresented) {
             TextField(Localization.string("favorites.picker.placeholder"), text: $renameText)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
             Button(Localization.string("common.cancel"), role: .cancel) {}
             Button(Localization.string("favorites.rename.confirm")) {
                 _ = viewModel.renameList(name: renameText)

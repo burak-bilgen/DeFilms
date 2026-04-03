@@ -80,6 +80,8 @@ struct FavoritesView: View {
             )
         ) {
             TextField(Localization.string("favorites.picker.placeholder"), text: $renameText)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
             Button(Localization.string("common.cancel"), role: .cancel) {
                 listPendingRename = nil
             }

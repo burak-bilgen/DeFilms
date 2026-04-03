@@ -36,7 +36,7 @@ struct MainTabView: View {
             .environmentObject(movieCoordinator)
                 .tag(Tab.movies)
                 .tabItem {
-                    Label(Localization.string("tab.movies"), systemImage: "movieclapper.fill")
+                    Label(Localization.string("tab.movies"), systemImage: selection == .movies ? "movieclapper.fill" : "movieclapper")
                 }
 
             NavigationStack(path: $favoritesCoordinator.path) {
@@ -58,17 +58,17 @@ struct MainTabView: View {
             .environmentObject(favoritesCoordinator)
                 .tag(Tab.favorites)
                 .tabItem {
-                    Label(Localization.string("tab.favorites"), systemImage: "rectangle.stack.badge.play")
+                    Label(Localization.string("tab.favorites"), systemImage: selection == .favorites ? "rectangle.stack.badge.play.fill" : "rectangle.stack.badge.play")
                 }
 
             SettingsView()
                 .tag(Tab.settings)
                 .tabItem {
-                    Label(Localization.string("tab.settings"), systemImage: "filemenu.and.selection")
+                    Label(Localization.string("tab.settings"), systemImage: selection == .settings ? "gearshape.fill" : "gearshape")
                 }
         }
         .id(preferences.selectedLanguage.rawValue)
-        .tint(Color.accentColor)
+        .tint(.primary)
     }
 }
 

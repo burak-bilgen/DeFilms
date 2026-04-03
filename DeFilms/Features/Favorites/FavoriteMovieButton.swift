@@ -39,33 +39,40 @@ struct FavoriteMovieButton: View {
 
     @ViewBuilder
     private var iconLabel: some View {
+        let isSaved = favoritesStore.isMovieInAnyList(movieID: movie.id)
+        let selectedBackground = Color(red: 0.96, green: 0.74, blue: 0.22)
+
         switch style {
         case .card:
             ZStack {
+                if isSaved {
+                    Circle()
+                        .fill(selectedBackground)
+                } else {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                }
                 Circle()
-                    .fill(.ultraThinMaterial)
-                Circle()
-                    .strokeBorder(Color.white.opacity(0.45), lineWidth: 1)
+                    .strokeBorder(isSaved ? selectedBackground.opacity(0.95) : Color.white.opacity(0.45), lineWidth: 1)
 
-                Image(systemName: favoritesStore.isMovieInAnyList(movieID: movie.id) ? "bookmark.fill" : "bookmark")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(favoritesStore.isMovieInAnyList(movieID: movie.id) ? .black : .white)
+                Image(systemName: isSaved ? "play.rectangle.on.rectangle.fill" : "plus.rectangle.fill.on.rectangle.fill")
+                    .font(.system(size: 11.5, weight: .semibold))
+                    .foregroundStyle(isSaved ? .black : .white)
             }
-            .frame(width: 32, height: 32)
-            .shadow(color: Color.black.opacity(0.16), radius: 8, x: 0, y: 4)
+            .frame(width: 28, height: 28)
+            .shadow(color: isSaved ? selectedBackground.opacity(0.45) : Color.black.opacity(0.16), radius: isSaved ? 10 : 6, x: 0, y: isSaved ? 5 : 3)
         case .hero:
-            let isSaved = favoritesStore.isMovieInAnyList(movieID: movie.id)
-
-            Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+            Image(systemName: isSaved ? "play.rectangle.on.rectangle.fill" : "plus.rectangle.fill.on.rectangle.fill")
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(isSaved ? .black : .white)
                 .frame(width: 42, height: 42)
                 .background(
                     Circle()
-                        .fill(Color.black.opacity(isSaved ? 0.92 : 0.22))
+                        .fill(isSaved ? selectedBackground : Color.black.opacity(0.22))
                 )
                 .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
+                .overlay(Circle().stroke(isSaved ? selectedBackground.opacity(0.95) : Color.white.opacity(0.18), lineWidth: 1))
+                .shadow(color: isSaved ? selectedBackground.opacity(0.4) : .clear, radius: 12, x: 0, y: 6)
         }
     }
 

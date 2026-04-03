@@ -62,7 +62,7 @@ struct FavoriteListPickerView: View {
                             .font(.title3.weight(.semibold))
                             .foregroundStyle(
                                 favoritesStore.isMovieInList(movieID: movie.id, listID: list.id)
-                                    ? Color.accentColor
+                                    ? Color.primary
                                     : .secondary
                             )
                     }

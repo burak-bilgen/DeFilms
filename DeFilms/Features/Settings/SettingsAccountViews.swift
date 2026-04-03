@@ -28,6 +28,9 @@ struct SignInView: View {
                     .autocorrectionDisabled()
 
                 SecureField(Localization.string("auth.password"), text: $viewModel.password)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textContentType(.oneTimeCode)
             }
 
             if let errorMessage = viewModel.errorMessage {
@@ -63,7 +66,13 @@ struct SignUpView: View {
                     .autocorrectionDisabled()
 
                 SecureField(Localization.string("auth.password"), text: $viewModel.password)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textContentType(.oneTimeCode)
                 SecureField(Localization.string("auth.confirmPassword"), text: $viewModel.confirmPassword)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textContentType(.oneTimeCode)
             }
 
             if let errorMessage = viewModel.errorMessage {
@@ -94,8 +103,17 @@ struct ChangePasswordView: View {
         AuthFormContainer(title: Localization.string("auth.changePassword")) {
             Section {
                 SecureField(Localization.string("auth.currentPassword"), text: $viewModel.currentPassword)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textContentType(.oneTimeCode)
                 SecureField(Localization.string("auth.newPassword"), text: $viewModel.newPassword)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textContentType(.oneTimeCode)
                 SecureField(Localization.string("auth.confirmPassword"), text: $viewModel.confirmPassword)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textContentType(.oneTimeCode)
             }
 
             if let errorMessage = viewModel.errorMessage {

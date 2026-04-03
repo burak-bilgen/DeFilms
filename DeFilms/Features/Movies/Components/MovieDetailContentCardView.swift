@@ -7,6 +7,7 @@ import SwiftUI
 
 struct MovieDetailContentCardView: View {
     @ObservedObject var viewModel: MovieDetailViewModel
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -26,20 +27,20 @@ struct MovieDetailContentCardView: View {
             detailSection(title: Localization.string("movies.detail.overview")) {
                 Text(viewModel.overview)
                     .font(.system(size: 17, weight: .regular, design: .rounded))
-                    .foregroundStyle(Color.black.opacity(0.72))
+                    .foregroundStyle(primaryBodyColor)
                     .lineSpacing(6)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if let castLine = viewModel.castLine {
-                detailSection(title: Localization.string("movies.detail.cast")) {
-                    Text(castLine)
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
-                        .foregroundStyle(Color.black.opacity(0.66))
-                        .lineSpacing(4)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
+//            if let castLine = viewModel.castLine {
+//                detailSection(title: Localization.string("movies.detail.cast")) {
+//                    Text(castLine)
+//                        .font(.system(size: 15, weight: .medium, design: .rounded))
+//                        .foregroundStyle(secondaryBodyColor)
+//                        .lineSpacing(4)
+//                        .fixedSize(horizontal: false, vertical: true)
+//                }
+//            }
 
             if !viewModel.genreNames.isEmpty {
                 detailSection(title: Localization.string("movies.detail.genres")) {
@@ -48,9 +49,13 @@ struct MovieDetailContentCardView: View {
             }
         }
         .padding(24)
-        .background(Color.white)
+        .background(cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: .black.opacity(0.08), radius: 24, y: 12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Color.primary.opacity(colorScheme == .dark ? 0.12 : 0.05), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(colorScheme == .dark ? 0.28 : 0.08), radius: 24, y: 12)
     }
 
     private func detailSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -58,10 +63,28 @@ struct MovieDetailContentCardView: View {
             Text(title)
                 .font(.system(size: 14, weight: .bold, design: .rounded))
                 .tracking(0.8)
-                .foregroundStyle(Color.black.opacity(0.46))
+                .foregroundStyle(sectionTitleColor)
 
             content()
         }
+    }
+
+    private var cardBackground: Color {
+        colorScheme == .dark
+            ? Color(red: 0.10, green: 0.11, blue: 0.14)
+            : Color(.systemBackground)
+    }
+
+    private var primaryBodyColor: Color {
+        colorScheme == .dark ? .white.opacity(0.82) : .black.opacity(0.72)
+    }
+
+    private var secondaryBodyColor: Color {
+        colorScheme == .dark ? .white.opacity(0.68) : .black.opacity(0.66)
+    }
+
+    private var sectionTitleColor: Color {
+        colorScheme == .dark ? .white.opacity(0.46) : .black.opacity(0.46)
     }
 }
 
@@ -77,7 +100,7 @@ struct MovieDetailRatingBadge: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(style == .hero ? Color.white.opacity(0.18) : Color.white)
+                .fill(style == .hero ? Color.white.opacity(0.18) : Color(.secondarySystemBackground))
             Circle()
                 .stroke(borderColor, lineWidth: style == .hero ? 1 : 2)
 
@@ -90,10 +113,10 @@ struct MovieDetailRatingBadge: View {
     }
 
     private var textColor: Color {
-        style == .hero ? .white : .black
+        style == .hero ? .white : .primary
     }
 
     private var borderColor: Color {
-        style == .hero ? Color.white.opacity(0.35) : Color.black.opacity(0.72)
+        style == .hero ? Color.white.opacity(0.35) : Color.primary.opacity(0.72)
     }
 }
