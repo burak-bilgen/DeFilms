@@ -11,6 +11,8 @@ final class AppContainer {
     let favoritesRepository: FavoritesRepositoryProtocol
     let sessionManager: AuthSessionManager
     let toastCenter: ToastCenter
+    private let movieCatalogService: MovieCatalogServicing
+    private let movieDetailService: MovieDetailServicing
 
     init(
         networkService: NetworkServiceProtocol = NetworkManager.shared,
@@ -24,6 +26,11 @@ final class AppContainer {
         self.favoritesRepository = favoritesRepository
         self.sessionManager = sessionManager
         self.toastCenter = toastCenter
+        self.movieCatalogService = TMDBMovieCatalogService(networkService: networkService)
+        self.movieDetailService = TMDBMovieDetailService(
+            networkService: networkService,
+            imagePrefetcher: PosterImagePrefetcher()
+        )
     }
 
     func makeFavoritesStore() -> FavoritesStore {
@@ -35,14 +42,17 @@ final class AppContainer {
 
     func makeMovieSearchViewModel() -> MovieSearchViewModel {
         MovieSearchViewModel(
-            networkService: networkService,
-            recentSearchRepository: recentSearchRepository,
+            movieCatalogService: movieCatalogService,
+            searchHistoryService: UserScopedMovieSearchHistoryService(
+                repository: recentSearchRepository,
+                sessionManager: sessionManager
+            ),
             sessionManager: sessionManager
         )
     }
 
     func makeMovieDetailViewModel(movie: Movie) -> MovieDetailViewModel {
-        MovieDetailViewModel(movie: movie, networkService: networkService)
+        MovieDetailViewModel(movie: movie, detailService: movieDetailService)
     }
 
     func makeFavoritesViewModel(favoritesStore: FavoritesStore) -> FavoritesViewModel {

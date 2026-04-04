@@ -24,12 +24,12 @@ final class MovieDetailViewModel: ObservableObject {
 
     let movie: Movie
 
-    private let networkService: NetworkServiceProtocol
+    private let detailService: MovieDetailServicing
     private var hasLoaded = false
 
-    init(movie: Movie, networkService: NetworkServiceProtocol) {
+    init(movie: Movie, detailService: MovieDetailServicing) {
         self.movie = movie
-        self.networkService = networkService
+        self.detailService = detailService
     }
 
     var title: String {
@@ -126,16 +126,14 @@ final class MovieDetailViewModel: ObservableObject {
 
         do {
             AppLogger.log("Loading detail for movie \(movie.id)", category: .movie)
-            async let imagesTask: Void = loadImages()
-            async let castTask: Void = loadCast()
-            async let trailerTask: Void = loadTrailer()
-            async let providersTask: Void = loadWatchProviders()
-            async let similarMoviesTask: Void = loadSimilarMovies()
-
-            detail = try await networkService.request(
-                endpoint: TMDBEndpoint.movieDetails(movieID: movie.id)
-            )
-            _ = await (imagesTask, castTask, trailerTask, providersTask, similarMoviesTask)
+            let payload = try await detailService.loadPayload(for: movie)
+            detail = payload.detail
+            trailer = payload.trailer
+            gallery = payload.gallery
+            directors = payload.directors
+            cast = payload.cast
+            streamingPlatforms = payload.streamingPlatforms
+            similarMovies = payload.similarMovies
             AppLogger.log("Loaded detail for movie \(movie.id)", category: .movie, level: .success)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.detail.error")
@@ -158,164 +156,6 @@ final class MovieDetailViewModel: ObservableObject {
 
     func clearToast() {
         toastItem = nil
-    }
-
-    private func loadImages() async {
-        do {
-            let imagesResponse: MovieImageResponse = try await networkService.request(
-                endpoint: TMDBEndpoint.movieImages(movieID: movie.id)
-            )
-            gallery = Array(imagesResponse.backdrops.prefix(6))
-        } catch {
-            AppLogger.log("Image load failed for movie \(movie.id)", category: .movie, level: .error)
-        }
-    }
-
-    private func loadCast() async {
-        do {
-            let creditsResponse: MovieCreditsResponse = try await networkService.request(
-                endpoint: TMDBEndpoint.movieCredits(movieID: movie.id)
-            )
-            let primaryDirectors = Array(creditsResponse.crew.filter { $0.job == "Director" }.prefix(3))
-            let primaryCast = Array(creditsResponse.cast.prefix(6))
-            directors = primaryDirectors
-            cast = primaryCast
-            await enrichDirectorsWithIMDb(primaryDirectors)
-            await enrichCastWithIMDb(primaryCast)
-        } catch {
-            AppLogger.log("Credits load failed for movie \(movie.id)", category: .movie, level: .error)
-        }
-    }
-
-    private func loadTrailer() async {
-        do {
-            let localizedVideos: MovieVideoResponse = try await networkService.request(
-                endpoint: TMDBEndpoint.movieVideos(movieID: movie.id, languageCode: nil)
-            )
-            trailer = selectPreferredTrailer(from: localizedVideos.results)
-
-            if trailer == nil, AppPreferences.persistedLanguage != .english {
-                let fallbackVideos: MovieVideoResponse = try await networkService.request(
-                    endpoint: TMDBEndpoint.movieVideos(movieID: movie.id, languageCode: AppLanguage.english.tmdbLanguageCode)
-                )
-                trailer = selectPreferredTrailer(from: fallbackVideos.results)
-            }
-        } catch {
-            AppLogger.log("Trailer load failed for movie \(movie.id)", category: .movie, level: .error)
-        }
-    }
-
-    private func loadWatchProviders() async {
-        do {
-            let response: MovieWatchProvidersResponse = try await networkService.request(
-                endpoint: TMDBEndpoint.movieWatchProviders(movieID: movie.id)
-            )
-            streamingPlatforms = preferredPlatforms(from: response.results)
-            Task {
-                await PosterImagePipeline.shared.prefetch(urls: streamingPlatforms.compactMap(\.logoURL))
-            }
-        } catch {
-            AppLogger.log("Watch providers load failed for movie \(movie.id)", category: .movie, level: .error)
-        }
-    }
-
-    private func loadSimilarMovies() async {
-        do {
-            let response: MovieResponse = try await networkService.request(
-                endpoint: TMDBEndpoint.similarMovies(movieID: movie.id, page: 1)
-            )
-            similarMovies = Array(response.results.filter { $0.id != movie.id }.prefix(12))
-            Task {
-                await PosterImagePipeline.shared.prefetch(
-                    urls: similarMovies.flatMap { movie in
-                        [movie.posterURL, movie.backdropURL].compactMap { $0 }
-                    }
-                )
-            }
-        } catch {
-            AppLogger.log("Similar movies load failed for movie \(movie.id)", category: .movie, level: .error)
-        }
-    }
-
-    private func selectPreferredTrailer(from videos: [MovieVideo]) -> MovieVideo? {
-        let youtubeVideos = videos.filter { $0.watchURL != nil }
-
-        return youtubeVideos.first(where: { $0.type == "Trailer" && $0.official }) ??
-            youtubeVideos.first(where: { $0.type == "Trailer" }) ??
-            youtubeVideos.first(where: { $0.official }) ??
-            youtubeVideos.first
-    }
-
-    private func enrichCastWithIMDb(_ castMembers: [MovieCastMember]) async {
-        var enrichedCast: [MovieCastMember] = []
-
-        for member in castMembers {
-            do {
-                let response: PersonExternalIDsResponse = try await networkService.request(
-                    endpoint: TMDBEndpoint.personExternalIDs(personID: member.id)
-                )
-                var updatedMember = member
-                updatedMember.imdbID = response.imdbID
-                enrichedCast.append(updatedMember)
-            } catch {
-                enrichedCast.append(member)
-            }
-        }
-
-        cast = enrichedCast
-    }
-
-    private func enrichDirectorsWithIMDb(_ crewMembers: [MovieCrewMember]) async {
-        var enrichedDirectors: [MovieCrewMember] = []
-
-        for member in crewMembers {
-            do {
-                let response: PersonExternalIDsResponse = try await networkService.request(
-                    endpoint: TMDBEndpoint.personExternalIDs(personID: member.id)
-                )
-                var updatedMember = member
-                updatedMember.imdbID = response.imdbID
-                enrichedDirectors.append(updatedMember)
-            } catch {
-                enrichedDirectors.append(member)
-            }
-        }
-
-        directors = enrichedDirectors
-    }
-
-    private func preferredPlatforms(from results: [String: MovieWatchProviderRegion]) -> [MovieStreamingPlatform] {
-        let preferredRegions = [preferredRegionCode, "TR", "US"]
-        let region = preferredRegions
-            .compactMap { code in results[code] }
-            .first ?? results.values.first
-
-        guard let region else { return [] }
-
-        var seen = Set<Int>()
-        let providers = (region.flatrate ?? []) + (region.rent ?? []) + (region.buy ?? [])
-
-        return providers.compactMap { provider in
-            guard seen.insert(provider.providerID).inserted else { return nil }
-
-            return MovieStreamingPlatform(
-                id: provider.providerID,
-                name: provider.providerName,
-                logoURL: provider.logoURL,
-                linkURL: region.link
-            )
-        }
-    }
-
-    private var preferredRegionCode: String {
-        switch AppPreferences.persistedLanguage {
-        case .turkish:
-            return "TR"
-        case .arabic:
-            return "AE"
-        case .english:
-            return "US"
-        }
     }
 }
 

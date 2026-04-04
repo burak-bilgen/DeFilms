@@ -7,8 +7,8 @@ struct MovieSearchViewModelTests {
     @Test
     func emptyQueryShowsValidationError() async {
         let viewModel = MovieSearchViewModel(
-            networkService: MockNetworkService(),
-            recentSearchRepository: MockRecentSearchRepository(),
+            movieCatalogService: MockMovieCatalogService(),
+            searchHistoryService: MockMovieSearchHistoryService(),
             sessionManager: AuthSessionManager(keychainService: MockKeychainService())
         )
 
@@ -31,16 +31,18 @@ struct MovieSearchViewModelTests {
             voteAverage: 8.2,
             genreIDs: [18]
         )
-        let repository = MockRecentSearchRepository()
+        let historyService = MockMovieSearchHistoryService()
         let viewModel = MovieSearchViewModel(
-            networkService: MockNetworkService { endpoint in
-                guard endpoint.path == "/search/movie" else {
-                    throw TestError.unexpectedEndpoint
-                }
+            movieCatalogService: MockMovieCatalogService(
+                searchHandler: { query, page in
+                    guard query == "Arrival", page == 1 else {
+                        throw TestError.unexpectedEndpoint
+                    }
 
-                return MovieResponse(page: 1, results: [movie], totalPages: 1)
+                    return MovieResponse(page: 1, results: [movie], totalPages: 1)
+                }
             },
-            recentSearchRepository: repository,
+            searchHistoryService: historyService,
             sessionManager: AuthSessionManager(keychainService: MockKeychainService())
         )
         viewModel.query = " Arrival "
@@ -49,7 +51,7 @@ struct MovieSearchViewModelTests {
 
         #expect(viewModel.screenState == .loadedResults)
         #expect(viewModel.filteredSearchResults == [movie])
-        #expect(repository.history == ["Arrival"])
+        #expect(historyService.history == ["Arrival"])
     }
 }
 
@@ -123,29 +125,53 @@ struct AuthFormViewModelTests {
     }
 }
 
-private struct MockNetworkService: NetworkServiceProtocol {
-    var handler: (Endpoint) throws -> Any = { _ in MovieResponse(page: 1, results: [], totalPages: 1) }
+private final class MockMovieCatalogService: MovieCatalogServicing {
+    var browseContent = MovieBrowseContent(
+        trendingTodayMovies: [],
+        trendingThisWeekMovies: [],
+        popularMovies: [],
+        upcomingMovies: [],
+        nowPlayingMovies: [],
+        topRatedMovies: []
+    )
+    var genres: [MovieGenre] = []
+    var searchHandler: (String, Int) throws -> MovieResponse
 
-    func request<T>(endpoint: Endpoint) async throws -> T where T : Decodable {
-        let value = try handler(endpoint)
-        guard let typedValue = value as? T else {
-            throw TestError.invalidResponseType
-        }
-        return typedValue
+    init(searchHandler: @escaping (String, Int) throws -> MovieResponse = { _, _ in
+        MovieResponse(page: 1, results: [], totalPages: 1)
+    }) {
+        self.searchHandler = searchHandler
     }
+
+    func loadBrowseContent() async throws -> MovieBrowseContent {
+        browseContent
+    }
+
+    func searchMovies(query: String, page: Int) async throws -> MovieResponse {
+        try searchHandler(query, page)
+    }
+
+    func loadGenres() async throws -> [MovieGenre] {
+        genres
+    }
+
+    func prefetchImages(for movies: [Movie]) async {}
 }
 
-private final class MockRecentSearchRepository: RecentSearchRepositoryProtocol {
+private final class MockMovieSearchHistoryService: MovieSearchHistoryServicing {
     var history: [String] = []
 
-    func fetchRecentSearches(for userIdentifier: String, limit: Int) throws -> [String] {
-        Array(history.prefix(limit))
+    func loadSearchHistory() throws -> [String] {
+        history
     }
 
-    func addSearch(_ query: String, for userIdentifier: String, limit: Int) throws {
+    func saveSearch(_ query: String) throws {
         history.removeAll { $0.caseInsensitiveCompare(query) == .orderedSame }
         history.insert(query, at: 0)
-        history = Array(history.prefix(limit))
+    }
+
+    func clearSearchHistory() throws {
+        history = []
     }
 }
 

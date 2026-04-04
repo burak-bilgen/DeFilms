@@ -8,22 +8,14 @@ import SwiftUI
 struct MovieDetailView: View {
     private let heroHeight: CGFloat = 420
 
-    let movie: Movie
-
     @StateObject private var viewModel: MovieDetailViewModel
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var toastCenter: ToastCenter
     @Environment(\.colorScheme) private var colorScheme
     @State private var scrollOffset: CGFloat = 0
 
-    init(movie: Movie, networkService: NetworkServiceProtocol) {
-        self.movie = movie
-        _viewModel = StateObject(
-            wrappedValue: MovieDetailViewModel(
-                movie: movie,
-                networkService: networkService
-            )
-        )
+    init(viewModel: MovieDetailViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
     }
 
     var body: some View {
@@ -43,7 +35,7 @@ struct MovieDetailView: View {
                             scrollOffsetReader
 
                             MovieDetailHeroHeaderView(
-                                movie: movie,
+                                movie: viewModel.movie,
                                 viewModel: viewModel,
                                 heroHeight: heroHeight,
                                 scrollOffset: scrollOffset

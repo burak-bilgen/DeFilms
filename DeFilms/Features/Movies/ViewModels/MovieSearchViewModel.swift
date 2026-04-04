@@ -45,10 +45,9 @@ final class MovieSearchViewModel: ObservableObject {
     @Published private(set) var toastItem: ToastItem?
     @Published var errorMessage: String?
 
-    private let networkService: NetworkServiceProtocol
-    private let recentSearchRepository: RecentSearchRepositoryProtocol
+    private let movieCatalogService: MovieCatalogServicing
+    private let searchHistoryService: MovieSearchHistoryServicing
     private let sessionManager: AuthSessionManager
-    private let historyLimit = 10
     private var hasLoadedBrowseContent = false
     private var lastLoadedLanguage: AppLanguage?
     private var lastExecutedSearchQuery: String?
@@ -57,12 +56,12 @@ final class MovieSearchViewModel: ObservableObject {
     private var cancellables: Set<AnyCancellable> = []
 
     init(
-        networkService: NetworkServiceProtocol,
-        recentSearchRepository: RecentSearchRepositoryProtocol,
+        movieCatalogService: MovieCatalogServicing,
+        searchHistoryService: MovieSearchHistoryServicing,
         sessionManager: AuthSessionManager
     ) {
-        self.networkService = networkService
-        self.recentSearchRepository = recentSearchRepository
+        self.movieCatalogService = movieCatalogService
+        self.searchHistoryService = searchHistoryService
         self.sessionManager = sessionManager
 
         sessionManager.$session
@@ -174,14 +173,12 @@ final class MovieSearchViewModel: ObservableObject {
 
         do {
             AppLogger.log("Search started for '\(searchText)'", category: .search)
-            let response: MovieResponse = try await networkService.request(
-                endpoint: TMDBEndpoint.searchMovie(query: searchText, page: 1)
-            )
+            let response = try await movieCatalogService.searchMovies(query: searchText, page: 1)
             applySearchPage(response, appendResults: false)
-            prefetchImages(for: response.results)
+            await movieCatalogService.prefetchImages(for: response.results)
             lastExecutedSearchQuery = searchText
             lastLoadedLanguage = AppPreferences.persistedLanguage
-            try recentSearchRepository.addSearch(searchText, for: sessionManager.currentUserIdentifier, limit: historyLimit)
+            try searchHistoryService.saveSearch(searchText)
             loadHistory()
             screenState = filteredSearchResults.isEmpty ? .emptyResults : .loadedResults
             AppLogger.log("Search completed with \(response.results.count) results", category: .search, level: .success)
@@ -242,7 +239,7 @@ final class MovieSearchViewModel: ObservableObject {
 
     func clearSearchHistory() {
         do {
-            try recentSearchRepository.clearRecentSearches(for: sessionManager.currentUserIdentifier)
+            try searchHistoryService.clearSearchHistory()
             searchHistory = []
         } catch {
             toastItem = .error(Localization.string("favorites.toast.genericError"))
@@ -253,8 +250,7 @@ final class MovieSearchViewModel: ObservableObject {
         guard genres.isEmpty else { return }
 
         do {
-            let response: MovieGenreResponse = try await networkService.request(endpoint: TMDBEndpoint.genreList)
-            genres = response.genres.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            genres = try await movieCatalogService.loadGenres()
             AppLogger.log("Loaded genres", category: .movie, level: .success)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.filter.error")
@@ -269,27 +265,14 @@ final class MovieSearchViewModel: ObservableObject {
 
         do {
             AppLogger.log("Browse loading started", category: .movie)
-            async let trendingToday = fetchMovies(for: TMDBEndpoint.trendingMovies(window: .day, page: 1))
-            async let trendingThisWeek = fetchMovies(for: TMDBEndpoint.trendingMovies(window: .week, page: 1))
-            async let popular = fetchMovies(for: TMDBEndpoint.popularMovies(page: 1))
-            async let upcoming = fetchMovies(for: TMDBEndpoint.upcomingMovies(page: 1))
-            async let nowPlaying = fetchMovies(for: TMDBEndpoint.nowPlayingMovies(page: 1))
-            async let topRated = fetchMovies(for: TMDBEndpoint.topRatedMovies(page: 1))
-
-            trendingTodayMovies = try await trendingToday
-            trendingThisWeekMovies = try await trendingThisWeek
-            popularMovies = try await popular
-            upcomingMovies = try await upcoming
-            nowPlayingMovies = try await nowPlaying
-            topRatedMovies = try await topRated
-            prefetchImages(
-                for: trendingTodayMovies +
-                    trendingThisWeekMovies +
-                    popularMovies +
-                    upcomingMovies +
-                    nowPlayingMovies +
-                    topRatedMovies
-            )
+            let browseContent = try await movieCatalogService.loadBrowseContent()
+            trendingTodayMovies = browseContent.trendingTodayMovies
+            trendingThisWeekMovies = browseContent.trendingThisWeekMovies
+            popularMovies = browseContent.popularMovies
+            upcomingMovies = browseContent.upcomingMovies
+            nowPlayingMovies = browseContent.nowPlayingMovies
+            topRatedMovies = browseContent.topRatedMovies
+            await movieCatalogService.prefetchImages(for: browseContent.allMovies)
             hasLoadedBrowseContent = true
             lastLoadedLanguage = AppPreferences.persistedLanguage
             screenState = .browse
@@ -308,7 +291,7 @@ final class MovieSearchViewModel: ObservableObject {
     }
 
     private func loadHistory() {
-        searchHistory = (try? recentSearchRepository.fetchRecentSearches(for: sessionManager.currentUserIdentifier, limit: historyLimit)) ?? []
+        searchHistory = (try? searchHistoryService.loadSearchHistory()) ?? []
     }
 
     private func handleDebouncedQueryChange(_ value: String) async {
@@ -338,20 +321,16 @@ final class MovieSearchViewModel: ObservableObject {
 
         do {
             let nextPage = currentSearchPage + 1
-            let response: MovieResponse = try await networkService.request(
-                endpoint: TMDBEndpoint.searchMovie(query: searchText, page: nextPage)
+            let response = try await movieCatalogService.searchMovies(
+                query: searchText,
+                page: nextPage
             )
 
             applySearchPage(response, appendResults: true)
-            prefetchImages(for: response.results)
+            await movieCatalogService.prefetchImages(for: response.results)
         } catch {
             AppLogger.log("Pagination failed for '\(searchText)'", category: .search, level: .error)
         }
-    }
-
-    private func fetchMovies(for endpoint: TMDBEndpoint) async throws -> [Movie] {
-        let response: MovieResponse = try await networkService.request(endpoint: endpoint)
-        return response.results
     }
 
     private func resetSearchPagination() {
@@ -374,15 +353,6 @@ final class MovieSearchViewModel: ObservableObject {
         }
     }
 
-    private func prefetchImages(for movies: [Movie]) {
-        let urls = movies.flatMap { movie in
-            [movie.posterURL, movie.backdropURL].compactMap { $0 }
-        }
-
-        Task {
-            await PosterImagePipeline.shared.prefetch(urls: urls)
-        }
-    }
 }
 
 enum MovieSortOption: String, CaseIterable, Identifiable {

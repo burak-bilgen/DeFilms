@@ -41,10 +41,7 @@ struct MainTabView: View {
                 .navigationDestination(for: MovieRoute.self) { route in
                     switch route {
                     case let .detail(movie):
-                        MovieDetailView(
-                            movie: movie,
-                            networkService: container.networkService
-                        )
+                        MovieDetailView(viewModel: container.makeMovieDetailViewModel(movie: movie))
                     }
                 }
             }
@@ -68,10 +65,7 @@ struct MainTabView: View {
                                 )
                             )
                         case let .movie(movie):
-                            MovieDetailView(
-                                movie: movie,
-                                networkService: container.networkService
-                            )
+                            MovieDetailView(viewModel: container.makeMovieDetailViewModel(movie: movie))
                         }
                     }
             }
