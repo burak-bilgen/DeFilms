@@ -34,7 +34,7 @@ struct DeFilmsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            AppEntryView()
                 .environment(\.managedObjectContext, persistenceController.viewContext)
                 .environment(\.locale, preferences.locale)
                 .environment(\.layoutDirection, preferences.layoutDirection)

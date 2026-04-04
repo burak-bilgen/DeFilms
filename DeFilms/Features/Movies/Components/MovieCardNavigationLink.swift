@@ -79,7 +79,7 @@ struct MovieCardNavigationLink: View {
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(movie.title), \(movie.releaseYear)")
+        .accessibilityLabel(Localization.string("movies.accessibility.cardSummary", movie.title, movie.releaseYear))
         .accessibilityHint(Localization.string("movies.accessibility.openDetails"))
     }
 }

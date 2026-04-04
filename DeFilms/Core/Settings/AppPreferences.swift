@@ -74,8 +74,15 @@ final class AppPreferences: ObservableObject {
         }
     }
 
+    @Published var hasCompletedOnboarding: Bool {
+        didSet {
+            UserDefaults.standard.set(hasCompletedOnboarding, forKey: Self.onboardingKey)
+        }
+    }
+
     static let themeKey = "app.theme"
     static let languageKey = "app.language"
+    static let onboardingKey = "app.onboarding.completed"
 
     static var persistedLanguage: AppLanguage {
         let languageValue = UserDefaults.standard.string(forKey: Self.languageKey)
@@ -88,6 +95,7 @@ final class AppPreferences: ObservableObject {
 
         selectedTheme = AppTheme(rawValue: themeValue ?? "") ?? .system
         selectedLanguage = AppLanguage(rawValue: languageValue ?? "") ?? .english
+        hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Self.onboardingKey)
         AppLogger.log("Preferences loaded", category: .app)
     }
 

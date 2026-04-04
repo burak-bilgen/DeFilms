@@ -51,10 +51,17 @@
 "auth.confirmPassword" = "تأكيد كلمة المرور";
 "auth.currentPassword" = "كلمة المرور الحالية";
 "auth.newPassword" = "كلمة المرور الجديدة";
+"auth.placeholder.email" = "example@mail.com";
+"auth.placeholder.password" = "أدخل كلمة المرور";
+"auth.placeholder.newPassword" = "أنشئ كلمة مرور جديدة";
+"auth.password.show" = "إظهار كلمة المرور";
+"auth.password.hide" = "إخفاء كلمة المرور";
+"auth.form.requiredHint" = "املأ الحقول المطلوبة للمتابعة.";
 "auth.error.generic" = "حدث خطأ ما.";
 "auth.error.emptyFields" = "يرجى ملء جميع الحقول المطلوبة.";
 "auth.error.invalidEmail" = "يرجى إدخال بريد إلكتروني صالح.";
 "auth.error.weakPassword" = "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.";
+"auth.error.invalidPasswordFormat" = "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل، وتحتوي على حرف كبير وحرف صغير ورقم، ومن دون مسافات.";
 "auth.error.passwordMismatch" = "كلمتا المرور غير متطابقتين.";
 "auth.error.accountExists" = "يوجد حساب لهذا البريد الإلكتروني بالفعل.";
 "auth.error.accountNotFound" = "لم يتم العثور على حساب لهذا البريد الإلكتروني.";
@@ -62,6 +69,20 @@
 "auth.error.currentPasswordIncorrect" = "كلمة المرور الحالية غير صحيحة.";
 "auth.error.newPasswordMustDiffer" = "يجب أن تكون كلمة المرور الجديدة مختلفة عن الحالية.";
 "auth.error.notSignedIn" = "يجب تسجيل الدخول للمتابعة.";
+
+"onboarding.eyebrow" = "سينما، منتقاة بعناية";
+"onboarding.title" = "اعثر على فيلمك القادم من دون ضجيج.";
+"onboarding.subtitle" = "استكشف ما يهم، واحفظ قوائمك الخاصة، وانتقل إلى تفاصيل الأفلام ضمن تجربة أنظف وأكثر تركيزًا.";
+"onboarding.stat.discovery" = "اكتشاف أسرع";
+"onboarding.stat.watchlist" = "قوائم خاصة";
+"onboarding.feature.discovery.title" = "اكتشف العناوين المناسبة بسرعة";
+"onboarding.feature.discovery.body" = "الأفلام الشائعة والرائجة والأعلى تقييمًا والقادمة مرتبة لتساعدك على الاختيار بسرعة.";
+"onboarding.feature.curation.title" = "صفِّ ورتّب وقارن";
+"onboarding.feature.curation.body" = "ابحث بالعنوان، وضيّق النتائج حسب النوع أو السنة، وراجع التفاصيل من دون أن تفقد تدفقك.";
+"onboarding.feature.account.title" = "اجعل تجربتك شخصية";
+"onboarding.feature.account.body" = "استخدم وضع الضيف للبداية السريعة، أو سجّل الدخول للاحتفاظ بالمفضلة منفصلة لحسابك.";
+"onboarding.action.guest" = "المتابعة كضيف";
+"onboarding.footnote" = "يمكنك تسجيل الدخول أو إنشاء حساب لاحقًا من الإعدادات.";
 
 "favorites.title" = "المفضلة";
 "favorites.navigate" = "افتح المفضلة";
@@ -88,6 +109,7 @@
 "favorites.picker.placeholder" = "اسم القائمة";
 "favorites.picker.empty" = "لا توجد قوائم بعد. أنشئ واحدة لحفظ هذا الفيلم.";
 "favorites.picker.newList" = "إنشاء قائمة جديدة";
+"favorites.form.requiredHint" = "أدخل اسمًا للقائمة للمتابعة.";
 "favorites.create.title" = "قائمة جديدة";
 "favorites.create.heading" = "أنشئ قائمة مفضلة";
 "favorites.create.subtitle.empty" = "أنشئ قائمة وستظهر مباشرة في شاشة المفضلة.";
@@ -147,6 +169,7 @@
 "movies.accessibility.searchField" = "حقل البحث عن فيلم";
 "movies.accessibility.clearSearch" = "مسح نص البحث";
 "movies.accessibility.recentSearch" = "بحث حديث، %@";
+"movies.accessibility.cardSummary" = "%@، %@";
 "movies.accessibility.openDetails" = "افتح التفاصيل";
 "movies.message.contentUnavailable.title" = "المحتوى غير متاح";
 "movies.message.noResults.title" = "لا توجد نتائج";

@@ -6,12 +6,18 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct SignInView: View {
     @EnvironmentObject private var sessionManager: AuthSessionManager
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var viewModel = SignInViewModel()
+
+    private var isSubmitEnabled: Bool {
+        !viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !viewModel.password.isEmpty
+    }
 
     var body: some View {
         AuthFormContainer(title: Localization.string("auth.signIn")) {
@@ -37,6 +43,7 @@ struct SignInView: View {
                         dismiss()
                     }
                 }
+                .disabled(!isSubmitEnabled)
             }
         }
     }
@@ -47,6 +54,12 @@ struct SignUpView: View {
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var viewModel = SignUpViewModel()
+
+    private var isSubmitEnabled: Bool {
+        !viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !viewModel.password.isEmpty &&
+        !viewModel.confirmPassword.isEmpty
+    }
 
     var body: some View {
         AuthFormContainer(title: Localization.string("auth.signUp")) {
@@ -77,6 +90,7 @@ struct SignUpView: View {
                         dismiss()
                     }
                 }
+                .disabled(!isSubmitEnabled)
             }
         }
     }
@@ -87,6 +101,12 @@ struct ChangePasswordView: View {
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var viewModel = ChangePasswordViewModel()
+
+    private var isSubmitEnabled: Bool {
+        !viewModel.currentPassword.isEmpty &&
+        !viewModel.newPassword.isEmpty &&
+        !viewModel.confirmPassword.isEmpty
+    }
 
     var body: some View {
         AuthFormContainer(title: Localization.string("auth.changePassword")) {
@@ -117,6 +137,7 @@ struct ChangePasswordView: View {
                         dismiss()
                     }
                 }
+                .disabled(!isSubmitEnabled)
             }
         }
     }
@@ -130,6 +151,7 @@ private struct AuthFormContainer<Content: View>: View {
         Form {
             content
         }
+        .tint(.primary)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -146,9 +168,9 @@ private struct AuthInputField: View {
             case .email:
                 return .username
             case .password:
-                return .password
+                return nil
             case .newPassword:
-                return .newPassword
+                return nil
             }
         }
 
@@ -169,12 +191,25 @@ private struct AuthInputField: View {
                 return .default
             }
         }
+
+        var placeholder: String {
+            switch self {
+            case .email:
+                return Localization.string("auth.placeholder.email")
+            case .password:
+                return Localization.string("auth.placeholder.password")
+            case .newPassword:
+                return Localization.string("auth.placeholder.newPassword")
+            }
+        }
     }
 
     let title: String
     @Binding var text: String
     let systemImage: String
     let kind: Kind
+    @State private var isFocused = false
+    @State private var isPasswordVisible = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -182,23 +217,168 @@ private struct AuthInputField: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            Group {
-                if kind.isSecure {
-                    SecureField(title, text: $text)
-                } else {
-                    TextField(title, text: $text)
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(isFocused ? Color.primary : .secondary)
+                    .frame(width: 18, height: 18)
+                    .padding(10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(isFocused ? Color.primary.opacity(0.08) : AppPalette.cardAccentBackground)
+                    )
+
+                Group {
+                    if kind.isSecure {
+                        NeutralSecureField(
+                            placeholder: kind.placeholder,
+                            text: $text,
+                            isSecureEntry: !isPasswordVisible,
+                            onFocusChange: { isFocused = $0 }
+                        )
+                    } else {
+                        TextField(kind.placeholder, text: $text, onEditingChanged: { editing in
+                            isFocused = editing
+                        })
+                    }
+                }
+                .textContentType(kind.textContentType)
+                .keyboardType(kind.keyboardType)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .environment(\.layoutDirection, .leftToRight)
+
+                if kind.isSecure && text.isEmpty == false {
+                    Button {
+                        isPasswordVisible.toggle()
+                    } label: {
+                        Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 18, height: 18)
+                            .padding(8)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(
+                        Localization.string(
+                            isPasswordVisible ? "auth.password.hide" : "auth.password.show"
+                        )
+                    )
                 }
             }
-            .textContentType(kind.textContentType)
-            .keyboardType(kind.keyboardType)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
             .padding(.horizontal, 14)
-            .frame(minHeight: 48)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .environment(\.layoutDirection, .leftToRight)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                AppPalette.cardBackground,
+                                AppPalette.cardAccentBackground
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(
+                        isFocused ? Color.primary.opacity(0.22) : AppPalette.border,
+                        lineWidth: isFocused ? 1.5 : 1
+                    )
+            )
+            .shadow(
+                color: isFocused ? Color.primary.opacity(0.08) : AppPalette.shadow,
+                radius: isFocused ? 12 : 8,
+                x: 0,
+                y: isFocused ? 6 : 4
+            )
         }
         .padding(.vertical, 4)
+    }
+}
+
+private struct NeutralSecureField: UIViewRepresentable {
+    let placeholder: String
+    @Binding var text: String
+    let isSecureEntry: Bool
+    let onFocusChange: (Bool) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, onFocusChange: onFocusChange)
+    }
+
+    func makeUIView(context: Context) -> UITextField {
+        let textField = UITextField(frame: .zero)
+        textField.delegate = context.coordinator
+        textField.placeholder = placeholder
+        textField.isSecureTextEntry = isSecureEntry
+        textField.textContentType = nil
+        textField.passwordRules = nil
+        textField.autocorrectionType = .no
+        textField.autocapitalizationType = .none
+        textField.spellCheckingType = .no
+        textField.smartQuotesType = .no
+        textField.smartDashesType = .no
+        textField.smartInsertDeleteType = .no
+        textField.keyboardType = .asciiCapable
+        textField.returnKeyType = .done
+        textField.borderStyle = .none
+        textField.backgroundColor = .clear
+        textField.tintColor = UIColor.label
+        textField.inputAssistantItem.leadingBarButtonGroups = []
+        textField.inputAssistantItem.trailingBarButtonGroups = []
+        textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        textField.addTarget(
+            context.coordinator,
+            action: #selector(Coordinator.textDidChange(_:)),
+            for: .editingChanged
+        )
+        return textField
+    }
+
+    func updateUIView(_ uiView: UITextField, context: Context) {
+        if uiView.text != text {
+            uiView.text = text
+        }
+
+        uiView.placeholder = placeholder
+        if uiView.isSecureTextEntry != isSecureEntry {
+            uiView.isSecureTextEntry = isSecureEntry
+            if uiView.isFirstResponder {
+                let existingText = uiView.text
+                uiView.text = nil
+                uiView.text = existingText
+            }
+        }
+
+    }
+
+    final class Coordinator: NSObject, UITextFieldDelegate {
+        @Binding private var text: String
+        private let onFocusChange: (Bool) -> Void
+
+        init(text: Binding<String>, onFocusChange: @escaping (Bool) -> Void) {
+            _text = text
+            self.onFocusChange = onFocusChange
+        }
+
+        @objc func textDidChange(_ textField: UITextField) {
+            let sanitizedText = (textField.text ?? "").filter { !$0.isWhitespace }
+            if textField.text != sanitizedText {
+                textField.text = sanitizedText
+            }
+            text = sanitizedText
+        }
+
+        func textFieldDidBeginEditing(_ textField: UITextField) {
+            onFocusChange(true)
+        }
+
+        func textFieldDidEndEditing(_ textField: UITextField) {
+            onFocusChange(false)
+        }
     }
 }

@@ -24,6 +24,27 @@ struct MoviesView: View {
         self.openFavorites = openFavorites
     }
 
+    private var hasActiveFilters: Bool {
+        let trimmedYear = viewModel.filterYear.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmedYear.isEmpty || viewModel.minRating > 0 || viewModel.selectedGenreID != nil
+    }
+
+    private var hasActiveSorting: Bool {
+        viewModel.sortOption != .titleAsc
+    }
+
+    private var searchResultCount: Int {
+        viewModel.filteredSearchResults.count
+    }
+
+    private var shouldShowFilterControl: Bool {
+        hasActiveFilters || searchResultCount > 0
+    }
+
+    private var shouldShowSortControl: Bool {
+        hasActiveSorting || searchResultCount > 1
+    }
+
     var body: some View {
         VStack(spacing: 2) {
             headerBar
@@ -78,13 +99,11 @@ struct MoviesView: View {
     }
 
     private var headerBar: some View {
-        HStack {
+        HStack(alignment: .center) {
             Image("AppLogo")
                 .resizable()
                 .scaledToFit()
                 .frame(height: 70)
-                .padding(.leading, -4)
-                .padding(.top, -12)
                 .accessibilityLabel(Localization.string("app.logo"))
 
             Spacer()
@@ -117,52 +136,51 @@ struct MoviesView: View {
 
     private var searchControlsRow: some View {
         HStack(spacing: 10) {
-            Button {
-                Task {
-                    await viewModel.loadGenresIfNeeded()
-                    isFilterSheetPresented = true
+            if shouldShowFilterControl {
+                Button {
+                    Task {
+                        await viewModel.loadGenresIfNeeded()
+                        isFilterSheetPresented = true
+                    }
+                } label: {
+                    SearchControlBubble(
+                        title: Localization.string("movies.filter.title"),
+                        systemImage: "line.3.horizontal.decrease.circle"
+                    )
                 }
-            } label: {
-                Label(Localization.string("movies.filter.title"), systemImage: "line.3.horizontal.decrease.circle")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .frame(height: AppDimension.controlHeight)
-                    .padding(.horizontal, 14)
-                    .background(AppPalette.cardBackground)
-                    .clipShape(Capsule())
+                .buttonStyle(.plain)
             }
 
-            Menu {
-                ForEach(MovieSortOption.allCases) { option in
-                    Button {
-                        viewModel.sortOption = option
-                    } label: {
-                        if viewModel.sortOption == option {
-                            Label(option.title, systemImage: "checkmark")
-                        } else {
-                            Text(option.title)
+            if shouldShowSortControl {
+                Menu {
+                    ForEach(MovieSortOption.allCases) { option in
+                        Button {
+                            viewModel.sortOption = option
+                        } label: {
+                            if viewModel.sortOption == option {
+                                Label(option.title, systemImage: "checkmark")
+                            } else {
+                                Text(option.title)
+                            }
                         }
                     }
-                }
 
-                Divider()
+                    Divider()
 
-                Button(Localization.string("movies.sort.reset")) {
-                    viewModel.sortOption = .titleAsc
+                    Button(Localization.string("movies.sort.reset")) {
+                        viewModel.sortOption = .titleAsc
+                    }
+                } label: {
+                    SearchControlBubble(
+                        title: Localization.string("movies.sort.title"),
+                        systemImage: "arrow.up.arrow.down.circle"
+                    )
                 }
-            } label: {
-                Label(Localization.string("movies.sort.title"), systemImage: "arrow.up.arrow.down.circle")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .frame(height: AppDimension.controlHeight)
-                    .padding(.horizontal, 14)
-                    .background(AppPalette.cardBackground)
-                    .clipShape(Capsule())
             }
 
             Spacer()
 
-            Text(Localization.string("movies.results.count", viewModel.filteredSearchResults.count))
+            Text(Localization.string("movies.results.count", searchResultCount))
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
         }
@@ -248,7 +266,8 @@ struct MoviesView: View {
                 title: Localization.string("movies.message.noResults.title"),
                 message: Localization.string("movies.message.noResults.body", viewModel.query),
                 buttonTitle: nil,
-                action: nil
+                action: nil,
+                animationName: "404"
             )
         case let .error(message):
             MoviesMessageView(
@@ -268,7 +287,8 @@ struct MoviesView: View {
         title: String,
         message: String,
         buttonTitle: String?,
-        action: (() -> Void)?
+        action: (() -> Void)?,
+        animationName: String? = nil
     ) -> some View {
         VStack {
             Spacer(minLength: AppSpacing.xxl)
@@ -277,7 +297,8 @@ struct MoviesView: View {
                 title: title,
                 message: message,
                 buttonTitle: buttonTitle,
-                action: action
+                action: action,
+                animationName: animationName
             )
             .frame(maxWidth: 380)
 
@@ -321,18 +342,54 @@ struct MoviesView: View {
     }
 }
 
+private struct SearchControlBubble: View {
+    let title: String
+    let systemImage: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.caption.weight(.bold))
+                .frame(width: 18, height: 18)
+                .padding(8)
+                .foregroundStyle(.primary)
+                .background(
+                    Circle()
+                        .fill(Color.primary.opacity(0.06))
+                )
+
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+        }
+        .foregroundStyle(.primary)
+        .frame(height: AppDimension.controlHeight)
+        .padding(.horizontal, 10)
+        .background(
+            Capsule()
+                .fill(AppPalette.cardBackground)
+        )
+        .overlay(
+            Capsule()
+                .stroke(AppPalette.border, lineWidth: 1)
+        )
+    }
+}
+
 private struct MovieSearchEmptyStateView: View {
     let title: String
     let message: String
     let buttonTitle: String?
     let action: (() -> Void)?
+    let animationName: String?
 
     var body: some View {
         MoviesMessageView(
             title: title,
             message: message,
             buttonTitle: buttonTitle,
-            action: action
+            action: action,
+            animationName: animationName
         )
         .frame(maxWidth: .infinity)
     }

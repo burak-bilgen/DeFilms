@@ -51,10 +51,17 @@
 "auth.confirmPassword" = "Şifre Tekrar";
 "auth.currentPassword" = "Mevcut Şifre";
 "auth.newPassword" = "Yeni Şifre";
+"auth.placeholder.email" = "ornek@mail.com";
+"auth.placeholder.password" = "Şifreni gir";
+"auth.placeholder.newPassword" = "Yeni bir şifre oluştur";
+"auth.password.show" = "Şifreyi göster";
+"auth.password.hide" = "Şifreyi gizle";
+"auth.form.requiredHint" = "Devam etmek için gerekli alanları doldur.";
 "auth.error.generic" = "Bir hata oluştu.";
 "auth.error.emptyFields" = "Lütfen gerekli alanların tamamını doldur.";
 "auth.error.invalidEmail" = "Geçerli bir e-posta adresi gir.";
 "auth.error.weakPassword" = "Şifre en az 6 karakter olmalıdır.";
+"auth.error.invalidPasswordFormat" = "Şifre en az 8 karakter olmalı; büyük harf, küçük harf ve rakam içermeli, boşluk içermemelidir.";
 "auth.error.passwordMismatch" = "Şifreler eşleşmiyor.";
 "auth.error.accountExists" = "Bu e-posta için zaten bir hesap mevcut.";
 "auth.error.accountNotFound" = "Bu e-posta için bir hesap bulunamadı.";
@@ -62,6 +69,20 @@
 "auth.error.currentPasswordIncorrect" = "Mevcut şifren yanlış.";
 "auth.error.newPasswordMustDiffer" = "Yeni şifre mevcut şifreden farklı olmalıdır.";
 "auth.error.notSignedIn" = "Devam etmek için giriş yapmalısın.";
+
+"onboarding.eyebrow" = "ÖZENLE SEÇİLMİŞ";
+"onboarding.title" = "Sıradaki filmini gürültü olmadan bul.";
+"onboarding.subtitle" = "Öne çıkan yapımları keşfet, kendi listelerini oluştur ve film detaylarına daha temiz bir deneyimle ulaş.";
+"onboarding.stat.discovery" = "Hızlı keşif";
+"onboarding.stat.watchlist" = "Özel listeler";
+"onboarding.feature.discovery.title" = "Doğru filmi daha hızlı keşfet";
+"onboarding.feature.discovery.body" = "Popüler, trend, en beğenilen ve yakında gelecek yapımlar karar vermeni kolaylaştıracak şekilde düzenlenir.";
+"onboarding.feature.curation.title" = "Filtrele, sırala, karşılaştır";
+"onboarding.feature.curation.body" = "Ada göre ara, tür veya yıla göre daralt, detayları akışını bozmadan incele.";
+"onboarding.feature.account.title" = "Deneyimini kişisel tut";
+"onboarding.feature.account.body" = "Hızlı başlamak için misafir olarak devam et ya da favorilerini hesabına özel tutmak için giriş yap.";
+"onboarding.action.guest" = "Misafir Olarak Devam Et";
+"onboarding.footnote" = "Daha sonra Ayarlar içinden giriş yapabilir veya hesap oluşturabilirsin.";
 
 "favorites.title" = "Favoriler";
 "favorites.navigate" = "Favorileri aç";
@@ -88,6 +109,7 @@
 "favorites.picker.placeholder" = "Liste adı";
 "favorites.picker.empty" = "Henüz liste yok. Bu filmi kaydetmek için bir tane oluştur.";
 "favorites.picker.newList" = "Yeni Liste Oluştur";
+"favorites.form.requiredHint" = "Devam etmek için bir liste adı gir.";
 "favorites.create.title" = "Yeni Liste";
 "favorites.create.heading" = "Favori listesi oluştur";
 "favorites.create.subtitle.empty" = "Bir liste oluştur, favoriler ekranında hemen görünsün.";
@@ -147,6 +169,7 @@
 "movies.accessibility.searchField" = "Film arama alanı";
 "movies.accessibility.clearSearch" = "Arama metnini temizle";
 "movies.accessibility.recentSearch" = "Son arama, %@";
+"movies.accessibility.cardSummary" = "%@, %@";
 "movies.accessibility.openDetails" = "Detayları aç";
 "movies.message.contentUnavailable.title" = "İçerik Kullanılamıyor";
 "movies.message.noResults.title" = "Sonuç Yok";

@@ -11,6 +11,10 @@ struct MoviesSearchBar: View {
     let onSubmit: () -> Void
     let onClear: () -> Void
 
+    private var trimmedText: String {
+        text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     var body: some View {
         HStack(spacing: AppSpacing.sm) {
             HStack(spacing: AppSpacing.sm) {
@@ -44,14 +48,15 @@ struct MoviesSearchBar: View {
             .frame(maxWidth: .infinity)
             .frame(height: AppDimension.controlHeight)
             .padding(.horizontal, 16)
-            .background(AppPalette.cardBackground)
+            .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
 
             Button(Localization.string("movies.search.action")) {
                 onSubmit()
             }
-            .frame(width: 78)
             .buttonStyle(PrimaryProminentButtonStyle())
+            .disabled(trimmedText.isEmpty)
+            .opacity(trimmedText.isEmpty ? 0.5 : 1)
             .accessibilityIdentifier("movies.search.submitButton")
         }
         .padding(AppSpacing.xxs + 2)

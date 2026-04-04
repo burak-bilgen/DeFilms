@@ -51,10 +51,17 @@
 "auth.confirmPassword" = "Confirm Password";
 "auth.currentPassword" = "Current Password";
 "auth.newPassword" = "New Password";
+"auth.placeholder.email" = "example@mail.com";
+"auth.placeholder.password" = "Enter your password";
+"auth.placeholder.newPassword" = "Create a new password";
+"auth.password.show" = "Show password";
+"auth.password.hide" = "Hide password";
+"auth.form.requiredHint" = "Fill in the required fields to continue.";
 "auth.error.generic" = "Something went wrong.";
 "auth.error.emptyFields" = "Please fill in all required fields.";
 "auth.error.invalidEmail" = "Please enter a valid email address.";
 "auth.error.weakPassword" = "Password must be at least 6 characters.";
+"auth.error.invalidPasswordFormat" = "Password must be at least 8 characters and include uppercase, lowercase, and a number, with no spaces.";
 "auth.error.passwordMismatch" = "Passwords do not match.";
 "auth.error.accountExists" = "An account already exists for this email.";
 "auth.error.accountNotFound" = "No account was found for this email.";
@@ -62,6 +69,20 @@
 "auth.error.currentPasswordIncorrect" = "Your current password is incorrect.";
 "auth.error.newPasswordMustDiffer" = "Your new password must be different from the current password.";
 "auth.error.notSignedIn" = "You must be signed in to continue.";
+
+"onboarding.eyebrow" = "CINEMA, CURATED";
+"onboarding.title" = "Find your next film without the noise.";
+"onboarding.subtitle" = "Browse what matters, save personal lists, and jump into movie details with a cleaner, more focused experience.";
+"onboarding.stat.discovery" = "Fresh discovery";
+"onboarding.stat.watchlist" = "Private lists";
+"onboarding.feature.discovery.title" = "Explore the right titles faster";
+"onboarding.feature.discovery.body" = "Popular, trending, top rated, and upcoming picks are organized to help you decide quickly.";
+"onboarding.feature.curation.title" = "Filter, sort, and compare";
+"onboarding.feature.curation.body" = "Search by title, refine by genre or year, and scan details without losing your flow.";
+"onboarding.feature.account.title" = "Keep your space personal";
+"onboarding.feature.account.body" = "Use guest mode for a quick start, or sign in to keep favorites separated for your account.";
+"onboarding.action.guest" = "Continue as Guest";
+"onboarding.footnote" = "You can sign in or create an account later from Settings.";
 
 "favorites.title" = "Favorites";
 "favorites.navigate" = "Open favorites";
@@ -88,6 +109,7 @@
 "favorites.picker.placeholder" = "List name";
 "favorites.picker.empty" = "No lists yet. Create one to save this movie.";
 "favorites.picker.newList" = "Create New List";
+"favorites.form.requiredHint" = "Enter a list name to continue.";
 "favorites.create.title" = "New List";
 "favorites.create.heading" = "Create a favorite list";
 "favorites.create.subtitle.empty" = "Build a list and it will appear on your favorites screen.";
@@ -147,6 +169,7 @@
 "movies.accessibility.searchField" = "Movie search field";
 "movies.accessibility.clearSearch" = "Clear search text";
 "movies.accessibility.recentSearch" = "Recent search, %@";
+"movies.accessibility.cardSummary" = "%@, %@";
 "movies.accessibility.openDetails" = "Open details";
 "movies.message.contentUnavailable.title" = "Content Unavailable";
 "movies.message.noResults.title" = "No Results";

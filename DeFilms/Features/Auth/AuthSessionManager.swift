@@ -94,21 +94,19 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
     func signUp(email: String, password: String, confirmPassword: String) throws {
         let emailAddress = normalize(email: email)
-        let passwordText = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let passwordText = password.filter { !$0.isWhitespace }
 
         guard !emailAddress.isEmpty, !passwordText.isEmpty else {
             throw AuthError.emptyFields
         }
 
-        guard emailAddress.contains("@") else {
+        guard isValidEmail(emailAddress) else {
             throw AuthError.invalidEmail
         }
 
-        guard passwordText.count >= 6 else {
-            throw AuthError.weakPassword
-        }
+        try validatePassword(passwordText)
 
-        guard passwordText == confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines) else {
+        guard passwordText == confirmPassword.filter({ !$0.isWhitespace }) else {
             throw AuthError.passwordMismatch
         }
 
@@ -131,13 +129,13 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
     func signIn(email: String, password: String) throws {
         let emailAddress = normalize(email: email)
-        let passwordText = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let passwordText = password.filter { !$0.isWhitespace }
 
         guard !emailAddress.isEmpty, !passwordText.isEmpty else {
             throw AuthError.emptyFields
         }
 
-        guard emailAddress.contains("@") else {
+        guard isValidEmail(emailAddress) else {
             throw AuthError.invalidEmail
         }
 
@@ -159,9 +157,9 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             throw AuthError.notSignedIn
         }
 
-        let currentPassword = currentPassword.trimmingCharacters(in: .whitespacesAndNewlines)
-        let newPassword = newPassword.trimmingCharacters(in: .whitespacesAndNewlines)
-        let confirmedPassword = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+        let currentPassword = currentPassword.filter { !$0.isWhitespace }
+        let newPassword = newPassword.filter { !$0.isWhitespace }
+        let confirmedPassword = confirmPassword.filter { !$0.isWhitespace }
 
         guard !currentPassword.isEmpty, !newPassword.isEmpty, !confirmedPassword.isEmpty else {
             throw AuthError.emptyFields
@@ -180,9 +178,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             throw AuthError.newPasswordMustDiffer
         }
 
-        guard newPassword.count >= 6 else {
-            throw AuthError.weakPassword
-        }
+        try validatePassword(newPassword)
 
         guard newPassword == confirmedPassword else {
             throw AuthError.passwordMismatch
@@ -285,9 +281,26 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
+    private func isValidEmail(_ email: String) -> Bool {
+        let pattern = #"^[A-Z0-9a-z._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"#
+        return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: email)
+    }
+
     private func hash(password: String) -> String {
         let data = Data(password.utf8)
         return SHA256.hash(data: data).compactMap { String(format: "%02x", $0) }.joined()
+    }
+
+    private func validatePassword(_ password: String) throws {
+        let hasMinimumLength = password.count >= 8
+        let hasUppercase = password.contains(where: \.isUppercase)
+        let hasLowercase = password.contains(where: \.isLowercase)
+        let hasDigit = password.contains(where: \.isNumber)
+        let hasWhitespace = password.contains(where: \.isWhitespace)
+
+        guard hasMinimumLength, hasUppercase, hasLowercase, hasDigit, !hasWhitespace else {
+            throw AuthError.invalidPasswordFormat
+        }
     }
 }
 
@@ -296,6 +309,7 @@ enum AuthError: Error, LocalizedError, Equatable {
     case emptyFields
     case invalidEmail
     case weakPassword
+    case invalidPasswordFormat
     case passwordMismatch
     case accountExists
     case accountNotFound
@@ -312,6 +326,8 @@ enum AuthError: Error, LocalizedError, Equatable {
             return Localization.string("auth.error.invalidEmail")
         case .weakPassword:
             return Localization.string("auth.error.weakPassword")
+        case .invalidPasswordFormat:
+            return Localization.string("auth.error.invalidPasswordFormat")
         case .passwordMismatch:
             return Localization.string("auth.error.passwordMismatch")
         case .accountExists:
