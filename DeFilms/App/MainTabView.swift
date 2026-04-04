@@ -8,16 +8,26 @@
 import SwiftUI
 
 struct MainTabView: View {
+    let container: AppContainer
+    let favoritesStore: FavoritesStore
+
     @EnvironmentObject private var preferences: AppPreferences
-    @EnvironmentObject private var favoritesStore: FavoritesStore
     @State private var selection: Tab = .movies
     @StateObject private var movieCoordinator = NavigationCoordinator<MovieRoute>()
     @StateObject private var favoritesCoordinator = NavigationCoordinator<FavoritesRoute>()
-    @StateObject private var moviesViewModel = MovieSearchViewModel(
-        networkService: NetworkManager.shared,
-        recentSearchRepository: RecentSearchRepository.shared,
-        sessionManager: AuthSessionManager.shared
-    )
+    @StateObject private var moviesViewModel: MovieSearchViewModel
+    @StateObject private var favoritesViewModel: FavoritesViewModel
+
+    init(container: AppContainer, favoritesStore: FavoritesStore) {
+        self.container = container
+        self.favoritesStore = favoritesStore
+        _moviesViewModel = StateObject(wrappedValue: container.makeMovieSearchViewModel())
+        _favoritesViewModel = StateObject(
+            wrappedValue: container.makeFavoritesViewModel(
+                favoritesStore: favoritesStore
+            )
+        )
+    }
 
     var body: some View {
         TabView(selection: $selection) {
@@ -31,7 +41,10 @@ struct MainTabView: View {
                 .navigationDestination(for: MovieRoute.self) { route in
                     switch route {
                     case let .detail(movie):
-                        MovieDetailView(movie: movie)
+                        MovieDetailView(
+                            movie: movie,
+                            networkService: container.networkService
+                        )
                     }
                 }
             }
@@ -42,18 +55,23 @@ struct MainTabView: View {
                 }
 
             NavigationStack(path: $favoritesCoordinator.path) {
-                FavoritesView(viewModel: FavoritesViewModel(favoritesStore: favoritesStore))
+                FavoritesView(
+                    viewModel: favoritesViewModel
+                )
                     .navigationDestination(for: FavoritesRoute.self) { route in
                         switch route {
                         case let .list(listID):
                             FavoriteListDetailView(
-                                viewModel: FavoriteListDetailViewModel(
+                                viewModel: container.makeFavoriteListDetailViewModel(
                                     listID: listID,
                                     favoritesStore: favoritesStore
                                 )
                             )
                         case let .movie(movie):
-                            MovieDetailView(movie: movie)
+                            MovieDetailView(
+                                movie: movie,
+                                networkService: container.networkService
+                            )
                         }
                     }
             }
@@ -63,7 +81,7 @@ struct MainTabView: View {
                     Label(Localization.string("tab.favorites"), systemImage: selection == .favorites ? "rectangle.stack.badge.play.fill" : "rectangle.stack.badge.play")
                 }
 
-            SettingsView()
+            SettingsView(viewModel: container.makeSettingsViewModel())
                 .tag(Tab.settings)
                 .tabItem {
                     Label(Localization.string("tab.settings"), systemImage: selection == .settings ? "gearshape.fill" : "gearshape")

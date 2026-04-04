@@ -10,6 +10,7 @@ import Foundation
 
 @main
 struct DeFilmsApp: App {
+    private let container: AppContainer
     @StateObject private var preferences: AppPreferences
     @StateObject private var sessionManager: AuthSessionManager
     @StateObject private var favoritesStore: FavoritesStore
@@ -17,24 +18,24 @@ struct DeFilmsApp: App {
     private let persistenceController = PersistenceController.shared
 
     init() {
+        let container = AppContainer()
         let preferences = AppPreferences()
-        let authManager = AuthSessionManager.shared
-        let toastCenter = ToastCenter.shared
+        let authManager = container.sessionManager
+        let toastCenter = container.toastCenter
+        self.container = container
         _preferences = StateObject(wrappedValue: preferences)
         _sessionManager = StateObject(wrappedValue: authManager)
         _toastCenter = StateObject(wrappedValue: toastCenter)
-        _favoritesStore = StateObject(
-            wrappedValue: FavoritesStore(
-                repository: FavoritesRepository.shared,
-                sessionManager: authManager
-            )
-        )
+        _favoritesStore = StateObject(wrappedValue: container.makeFavoritesStore())
         AppLogger.log("Application configured", category: .app, level: .success)
     }
 
     var body: some Scene {
         WindowGroup {
-            AppEntryView()
+            AppEntryView(
+                container: container,
+                favoritesStore: favoritesStore
+            )
                 .environment(\.managedObjectContext, persistenceController.viewContext)
                 .environment(\.locale, preferences.locale)
                 .environment(\.layoutDirection, preferences.layoutDirection)

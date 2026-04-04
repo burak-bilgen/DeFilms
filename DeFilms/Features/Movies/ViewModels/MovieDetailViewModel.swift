@@ -19,6 +19,7 @@ final class MovieDetailViewModel: ObservableObject {
     @Published private(set) var similarMovies: [Movie] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
+    @Published private(set) var toastItem: ToastItem?
     @Published var isTrailerPresented = false
 
     let movie: Movie
@@ -139,7 +140,7 @@ final class MovieDetailViewModel: ObservableObject {
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.detail.error")
             errorMessage = message
-            ToastCenter.shared.showError(message)
+            toastItem = .error(message)
             AppLogger.log("Detail load failed for movie \(movie.id)", category: .movie, level: .error)
         }
 
@@ -148,11 +149,15 @@ final class MovieDetailViewModel: ObservableObject {
 
     func presentTrailer() {
         guard hasTrailer else {
-            ToastCenter.shared.showError(Localization.string("movies.detail.trailer.missing"))
+            toastItem = .error(Localization.string("movies.detail.trailer.missing"))
             return
         }
 
         isTrailerPresented = true
+    }
+
+    func clearToast() {
+        toastItem = nil
     }
 
     private func loadImages() async {

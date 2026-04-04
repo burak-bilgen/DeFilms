@@ -13,12 +13,18 @@ struct AppEntryView: View {
         var id: Self { self }
     }
 
+    let container: AppContainer
+    let favoritesStore: FavoritesStore
     @EnvironmentObject private var preferences: AppPreferences
+    @EnvironmentObject private var sessionManager: AuthSessionManager
     @EnvironmentObject private var toastCenter: ToastCenter
     @State private var authDestination: AuthDestination?
 
     var body: some View {
-        MainTabView()
+        MainTabView(
+            container: container,
+            favoritesStore: favoritesStore
+        )
             .fullScreenCover(isPresented: onboardingBinding) {
                 OnboardingView(
                     continueAsGuest: dismissOnboarding,
@@ -44,6 +50,16 @@ struct AppEntryView: View {
                 .tint(.primary)
                 .toast(item: $toastCenter.item, duration: 1.8)
             }
+            .onChange(of: sessionManager.toastItem?.id) { _ in
+                relayToast(from: sessionManager.toastItem) {
+                    sessionManager.clearToast()
+                }
+            }
+            .onChange(of: favoritesStore.toastItem?.id) { _ in
+                relayToast(from: favoritesStore.toastItem) {
+                    favoritesStore.clearToast()
+                }
+            }
     }
 
     private var onboardingBinding: Binding<Bool> {
@@ -59,6 +75,12 @@ struct AppEntryView: View {
 
     private func dismissOnboarding() {
         preferences.hasCompletedOnboarding = true
+    }
+
+    private func relayToast(from item: ToastItem?, onConsumed: () -> Void) {
+        guard let item else { return }
+        toastCenter.show(message: item.message, style: item.style)
+        onConsumed()
     }
 }
 

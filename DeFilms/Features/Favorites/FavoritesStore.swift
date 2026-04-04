@@ -12,6 +12,7 @@ import SwiftUI
 @MainActor
 final class FavoritesStore: ObservableObject {
     @Published private(set) var lists: [FavoriteList] = []
+    @Published private(set) var toastItem: ToastItem?
 
     private let repository: FavoritesRepositoryProtocol
     private let sessionManager: AuthSessionManager
@@ -47,11 +48,11 @@ final class FavoritesStore: ObservableObject {
             let list = try repository.createList(named: trimmed, userIdentifier: currentUserIdentifier)
             reloadLists()
             AppLogger.log("Created favorite list: \(trimmed)", category: .favorites, level: .success)
-            ToastCenter.shared.showSuccess(Localization.string("favorites.toast.listCreated"))
+            toastItem = .success(Localization.string("favorites.toast.listCreated"))
             return list
         } catch {
             AppLogger.log("Failed to create favorite list", category: .favorites, level: .error)
-            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            toastItem = .error(Localization.string("favorites.toast.genericError"))
             return nil
         }
     }
@@ -63,7 +64,7 @@ final class FavoritesStore: ObservableObject {
             AppLogger.log("Added movie \(movie.id) to favorites", category: .favorites, level: .success)
         } catch {
             AppLogger.log("Failed to add movie \(movie.id) to favorites", category: .favorites, level: .error)
-            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            toastItem = .error(Localization.string("favorites.toast.genericError"))
             return
         }
     }
@@ -75,7 +76,7 @@ final class FavoritesStore: ObservableObject {
             AppLogger.log("Removed movie \(movieID) from list \(listID.uuidString)", category: .favorites, level: .success)
         } catch {
             AppLogger.log("Failed to remove movie \(movieID) from list", category: .favorites, level: .error)
-            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            toastItem = .error(Localization.string("favorites.toast.genericError"))
             return
         }
     }
@@ -85,17 +86,17 @@ final class FavoritesStore: ObservableObject {
         guard !trimmed.isEmpty else { return false }
 
         if let existingList = existingList(named: trimmed), existingList.id != listID {
-            ToastCenter.shared.showError(Localization.string("favorites.toast.duplicateList"))
+            toastItem = .error(Localization.string("favorites.toast.duplicateList"))
             return false
         }
 
         do {
             try repository.renameList(listID: listID, name: trimmed, userIdentifier: currentUserIdentifier)
             reloadLists()
-            ToastCenter.shared.showSuccess(Localization.string("favorites.toast.listRenamed"))
+            toastItem = .success(Localization.string("favorites.toast.listRenamed"))
             return true
         } catch {
-            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            toastItem = .error(Localization.string("favorites.toast.genericError"))
             return false
         }
     }
@@ -104,9 +105,9 @@ final class FavoritesStore: ObservableObject {
         do {
             try repository.deleteList(listID: listID, userIdentifier: currentUserIdentifier)
             reloadLists()
-            ToastCenter.shared.showSuccess(Localization.string("favorites.toast.listDeleted"))
+            toastItem = .success(Localization.string("favorites.toast.listDeleted"))
         } catch {
-            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            toastItem = .error(Localization.string("favorites.toast.genericError"))
         }
     }
 
@@ -119,10 +120,14 @@ final class FavoritesStore: ObservableObject {
                 userIdentifier: currentUserIdentifier
             )
             reloadLists()
-            ToastCenter.shared.showSuccess(Localization.string("favorites.toast.movieMoved"))
+            toastItem = .success(Localization.string("favorites.toast.movieMoved"))
         } catch {
-            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            toastItem = .error(Localization.string("favorites.toast.genericError"))
         }
+    }
+
+    func clearToast() {
+        toastItem = nil
     }
 
     func isMovieInAnyList(movieID: Int) -> Bool {

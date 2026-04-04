@@ -12,12 +12,18 @@ struct MovieDetailView: View {
 
     @StateObject private var viewModel: MovieDetailViewModel
     @EnvironmentObject private var preferences: AppPreferences
+    @EnvironmentObject private var toastCenter: ToastCenter
     @Environment(\.colorScheme) private var colorScheme
     @State private var scrollOffset: CGFloat = 0
 
-    init(movie: Movie) {
+    init(movie: Movie, networkService: NetworkServiceProtocol) {
         self.movie = movie
-        _viewModel = StateObject(wrappedValue: MovieDetailViewModel(movie: movie, networkService: NetworkManager.shared))
+        _viewModel = StateObject(
+            wrappedValue: MovieDetailViewModel(
+                movie: movie,
+                networkService: networkService
+            )
+        )
     }
 
     var body: some View {
@@ -111,6 +117,9 @@ struct MovieDetailView: View {
                     .ignoresSafeArea()
             }
         }
+        .onChange(of: viewModel.toastItem?.id) { _ in
+            relayToast(from: viewModel.toastItem)
+        }
     }
 
     private var scrollOffsetReader: some View {
@@ -138,6 +147,12 @@ struct MovieDetailView: View {
 
     private var bottomBackgroundColor: Color {
         colorScheme == .dark ? Color.black : Color(.systemBackground)
+    }
+
+    private func relayToast(from item: ToastItem?) {
+        guard let item else { return }
+        toastCenter.show(message: item.message, style: item.style)
+        viewModel.clearToast()
     }
 }
 

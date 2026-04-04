@@ -25,6 +25,18 @@ struct ToastItem: Identifiable, Equatable {
     let id = UUID()
     let message: String
     let style: Style
+
+    static func info(_ message: String) -> Self {
+        ToastItem(message: message, style: .info)
+    }
+
+    static func success(_ message: String) -> Self {
+        ToastItem(message: message, style: .success)
+    }
+
+    static func error(_ message: String) -> Self {
+        ToastItem(message: message, style: .error)
+    }
 }
 
 struct ToastView: View {

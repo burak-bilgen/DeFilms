@@ -14,6 +14,7 @@ struct MoviesView: View {
     @State private var isFilterSheetPresented = false
     @FocusState private var isSearchFocused: Bool
     @EnvironmentObject private var preferences: AppPreferences
+    @EnvironmentObject private var toastCenter: ToastCenter
 
     private let searchColumns = [
         GridItem(.adaptive(minimum: AppDimension.posterRailWidth, maximum: AppDimension.posterRailWidth), spacing: AppSpacing.xxxl, alignment: .top)
@@ -104,6 +105,9 @@ struct MoviesView: View {
                 MovieFilterSheet(viewModel: viewModel)
             }
             .presentationDetents([.medium, .large])
+        }
+        .onChange(of: viewModel.toastItem?.id) { _ in
+            relayToast(from: viewModel.toastItem)
         }
     }
 
@@ -371,6 +375,12 @@ struct MoviesView: View {
         default:
             return sectionID
         }
+    }
+
+    private func relayToast(from item: ToastItem?) {
+        guard let item else { return }
+        toastCenter.show(message: item.message, style: item.style)
+        viewModel.clearToast()
     }
 }
 

@@ -8,12 +8,16 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @StateObject private var viewModel = SettingsViewModel()
+    @StateObject private var viewModel: SettingsViewModel
 
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var sessionManager: AuthSessionManager
 
     @State private var showLogoutConfirmation = false
+
+    init(viewModel: SettingsViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {
@@ -37,9 +41,6 @@ struct SettingsView: View {
         }
         .id(preferences.interfaceLayoutID)
         .environment(\.layoutDirection, preferences.layoutDirection)
-        .task {
-            viewModel.bind(sessionManager: sessionManager)
-        }
     }
 
     private var appearanceSection: some View {

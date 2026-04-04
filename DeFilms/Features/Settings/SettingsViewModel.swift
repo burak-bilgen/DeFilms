@@ -11,9 +11,14 @@ import Foundation
 @MainActor
 final class SettingsViewModel: ObservableObject {
     private let bundle: Bundle
+    private weak var sessionManager: AuthSessionManaging?
 
-    init(bundle: Bundle = .main) {
+    init(
+        bundle: Bundle = .main,
+        sessionManager: AuthSessionManaging? = nil
+    ) {
         self.bundle = bundle
+        self.sessionManager = sessionManager
     }
 
     var appVersionText: String {
@@ -24,12 +29,6 @@ final class SettingsViewModel: ObservableObject {
 
     var signedInEmail: String? {
         sessionManager?.session?.email
-    }
-
-    private weak var sessionManager: AuthSessionManaging?
-
-    func bind(sessionManager: AuthSessionManaging) {
-        self.sessionManager = sessionManager
     }
 
     func signOut() {

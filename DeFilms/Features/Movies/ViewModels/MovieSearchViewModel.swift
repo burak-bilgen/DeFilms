@@ -42,6 +42,7 @@ final class MovieSearchViewModel: ObservableObject {
     @Published private(set) var genres: [MovieGenre] = []
     @Published private(set) var screenState: MoviesScreenState = .browse
     @Published private(set) var searchHistory: [String] = []
+    @Published private(set) var toastItem: ToastItem?
     @Published var errorMessage: String?
 
     private let networkService: NetworkServiceProtocol
@@ -161,7 +162,7 @@ final class MovieSearchViewModel: ObservableObject {
             searchResults = []
             isSearchActive = false
             screenState = .browse
-            ToastCenter.shared.showError(message)
+            toastItem = .error(message)
             return
         }
 
@@ -190,7 +191,7 @@ final class MovieSearchViewModel: ObservableObject {
             searchResults = []
             resetSearchPagination()
             screenState = .error(message: message)
-            ToastCenter.shared.showError(message)
+            toastItem = .error(message)
             AppLogger.log("Search failed for '\(searchText)'", category: .search, level: .error)
         }
     }
@@ -244,7 +245,7 @@ final class MovieSearchViewModel: ObservableObject {
             try recentSearchRepository.clearRecentSearches(for: sessionManager.currentUserIdentifier)
             searchHistory = []
         } catch {
-            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+            toastItem = .error(Localization.string("favorites.toast.genericError"))
         }
     }
 
@@ -258,7 +259,7 @@ final class MovieSearchViewModel: ObservableObject {
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.filter.error")
             errorMessage = message
-            ToastCenter.shared.showError(message)
+            toastItem = .error(message)
             AppLogger.log("Genre loading failed", category: .movie, level: .error)
         }
     }
@@ -297,9 +298,13 @@ final class MovieSearchViewModel: ObservableObject {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.browse.error")
             errorMessage = message
             screenState = .error(message: message)
-            ToastCenter.shared.showError(message)
+            toastItem = .error(message)
             AppLogger.log("Browse loading failed", category: .movie, level: .error)
         }
+    }
+
+    func clearToast() {
+        toastItem = nil
     }
 
     private func loadHistory() {

@@ -56,6 +56,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
     static let shared = AuthSessionManager(keychainService: KeychainService.shared)
 
     @Published private(set) var session: AuthSession?
+    @Published private(set) var toastItem: ToastItem?
 
     private let keychainService: KeychainServicing
     private let accountsKey = "auth.accounts"
@@ -199,7 +200,11 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         }
         session = nil
         AppLogger.log("User signed out", category: .auth, level: .success)
-        ToastCenter.shared.showSuccess(Localization.string("auth.toast.signedOut"))
+        toastItem = .success(Localization.string("auth.toast.signedOut"))
+    }
+
+    func clearToast() {
+        toastItem = nil
     }
 
     private func restoreSession() {

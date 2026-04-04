@@ -23,9 +23,7 @@ final class DeFilmsTests: XCTestCase {
 
     func testSettingsViewModelSignsOutThroughBoundSession() {
         let sessionManager = MockBoundAuthSessionManager()
-        let viewModel = SettingsViewModel()
-
-        viewModel.bind(sessionManager: sessionManager)
+        let viewModel = SettingsViewModel(sessionManager: sessionManager)
         viewModel.signOut()
 
         XCTAssertTrue(sessionManager.didSignOut)
