@@ -21,8 +21,6 @@ struct OnboardingView: View {
                     actionStack
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 22)
-                .padding(.bottom, 28)
             }
         }
         .statusBarHidden()
@@ -108,12 +106,13 @@ struct OnboardingView: View {
             .font(.subheadline.weight(.semibold))
             .foregroundStyle(Color.primary.opacity(0.72))
             .padding(.top, 15)
+            
+            Spacer(minLength: 50)
 
             Text(Localization.string("onboarding.footnote"))
                 .font(.footnote)
-                .foregroundStyle(Color.primary.opacity(0.55))
+                .foregroundStyle(Color.primary.opacity(0.35))
                 .multilineTextAlignment(.center)
-                .padding(.top, 2)
         }
         .padding(.top, 4)
     }
