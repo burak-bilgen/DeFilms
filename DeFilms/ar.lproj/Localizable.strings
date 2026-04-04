@@ -192,6 +192,8 @@
 "movies.detail.cast" = "طاقم التمثيل";
 "movies.detail.director" = "المخرج";
 "movies.detail.genres" = "الأنواع";
+"movies.detail.availableOn" = "متوفر على";
+"movies.detail.similar" = "أفلام مشابهة";
 "movies.detail.rating" = "التقييم %@";
 "movies.detail.info.release" = "الإصدار";
 "movies.detail.info.runtime" = "المدة";

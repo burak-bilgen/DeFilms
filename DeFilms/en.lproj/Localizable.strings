@@ -192,6 +192,8 @@
 "movies.detail.cast" = "Cast";
 "movies.detail.director" = "Director";
 "movies.detail.genres" = "Genres";
+"movies.detail.availableOn" = "Available On";
+"movies.detail.similar" = "Similar Movies";
 "movies.detail.rating" = "Rating %@";
 "movies.detail.info.release" = "RELEASE";
 "movies.detail.info.runtime" = "RUNTIME";

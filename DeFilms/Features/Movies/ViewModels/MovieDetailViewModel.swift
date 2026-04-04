@@ -206,6 +206,9 @@ final class MovieDetailViewModel: ObservableObject {
                 endpoint: TMDBEndpoint.movieWatchProviders(movieID: movie.id)
             )
             streamingPlatforms = preferredPlatforms(from: response.results)
+            Task {
+                await PosterImagePipeline.shared.prefetch(urls: streamingPlatforms.compactMap(\.logoURL))
+            }
         } catch {
             AppLogger.log("Watch providers load failed for movie \(movie.id)", category: .movie, level: .error)
         }
@@ -217,6 +220,13 @@ final class MovieDetailViewModel: ObservableObject {
                 endpoint: TMDBEndpoint.similarMovies(movieID: movie.id, page: 1)
             )
             similarMovies = Array(response.results.filter { $0.id != movie.id }.prefix(12))
+            Task {
+                await PosterImagePipeline.shared.prefetch(
+                    urls: similarMovies.flatMap { movie in
+                        [movie.posterURL, movie.backdropURL].compactMap { $0 }
+                    }
+                )
+            }
         } catch {
             AppLogger.log("Similar movies load failed for movie \(movie.id)", category: .movie, level: .error)
         }

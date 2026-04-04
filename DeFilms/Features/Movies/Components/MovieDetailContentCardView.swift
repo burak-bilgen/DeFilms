@@ -38,33 +38,6 @@ struct MovieDetailContentCardView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if !viewModel.directors.isEmpty {
-                MoviePeopleCarouselSection(
-                    title: Localization.string("movies.detail.director"),
-                    members: viewModel.directors
-                )
-            }
-
-            if !viewModel.cast.isEmpty {
-                MoviePeopleCarouselSection(
-                    title: Localization.string("movies.detail.cast"),
-                    members: viewModel.cast
-                )
-            }
-            
-            if !viewModel.streamingPlatforms.isEmpty {
-                MoviePlatformCarouselSection(
-                    title: Localization.string("movies.detail.availableOn"),
-                    platforms: viewModel.streamingPlatforms
-                )
-            }
-            
-            if !viewModel.similarMovies.isEmpty {
-                MovieDetailCarouselSection(
-                    title: Localization.string("movies.detail.similar"),
-                    movies: viewModel.similarMovies
-                )
-            }
         }
         .padding(AppSpacing.xl)
         .background(cardBackground)
@@ -159,9 +132,7 @@ struct MoviePeopleCarouselSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle(title)
-
+        MovieDetailCarouselCard(title: title) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 14) {
                     ForEach(people) { person in
@@ -174,9 +145,9 @@ struct MoviePeopleCarouselSection: View {
                         }
                     }
                 }
+                .padding(.horizontal, 18)
                 .padding(.vertical, 2)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
@@ -188,9 +159,7 @@ struct MoviePlatformCarouselSection: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle(title)
-
+        MovieDetailCarouselCard(title: title) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 14) {
                     ForEach(platforms) { platform in
@@ -202,7 +171,6 @@ struct MoviePlatformCarouselSection: View {
                 .padding(.horizontal, 18)
                 .padding(.vertical, 2)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
@@ -214,9 +182,7 @@ struct MovieDetailCarouselSection: View {
     let movies: [Movie]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle(title)
-
+        MovieDetailCarouselCard(title: title) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: AppSpacing.lg + 2) {
                     ForEach(movies) { movie in
@@ -229,6 +195,50 @@ struct MovieDetailCarouselSection: View {
                 .padding(.vertical, AppSpacing.xxs - 2)
             }
         }
+    }
+}
+
+private struct MovieDetailCarouselCard<Content: View>: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    let title: String
+    @ViewBuilder let content: Content
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(title)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .tracking(0.8)
+                .foregroundStyle(sectionTitleColor)
+                .padding(.horizontal, 4)
+
+            content
+        }
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.vertical, AppSpacing.lg)
+        .background(cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous)
+                .stroke(Color.primary.opacity(colorScheme == .dark ? 0.12 : 0.05), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.08), radius: 20, y: 10)
+        .padding(.horizontal, 18)
+    }
+
+    private var cardBackground: Color {
+        colorScheme == .dark
+            ? Color(red: 0.10, green: 0.11, blue: 0.14)
+            : Color(.systemBackground)
+    }
+
+    private var sectionTitleColor: Color {
+        colorScheme == .dark ? .white.opacity(0.46) : .black.opacity(0.46)
     }
 }
 

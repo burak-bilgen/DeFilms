@@ -177,6 +177,7 @@ final class MovieSearchViewModel: ObservableObject {
                 endpoint: TMDBEndpoint.searchMovie(query: searchText, page: 1)
             )
             applySearchPage(response, appendResults: false)
+            prefetchImages(for: response.results)
             lastExecutedSearchQuery = searchText
             lastLoadedLanguage = AppPreferences.persistedLanguage
             try recentSearchRepository.addSearch(searchText, for: sessionManager.currentUserIdentifier, limit: historyLimit)
@@ -280,6 +281,14 @@ final class MovieSearchViewModel: ObservableObject {
             upcomingMovies = try await upcoming
             nowPlayingMovies = try await nowPlaying
             topRatedMovies = try await topRated
+            prefetchImages(
+                for: trendingTodayMovies +
+                    trendingThisWeekMovies +
+                    popularMovies +
+                    upcomingMovies +
+                    nowPlayingMovies +
+                    topRatedMovies
+            )
             hasLoadedBrowseContent = true
             lastLoadedLanguage = AppPreferences.persistedLanguage
             screenState = .browse
@@ -329,6 +338,7 @@ final class MovieSearchViewModel: ObservableObject {
             )
 
             applySearchPage(response, appendResults: true)
+            prefetchImages(for: response.results)
         } catch {
             AppLogger.log("Pagination failed for '\(searchText)'", category: .search, level: .error)
         }
@@ -356,6 +366,16 @@ final class MovieSearchViewModel: ObservableObject {
             }
         } else {
             searchResults = response.results
+        }
+    }
+
+    private func prefetchImages(for movies: [Movie]) {
+        let urls = movies.flatMap { movie in
+            [movie.posterURL, movie.backdropURL].compactMap { $0 }
+        }
+
+        Task {
+            await PosterImagePipeline.shared.prefetch(urls: urls)
         }
     }
 }

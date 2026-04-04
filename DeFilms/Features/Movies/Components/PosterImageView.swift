@@ -15,12 +15,13 @@ struct PosterImageView: View {
 
     @State private var image: UIImage?
     @State private var isLoading: Bool
+    @State private var loadingTask: Task<Void, Never>?
 
     init(url: URL?, cornerRadius: CGFloat, placeholderSystemImage: String) {
         self.url = url
         self.cornerRadius = cornerRadius
         self.placeholderSystemImage = placeholderSystemImage
-        _isLoading = State(initialValue: url != nil)
+        _isLoading = State(initialValue: false)
     }
 
     var body: some View {
@@ -29,7 +30,7 @@ struct PosterImageView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .transition(.opacity)
+                    .transition(.opacity.combined(with: .scale(scale: 0.985)))
             } else if isLoading {
                 loadingPlaceholder
             } else {
@@ -39,6 +40,9 @@ struct PosterImageView: View {
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .task(id: url) {
             await loadImage()
+        }
+        .onDisappear {
+            loadingTask?.cancel()
         }
     }
 
@@ -57,57 +61,130 @@ struct PosterImageView: View {
 
     private func loadImage() async {
         guard let url else {
+            loadingTask?.cancel()
             image = nil
             isLoading = false
             return
         }
 
-        if let cachedImage = PosterImageMemoryCache.shared.image(for: url) {
-            image = cachedImage
+        if let cachedImage = await PosterImagePipeline.shared.cachedImage(for: url) {
+            loadingTask?.cancel()
+            withAnimation(.easeOut(duration: 0.2)) {
+                image = cachedImage
+            }
             isLoading = false
             return
         }
 
         image = nil
-        isLoading = true
-
-        do {
-            var request = URLRequest(url: url)
-            request.cachePolicy = .returnCacheDataElseLoad
-            request.timeoutInterval = 30
-
-            let (data, _) = try await URLSession.shared.data(for: request)
-
-            guard !Task.isCancelled, let loadedImage = UIImage(data: data) else {
-                isLoading = false
-                return
+        isLoading = false
+        loadingTask?.cancel()
+        loadingTask = Task {
+            try? await Task.sleep(nanoseconds: 140_000_000)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                if image == nil {
+                    isLoading = true
+                }
             }
+        }
 
-            PosterImageMemoryCache.shared.insert(loadedImage, for: url)
-            image = loadedImage
-        } catch {
+        guard let loadedImage = await PosterImagePipeline.shared.image(for: url) else {
+            loadingTask?.cancel()
+            isLoading = false
             image = nil
+            return
+        }
+
+        guard !Task.isCancelled else { return }
+
+        loadingTask?.cancel()
+        withAnimation(.easeOut(duration: 0.24)) {
+            image = loadedImage
         }
 
         isLoading = false
     }
 }
 
-private final class PosterImageMemoryCache {
-    static let shared = PosterImageMemoryCache()
+actor PosterImagePipeline {
+    static let shared = PosterImagePipeline()
 
     private let cache = NSCache<NSURL, UIImage>()
+    private var inFlightTasks: [URL: Task<UIImage?, Never>] = [:]
 
     private init() {
         cache.countLimit = 300
         cache.totalCostLimit = 80 * 1024 * 1024
     }
 
-    func image(for url: URL) -> UIImage? {
+    func cachedImage(for url: URL) -> UIImage? {
         cache.object(forKey: url as NSURL)
     }
 
-    func insert(_ image: UIImage, for url: URL) {
+    func image(for url: URL) async -> UIImage? {
+        if let cachedImage = cachedImage(for: url) {
+            return cachedImage
+        }
+
+        if let task = inFlightTasks[url] {
+            return await task.value
+        }
+
+        let task = Task<UIImage?, Never> {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .returnCacheDataElseLoad
+            request.timeoutInterval = 30
+
+            do {
+                let (data, _) = try await URLSession.shared.data(for: request)
+                guard let loadedImage = UIImage(data: data) else { return nil }
+                await self.insert(loadedImage, for: url)
+                return loadedImage
+            } catch {
+                return nil
+            }
+        }
+
+        inFlightTasks[url] = task
+        let image = await task.value
+        inFlightTasks[url] = nil
+        return image
+    }
+
+    func prefetch(urls: [URL]) {
+        for url in urls {
+            guard cachedImage(for: url) == nil, inFlightTasks[url] == nil else { continue }
+
+            let task = Task<UIImage?, Never> {
+                var request = URLRequest(url: url)
+                request.cachePolicy = .returnCacheDataElseLoad
+                request.timeoutInterval = 30
+
+                do {
+                    let (data, _) = try await URLSession.shared.data(for: request)
+                    guard let loadedImage = UIImage(data: data) else { return nil }
+                    await self.insert(loadedImage, for: url)
+                    return loadedImage
+                } catch {
+                    return nil
+                }
+            }
+
+            inFlightTasks[url] = task
+
+            Task {
+                _ = await task.value
+                await self.finishPrefetch(for: url)
+            }
+        }
+    }
+
+    private func finishPrefetch(for url: URL) async {
+        inFlightTasks[url] = nil
+    }
+
+    private func insert(_ image: UIImage, for url: URL) async {
         let cost = Int(image.size.width * image.size.height * image.scale * image.scale)
         cache.setObject(image, forKey: url as NSURL, cost: cost)
     }

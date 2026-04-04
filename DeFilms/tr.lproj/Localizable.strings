@@ -192,6 +192,8 @@
 "movies.detail.cast" = "Oyuncular";
 "movies.detail.director" = "Yönetmen";
 "movies.detail.genres" = "Türler";
+"movies.detail.availableOn" = "Yayında Olduğu Platformlar";
+"movies.detail.similar" = "Benzer Filmler";
 "movies.detail.rating" = "Puan %@";
 "movies.detail.info.release" = "YAYIN";
 "movies.detail.info.runtime" = "SÜRE";
