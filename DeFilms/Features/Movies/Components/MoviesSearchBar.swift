@@ -16,7 +16,7 @@ struct MoviesSearchBar: View {
     }
 
     var body: some View {
-        HStack(spacing: AppSpacing.sm) {
+        HStack(spacing: 6) {
             HStack(spacing: AppSpacing.sm) {
                 Image(systemName: "magnifyingglass")
                     .font(.subheadline.weight(.semibold))
@@ -47,7 +47,8 @@ struct MoviesSearchBar: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: AppDimension.controlHeight)
-            .padding(.horizontal, 16)
+            .padding(.leading, 16)
+            .padding(.trailing, 8)
             .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
 

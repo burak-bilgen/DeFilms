@@ -15,6 +15,8 @@ final class MovieDetailViewModel: ObservableObject {
     @Published private(set) var gallery: [MovieImageAsset] = []
     @Published private(set) var directors: [MovieCrewMember] = []
     @Published private(set) var cast: [MovieCastMember] = []
+    @Published private(set) var streamingPlatforms: [MovieStreamingPlatform] = []
+    @Published private(set) var similarMovies: [Movie] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
     @Published var isTrailerPresented = false
@@ -118,17 +120,21 @@ final class MovieDetailViewModel: ObservableObject {
         gallery = []
         directors = []
         cast = []
+        streamingPlatforms = []
+        similarMovies = []
 
         do {
             AppLogger.log("Loading detail for movie \(movie.id)", category: .movie)
             async let imagesTask: Void = loadImages()
             async let castTask: Void = loadCast()
             async let trailerTask: Void = loadTrailer()
+            async let providersTask: Void = loadWatchProviders()
+            async let similarMoviesTask: Void = loadSimilarMovies()
 
             detail = try await networkService.request(
                 endpoint: TMDBEndpoint.movieDetails(movieID: movie.id)
             )
-            _ = await (imagesTask, castTask, trailerTask)
+            _ = await (imagesTask, castTask, trailerTask, providersTask, similarMoviesTask)
             AppLogger.log("Loaded detail for movie \(movie.id)", category: .movie, level: .success)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.detail.error")
@@ -194,6 +200,28 @@ final class MovieDetailViewModel: ObservableObject {
         }
     }
 
+    private func loadWatchProviders() async {
+        do {
+            let response: MovieWatchProvidersResponse = try await networkService.request(
+                endpoint: TMDBEndpoint.movieWatchProviders(movieID: movie.id)
+            )
+            streamingPlatforms = preferredPlatforms(from: response.results)
+        } catch {
+            AppLogger.log("Watch providers load failed for movie \(movie.id)", category: .movie, level: .error)
+        }
+    }
+
+    private func loadSimilarMovies() async {
+        do {
+            let response: MovieResponse = try await networkService.request(
+                endpoint: TMDBEndpoint.similarMovies(movieID: movie.id, page: 1)
+            )
+            similarMovies = Array(response.results.filter { $0.id != movie.id }.prefix(12))
+        } catch {
+            AppLogger.log("Similar movies load failed for movie \(movie.id)", category: .movie, level: .error)
+        }
+    }
+
     private func selectPreferredTrailer(from videos: [MovieVideo]) -> MovieVideo? {
         let youtubeVideos = videos.filter { $0.watchURL != nil }
 
@@ -239,6 +267,40 @@ final class MovieDetailViewModel: ObservableObject {
         }
 
         directors = enrichedDirectors
+    }
+
+    private func preferredPlatforms(from results: [String: MovieWatchProviderRegion]) -> [MovieStreamingPlatform] {
+        let preferredRegions = [preferredRegionCode, "TR", "US"]
+        let region = preferredRegions
+            .compactMap { code in results[code] }
+            .first ?? results.values.first
+
+        guard let region else { return [] }
+
+        var seen = Set<Int>()
+        let providers = (region.flatrate ?? []) + (region.rent ?? []) + (region.buy ?? [])
+
+        return providers.compactMap { provider in
+            guard seen.insert(provider.providerID).inserted else { return nil }
+
+            return MovieStreamingPlatform(
+                id: provider.providerID,
+                name: provider.providerName,
+                logoURL: provider.logoURL,
+                linkURL: region.link
+            )
+        }
+    }
+
+    private var preferredRegionCode: String {
+        switch AppPreferences.persistedLanguage {
+        case .turkish:
+            return "TR"
+        case .arabic:
+            return "AE"
+        case .english:
+            return "US"
+        }
     }
 }
 

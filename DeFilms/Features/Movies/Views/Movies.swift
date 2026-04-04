@@ -30,7 +30,7 @@ struct MoviesView: View {
     }
 
     private var hasActiveSorting: Bool {
-        viewModel.sortOption != .titleAsc
+        viewModel.sortOption != .relevance
     }
 
     private var searchResultCount: Int {
@@ -45,6 +45,10 @@ struct MoviesView: View {
         hasActiveSorting || searchResultCount > 1
     }
 
+    private var shouldShowResetControls: Bool {
+        hasActiveFilters || hasActiveSorting
+    }
+
     var body: some View {
         VStack(spacing: 2) {
             headerBar
@@ -54,20 +58,25 @@ struct MoviesView: View {
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
                     searchSection
                         .padding(.horizontal)
-                        
+                        .animation(.easeInOut(duration: 0.2), value: viewModel.shouldShowBrowseContent)
+
                     if !viewModel.shouldShowBrowseContent {
                         searchControlsRow
                             .padding(.horizontal)
+                            .transition(.opacity)
                     }
-                    
+
                     if viewModel.shouldShowBrowseContent {
                         browseContent
+                            .transition(.opacity)
                     } else {
                         searchContent
+                            .transition(.opacity)
                     }
                 }
                 .padding(.top, viewModel.shouldShowBrowseContent ? AppSpacing.xxl : 0)
                 .padding(.bottom, AppSpacing.xxl)
+                .animation(.easeInOut(duration: 0.22), value: viewModel.shouldShowBrowseContent)
             }
             .scrollDismissesKeyboard(.interactively)
         }
@@ -168,7 +177,7 @@ struct MoviesView: View {
                     Divider()
 
                     Button(Localization.string("movies.sort.reset")) {
-                        viewModel.sortOption = .titleAsc
+                        viewModel.sortOption = .relevance
                     }
                 } label: {
                     SearchControlBubble(
@@ -176,6 +185,15 @@ struct MoviesView: View {
                         systemImage: "arrow.up.arrow.down.circle"
                     )
                 }
+            }
+
+            if shouldShowResetControls {
+                Button(action: viewModel.resetFiltersAndSort) {
+                    SearchControlIconBubble(systemImage: "arrow.counterclockwise")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Localization.string("movies.filter.reset"))
+                .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.92)))
             }
 
             Spacer()
@@ -189,11 +207,15 @@ struct MoviesView: View {
     @ViewBuilder
     private var browseContent: some View {
         if !viewModel.searchHistory.isEmpty {
-            SearchHistoryView(history: viewModel.searchHistory) { selected in
-                Task {
-                    await viewModel.selectRecentSearch(selected)
-                }
-            }
+            SearchHistoryView(
+                history: viewModel.searchHistory,
+                onSelect: { selected in
+                    Task {
+                        await viewModel.selectRecentSearch(selected)
+                    }
+                },
+                onClear: viewModel.clearSearchHistory
+            )
             .padding(.bottom, 10)
         }
 
@@ -254,11 +276,9 @@ struct MoviesView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 16)
+                    .animation(.easeInOut(duration: 0.22), value: displayedMovies.map(\.id))
 
-                    if viewModel.isLoadingNextSearchPage {
-                        ProgressView()
-                            .padding(.vertical, AppSpacing.xs)
-                    }
+                    paginationFooter
                 }
             }
         case .emptyResults:
@@ -322,6 +342,18 @@ struct MoviesView: View {
         }
     }
 
+    @ViewBuilder
+    private var paginationFooter: some View {
+        ZStack {
+            if viewModel.isLoadingNextSearchPage {
+                ProgressView()
+                    .transition(.opacity)
+            }
+        }
+        .frame(height: 28)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isLoadingNextSearchPage)
+    }
+
     private func localizedBrowseTitle(for sectionID: String) -> String {
         switch sectionID {
         case "trending-today":
@@ -373,6 +405,25 @@ private struct SearchControlBubble: View {
             Capsule()
                 .stroke(AppPalette.border, lineWidth: 1)
         )
+    }
+}
+
+private struct SearchControlIconBubble: View {
+    let systemImage: String
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.primary)
+            .frame(width: AppDimension.controlHeight, height: AppDimension.controlHeight)
+            .background(
+                Circle()
+                    .fill(AppPalette.cardBackground)
+            )
+            .overlay(
+                Circle()
+                    .stroke(AppPalette.border, lineWidth: 1)
+            )
     }
 }
 

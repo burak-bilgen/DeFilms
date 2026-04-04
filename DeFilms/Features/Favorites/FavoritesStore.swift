@@ -7,6 +7,7 @@
 
 import Combine
 import Foundation
+import SwiftUI
 
 @MainActor
 final class FavoritesStore: ObservableObject {
@@ -164,7 +165,10 @@ final class FavoritesStore: ObservableObject {
             for: currentUserIdentifier,
             from: sessionManager.legacyUserIdentifiers
         )
-        lists = (try? repository.fetchLists(for: currentUserIdentifier)) ?? []
+        let updatedLists = (try? repository.fetchLists(for: currentUserIdentifier)) ?? []
+        withAnimation(.easeInOut(duration: 0.24)) {
+            lists = updatedLists
+        }
         AppLogger.log("Favorites reloaded for \(currentUserIdentifier)", category: .favorites)
     }
 }

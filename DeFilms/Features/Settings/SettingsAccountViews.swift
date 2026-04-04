@@ -144,7 +144,7 @@ struct ChangePasswordView: View {
 }
 
 private struct AuthFormContainer<Content: View>: View {
-    let title: String
+    var title: String? = nil
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -152,7 +152,7 @@ private struct AuthFormContainer<Content: View>: View {
             content
         }
         .tint(.primary)
-        .navigationTitle(title)
+        .navigationTitle(title ?? "")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -217,17 +217,7 @@ private struct AuthInputField: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            HStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(isFocused ? Color.primary : .secondary)
-                    .frame(width: 18, height: 18)
-                    .padding(10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(isFocused ? Color.primary.opacity(0.08) : AppPalette.cardAccentBackground)
-                    )
-
+            HStack(spacing: 10) {
                 Group {
                     if kind.isSecure {
                         NeutralSecureField(

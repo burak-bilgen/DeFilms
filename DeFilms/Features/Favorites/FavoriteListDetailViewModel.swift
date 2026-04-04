@@ -32,6 +32,21 @@ final class FavoriteListDetailViewModel: ObservableObject {
         favoritesStore.lists.filter { $0.id != listID }
     }
 
+    var shareText: String? {
+        guard let list, !list.movies.isEmpty else { return nil }
+
+        let movieLines = list.movies.map { movie in
+            "• \(movie.title) (\(movie.releaseYear))"
+        }
+        .joined(separator: "\n")
+
+        return """
+        \(Localization.string("favorites.share.header", list.name))
+
+        \(movieLines)
+        """
+    }
+
     func renameList(name: String) -> Bool {
         favoritesStore.renameList(listID: listID, name: name)
     }

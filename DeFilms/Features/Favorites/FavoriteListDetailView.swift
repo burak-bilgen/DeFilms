@@ -11,8 +11,8 @@ struct FavoriteListDetailView: View {
 
     @ObservedObject var viewModel: FavoriteListDetailViewModel
     private let columns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
+        GridItem(.flexible(), spacing: 20),
+        GridItem(.flexible(), spacing: 20)
     ]
     @State private var renameText: String = ""
     @State private var isRenamePresented = false
@@ -41,9 +41,11 @@ struct FavoriteListDetailView: View {
                                         moveMovie: { moviePendingMove = movie },
                                         removeMovie: { moviePendingRemoval = movie }
                                     )
+                                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
                                 }
                             }
                             .padding(.horizontal, 16)
+                            .animation(.easeInOut(duration: 0.24), value: list.movies.map(\.id))
                         }
                     }
                     .padding(.vertical, 16)
@@ -52,6 +54,15 @@ struct FavoriteListDetailView: View {
                 .navigationTitle(list.name)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    if let shareText = viewModel.shareText {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            ShareLink(item: shareText) {
+                                Image(systemName: "square.and.arrow.up")
+                            }
+                            .accessibilityLabel(Localization.string("favorites.share.button"))
+                        }
+                    }
+
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
                             Button(Localization.string("favorites.rename.title")) {
@@ -180,7 +191,14 @@ private struct FavoriteMovieGridItem: View {
     var body: some View {
         VStack(alignment: .trailing, spacing: 10) {
             Button(action: openMovie) {
-                MovieCardView(movie: movie.asMovie)
+                MovieCardView(
+                    movie: movie.asMovie,
+                    titleFont: .footnote,
+                    contentSpacing: AppSpacing.xs,
+                    metadataSpacing: 2,
+                    posterCornerRadius: 14
+                )
+                .padding(.horizontal, 3)
             }
             .buttonStyle(.plain)
 

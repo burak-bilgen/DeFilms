@@ -11,6 +11,7 @@ import Foundation
 protocol RecentSearchRepositoryProtocol {
     func fetchRecentSearches(for userIdentifier: String, limit: Int) throws -> [String]
     func addSearch(_ query: String, for userIdentifier: String, limit: Int) throws
+    func clearRecentSearches(for userIdentifier: String) throws
 }
 
 final class RecentSearchRepository: RecentSearchRepositoryProtocol {
@@ -60,12 +61,26 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
         overflowRequest.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
         let allSearches = try context.fetch(overflowRequest)
 
-        for search in allSearches.dropFirst(limit - 1) {
+        for search in allSearches.dropFirst(limit) {
             context.delete(search)
         }
 
         try context.save()
         AppLogger.log("Saved recent search '\(trimmedQuery)'", category: .persistence, level: .success)
+    }
+
+    func clearRecentSearches(for userIdentifier: String) throws {
+        let context = persistenceController.viewContext
+        let request = RecentSearchEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
+
+        let searches = try context.fetch(request)
+        for search in searches {
+            context.delete(search)
+        }
+
+        try context.save()
+        AppLogger.log("Cleared recent searches for \(userIdentifier)", category: .persistence, level: .success)
     }
 
     private func migrateLegacySearchesIfNeeded() {

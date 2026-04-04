@@ -23,6 +23,8 @@ enum TMDBEndpoint: Endpoint {
     case movieVideos(movieID: Int, languageCode: String?)
     case movieImages(movieID: Int)
     case movieCredits(movieID: Int)
+    case movieWatchProviders(movieID: Int)
+    case similarMovies(movieID: Int, page: Int)
     case personExternalIDs(personID: Int)
     case genreList
 
@@ -48,6 +50,10 @@ enum TMDBEndpoint: Endpoint {
             return "/movie/\(movieID)/images"
         case let .movieCredits(movieID):
             return "/movie/\(movieID)/credits"
+        case let .movieWatchProviders(movieID):
+            return "/movie/\(movieID)/watch/providers"
+        case let .similarMovies(movieID, _):
+            return "/movie/\(movieID)/similar"
         case let .personExternalIDs(personID):
             return "/person/\(personID)/external_ids"
         case .genreList:
@@ -102,6 +108,12 @@ enum TMDBEndpoint: Endpoint {
             ]
         case .movieCredits:
             return []
+        case .movieWatchProviders:
+            return []
+        case let .similarMovies(_, page):
+            return [
+                URLQueryItem(name: "page", value: String(page))
+            ]
         case .personExternalIDs:
             return []
         case .genreList:

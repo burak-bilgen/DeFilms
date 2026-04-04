@@ -136,6 +136,8 @@
 "favorites.remove.from.list.message" = "Bu filmi \"%@\" listesinden çıkarmak istiyor musun?";
 "favorites.move.title" = "Filmi Taşı";
 "favorites.move.message" = "\"%@\" için hedef liste seç.";
+"favorites.share.button" = "Listeyi Paylaş";
+"favorites.share.header" = "Hey! DeFilms'deki %@ listeme göz at.";
 
 "movies.section.popular" = "Popüler";
 "movies.section.trendingToday" = "Bugün Trend";
@@ -159,6 +161,7 @@
 "movies.filter.reset" = "Filtreleri Sıfırla";
 "movies.filter.error" = "Filtreler yüklenemedi.";
 "movies.sort.title" = "Sırala";
+"movies.sort.relevance" = "İlgililiğe Göre";
 "movies.sort.reset" = "Sıralamayı Sıfırla";
 "movies.sort.titleAsc" = "Alfabetik A-Z";
 "movies.sort.titleDesc" = "Alfabetik Z-A";
@@ -169,6 +172,10 @@
 "movies.accessibility.searchField" = "Film arama alanı";
 "movies.accessibility.clearSearch" = "Arama metnini temizle";
 "movies.accessibility.recentSearch" = "Son arama, %@";
+"movies.searchHistory.clear" = "Arama Geçmişini Temizle";
+"movies.searchHistory.clear.confirmTitle" = "Son aramaları temizlemek istediğine emin misin?";
+"movies.searchHistory.clear.confirmMessage" = "Arama geçmişin kaldırılacak.";
+"movies.searchHistory.clear.confirmAction" = "Temizle";
 "movies.accessibility.cardSummary" = "%@, %@";
 "movies.accessibility.openDetails" = "Detayları aç";
 "movies.message.contentUnavailable.title" = "İçerik Kullanılamıyor";

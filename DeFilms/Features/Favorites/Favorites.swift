@@ -48,6 +48,7 @@ struct FavoritesView: View {
                                         listPendingDeletion = list
                                     }
                                 )
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
                             }
                         }
                     }
@@ -55,9 +56,20 @@ struct FavoritesView: View {
                     .padding(.vertical, 16)
                 }
                 .background(Color(.systemGroupedBackground))
+                .animation(.easeInOut(duration: 0.22), value: viewModel.lists.map(\.id))
             }
         }
         .navigationTitle(Localization.string("favorites.title"))
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    isCreateListPresented = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .accessibilityLabel(Localization.string("favorites.create.title"))
+            }
+        }
         .alert(
             Localization.string("favorites.rename.title"),
             isPresented: Binding(

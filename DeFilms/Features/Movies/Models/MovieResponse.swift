@@ -51,6 +51,42 @@ struct MovieCreditsResponse: Codable {
     let crew: [MovieCrewMember]
 }
 
+struct MovieWatchProvidersResponse: Codable {
+    let id: Int
+    let results: [String: MovieWatchProviderRegion]
+}
+
+struct MovieWatchProviderRegion: Codable {
+    let link: URL?
+    let flatrate: [MovieWatchProvider]?
+    let rent: [MovieWatchProvider]?
+    let buy: [MovieWatchProvider]?
+}
+
+struct MovieWatchProvider: Codable, Equatable, Hashable {
+    let providerID: Int
+    let providerName: String
+    let logoPath: String?
+
+    enum CodingKeys: String, CodingKey {
+        case providerID = "provider_id"
+        case providerName = "provider_name"
+        case logoPath = "logo_path"
+    }
+
+    var logoURL: URL? {
+        guard let logoPath else { return nil }
+        return URL(string: APIConfig.imageBaseURL + logoPath)
+    }
+}
+
+struct MovieStreamingPlatform: Identifiable, Equatable {
+    let id: Int
+    let name: String
+    let logoURL: URL?
+    let linkURL: URL?
+}
+
 struct MovieCastMember: Codable, Equatable, Identifiable {
     let id: Int
     let name: String

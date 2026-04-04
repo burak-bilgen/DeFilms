@@ -75,12 +75,6 @@ struct SettingsView: View {
     private var accountSection: some View {
         Section {
             if sessionManager.isSignedIn {
-                SettingsValueRow(
-                    symbol: "person.crop.circle",
-                    title: Localization.string("settings.account.status"),
-                    value: viewModel.signedInEmail ?? ""
-                )
-
                 NavigationLink {
                     ChangePasswordView()
                 } label: {

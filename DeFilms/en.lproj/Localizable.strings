@@ -136,6 +136,8 @@
 "favorites.remove.from.list.message" = "Remove this movie from \"%@\"?";
 "favorites.move.title" = "Move Movie";
 "favorites.move.message" = "Choose a destination list for \"%@\".";
+"favorites.share.button" = "Share List";
+"favorites.share.header" = "Hey! Check out my %@ list on DeFilms.";
 
 "movies.section.popular" = "Popular";
 "movies.section.trendingToday" = "Trending Today";
@@ -159,6 +161,7 @@
 "movies.filter.reset" = "Reset Filters";
 "movies.filter.error" = "Filters could not be loaded.";
 "movies.sort.title" = "Sort";
+"movies.sort.relevance" = "Relevance";
 "movies.sort.reset" = "Reset Sorting";
 "movies.sort.titleAsc" = "Alphabetical A-Z";
 "movies.sort.titleDesc" = "Alphabetical Z-A";
@@ -169,6 +172,10 @@
 "movies.accessibility.searchField" = "Movie search field";
 "movies.accessibility.clearSearch" = "Clear search text";
 "movies.accessibility.recentSearch" = "Recent search, %@";
+"movies.searchHistory.clear" = "Clear Search History";
+"movies.searchHistory.clear.confirmTitle" = "Clear recent searches?";
+"movies.searchHistory.clear.confirmMessage" = "Your recent search history will be removed.";
+"movies.searchHistory.clear.confirmAction" = "Clear";
 "movies.accessibility.cardSummary" = "%@, %@";
 "movies.accessibility.openDetails" = "Open details";
 "movies.message.contentUnavailable.title" = "Content Unavailable";

@@ -136,6 +136,8 @@
 "favorites.remove.from.list.message" = "إزالة هذا الفيلم من \"%@\"؟";
 "favorites.move.title" = "نقل الفيلم";
 "favorites.move.message" = "اختر قائمة وجهة لـ \"%@\".";
+"favorites.share.button" = "مشاركة القائمة";
+"favorites.share.header" = "مرحبًا! ألقِ نظرة على قائمتي %@ في DeFilms.";
 
 "movies.section.popular" = "الشائعة";
 "movies.section.trendingToday" = "الأكثر رواجًا اليوم";
@@ -159,6 +161,7 @@
 "movies.filter.reset" = "إعادة التصفية";
 "movies.filter.error" = "تعذر تحميل الفلاتر.";
 "movies.sort.title" = "ترتيب";
+"movies.sort.relevance" = "الأكثر صلة";
 "movies.sort.reset" = "إعادة الترتيب";
 "movies.sort.titleAsc" = "أبجديًا أ-ي";
 "movies.sort.titleDesc" = "أبجديًا ي-أ";
@@ -169,6 +172,10 @@
 "movies.accessibility.searchField" = "حقل البحث عن فيلم";
 "movies.accessibility.clearSearch" = "مسح نص البحث";
 "movies.accessibility.recentSearch" = "بحث حديث، %@";
+"movies.searchHistory.clear" = "مسح سجل البحث";
+"movies.searchHistory.clear.confirmTitle" = "هل أنت متأكد أنك تريد مسح عمليات البحث الأخيرة؟";
+"movies.searchHistory.clear.confirmMessage" = "سيتم حذف سجل البحث الخاص بك.";
+"movies.searchHistory.clear.confirmAction" = "مسح";
 "movies.accessibility.cardSummary" = "%@، %@";
 "movies.accessibility.openDetails" = "افتح التفاصيل";
 "movies.message.contentUnavailable.title" = "المحتوى غير متاح";

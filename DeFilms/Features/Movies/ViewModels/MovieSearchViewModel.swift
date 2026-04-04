@@ -7,6 +7,7 @@
 
 import Combine
 import Foundation
+import SwiftUI
 
 enum MoviesScreenState: Equatable {
     case browse
@@ -28,7 +29,7 @@ final class MovieSearchViewModel: ObservableObject {
     @Published var filterYear: String = ""
     @Published var minRating: Double = 0
     @Published var selectedGenreID: Int?
-    @Published var sortOption: MovieSortOption = .titleAsc
+    @Published var sortOption: MovieSortOption = .relevance
     @Published private(set) var isSearchActive = false
     @Published private(set) var isLoadingNextSearchPage = false
     @Published private(set) var popularMovies: [Movie] = []
@@ -116,6 +117,8 @@ final class MovieSearchViewModel: ObservableObject {
         }
 
         switch sortOption {
+        case .relevance:
+            break
         case .titleAsc:
             results.sort { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
         case .titleDesc:
@@ -133,6 +136,10 @@ final class MovieSearchViewModel: ObservableObject {
 
     var canLoadMoreSearchResults: Bool {
         isSearchActive && currentSearchPage < totalSearchPages
+    }
+
+    var currentSearchPageNumber: Int {
+        currentSearchPage
     }
 
     func loadBrowseContentIfNeeded(for language: AppLanguage) async {
@@ -228,7 +235,16 @@ final class MovieSearchViewModel: ObservableObject {
         filterYear = ""
         minRating = 0
         selectedGenreID = nil
-        sortOption = .titleAsc
+        sortOption = .relevance
+    }
+
+    func clearSearchHistory() {
+        do {
+            try recentSearchRepository.clearRecentSearches(for: sessionManager.currentUserIdentifier)
+            searchHistory = []
+        } catch {
+            ToastCenter.shared.showError(Localization.string("favorites.toast.genericError"))
+        }
     }
 
     func loadGenresIfNeeded() async {
@@ -334,7 +350,10 @@ final class MovieSearchViewModel: ObservableObject {
 
         if appendResults {
             let existingMovieIDs = Set(searchResults.map(\.id))
-            searchResults.append(contentsOf: response.results.filter { !existingMovieIDs.contains($0.id) })
+            let newResults = response.results.filter { !existingMovieIDs.contains($0.id) }
+            withAnimation(.easeOut(duration: 0.24)) {
+                searchResults.append(contentsOf: newResults)
+            }
         } else {
             searchResults = response.results
         }
@@ -342,6 +361,7 @@ final class MovieSearchViewModel: ObservableObject {
 }
 
 enum MovieSortOption: String, CaseIterable, Identifiable {
+    case relevance
     case titleAsc
     case titleDesc
     case dateAsc
@@ -352,6 +372,8 @@ enum MovieSortOption: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .relevance:
+            return Localization.string("movies.sort.relevance")
         case .titleAsc:
             return Localization.string("movies.sort.titleAsc")
         case .titleDesc:
