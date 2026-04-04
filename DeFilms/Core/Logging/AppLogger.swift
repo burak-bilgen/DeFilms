@@ -19,21 +19,6 @@ enum AppLogger {
         case theme = "theme"
         case favorites = "favorites"
         case navigation = "navigation"
-
-        var emoji: String {
-            switch self {
-            case .app: return "🚀"
-            case .network: return "🌐"
-            case .persistence: return "💾"
-            case .movie: return "🎬"
-            case .search: return "🔎"
-            case .auth: return "🔐"
-            case .localization: return "🌍"
-            case .theme: return "🎨"
-            case .favorites: return "❤️"
-            case .navigation: return "🧭"
-            }
-        }
     }
 
     enum Level {
@@ -42,31 +27,57 @@ enum AppLogger {
         case warning
         case error
 
-        var emoji: String {
-            switch self {
-            case .info: return "ℹ️"
-            case .success: return "✅"
-            case .warning: return "⚠️"
-            case .error: return "❌"
-            }
-        }
-
         var osLogType: OSLogType {
             switch self {
-            case .info, .success:
+            case .info:
                 return .info
+            case .success:
+                return .default
             case .warning:
                 return .default
             case .error:
                 return .error
             }
         }
+
+        var shouldLogInCurrentConfiguration: Bool {
+            switch self {
+            case .warning, .error:
+                return true
+            case .info, .success:
+                #if DEBUG
+                return true
+                #else
+                return false
+                #endif
+            }
+        }
     }
 
     private static let subsystem = "com.defilms.app"
+    private static let loggerCache = LoggerCache()
 
     static func log(_ message: String, category: Category, level: Level = .info) {
+        guard level.shouldLogInCurrentConfiguration else { return }
+        let logger = loggerCache.logger(for: category, subsystem: subsystem)
+        logger.log(level: level.osLogType, "\(message, privacy: .private(mask: .hash))")
+    }
+}
+
+private final class LoggerCache: @unchecked Sendable {
+    private var loggers: [AppLogger.Category: Logger] = [:]
+    private let lock = NSLock()
+
+    func logger(for category: AppLogger.Category, subsystem: String) -> Logger {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let logger = loggers[category] {
+            return logger
+        }
+
         let logger = Logger(subsystem: subsystem, category: category.rawValue)
-        logger.log(level: level.osLogType, "\(category.emoji) \(level.emoji) \(message)")
+        loggers[category] = logger
+        return logger
     }
 }
