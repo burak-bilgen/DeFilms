@@ -60,9 +60,13 @@ struct FavoritesViewModelTests {
     @Test
     func createRenameAndDeleteListUpdatesPublishedLists() {
         let repository = MockFavoritesRepository()
+        let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
         let store = FavoritesStore(
-            repository: repository,
-            sessionManager: AuthSessionManager(keychainService: MockKeychainService())
+            favoritesService: FavoritesService(
+                repository: repository,
+                sessionManager: sessionManager
+            ),
+            sessionManager: sessionManager
         )
         let viewModel = FavoritesViewModel(favoritesStore: store)
 
@@ -82,7 +86,13 @@ struct FavoritesViewModelTests {
     func storeAdoptsLegacyGuestListsIntoSignedInAccountScope() throws {
         let repository = MockFavoritesRepository()
         let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
-        let store = FavoritesStore(repository: repository, sessionManager: sessionManager)
+        let store = FavoritesStore(
+            favoritesService: FavoritesService(
+                repository: repository,
+                sessionManager: sessionManager
+            ),
+            sessionManager: sessionManager
+        )
 
         try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
 
@@ -98,25 +108,24 @@ struct FavoritesViewModelTests {
 struct AuthFormViewModelTests {
     @Test
     func signInViewModelPublishesLocalizedErrorOnFailure() {
-        let sessionManager = MockAuthSessionManager(signInError: AuthError.invalidCredentials)
-        let viewModel = SignInViewModel()
+        let authFormService = MockAuthFormService(signInError: AuthError.invalidCredentials)
+        let viewModel = SignInViewModel(authFormService: authFormService)
         viewModel.email = "user@example.com"
         viewModel.password = "wrong"
 
-        let result = viewModel.submit(using: sessionManager)
+        let result = viewModel.submit()
 
         #expect(result == false)
     }
 
     @Test
     func changePasswordViewModelClearsFieldsOnSuccess() {
-        let sessionManager = MockAuthSessionManager()
-        let viewModel = ChangePasswordViewModel()
+        let viewModel = ChangePasswordViewModel(authFormService: MockAuthFormService())
         viewModel.currentPassword = "oldpass"
         viewModel.newPassword = "newpass"
         viewModel.confirmPassword = "newpass"
 
-        let result = viewModel.submit(using: sessionManager)
+        let result = viewModel.submit()
 
         #expect(result)
         #expect(viewModel.currentPassword.isEmpty)
@@ -275,6 +284,37 @@ private final class MockAuthSessionManager: AuthSessionManaging {
     func signOut() {
         didSignOut = true
         session = nil
+    }
+}
+
+private final class MockAuthFormService: AuthFormServicing {
+    var signUpError: Error?
+    var signInError: Error?
+    var changePasswordError: Error?
+
+    init(
+        signUpError: Error? = nil,
+        signInError: Error? = nil,
+        changePasswordError: Error? = nil
+    ) {
+        self.signUpError = signUpError
+        self.signInError = signInError
+        self.changePasswordError = changePasswordError
+    }
+
+    func signIn(email: String, password: String) throws -> String {
+        if let signInError { throw signInError }
+        return Localization.string("auth.toast.signedIn")
+    }
+
+    func signUp(email: String, password: String, confirmPassword: String) throws -> String {
+        if let signUpError { throw signUpError }
+        return Localization.string("auth.toast.accountCreated")
+    }
+
+    func changePassword(currentPassword: String, newPassword: String, confirmPassword: String) throws -> String {
+        if let changePasswordError { throw changePasswordError }
+        return Localization.string("auth.changePassword.success")
     }
 }
 

@@ -42,9 +42,9 @@ struct AppEntryView: View {
                 AuthEntryContainer {
                     switch destination {
                     case .signIn:
-                        SignInView()
+                        SignInView(viewModel: container.makeSignInViewModel())
                     case .signUp:
-                        SignUpView()
+                        SignUpView(viewModel: container.makeSignUpViewModel())
                     }
                 }
                 .tint(.primary)

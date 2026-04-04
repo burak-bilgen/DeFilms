@@ -14,5 +14,11 @@ enum HTTPMethod: String {
 protocol Endpoint {
     var path: String { get }
     var method: HTTPMethod { get }
-    var queryItems: [URLQueryItem] { get }
+    func queryItems(for language: AppLanguage) -> [URLQueryItem]
+}
+
+extension Endpoint {
+    func queryItems(for language: AppLanguage) -> [URLQueryItem] {
+        []
+    }
 }

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    let container: AppContainer
     @StateObject private var viewModel: SettingsViewModel
 
     @EnvironmentObject private var preferences: AppPreferences
@@ -15,7 +16,8 @@ struct SettingsView: View {
 
     @State private var showLogoutConfirmation = false
 
-    init(viewModel: SettingsViewModel) {
+    init(container: AppContainer, viewModel: SettingsViewModel) {
+        self.container = container
         _viewModel = StateObject(wrappedValue: viewModel)
     }
 
@@ -77,7 +79,7 @@ struct SettingsView: View {
         Section {
             if sessionManager.isSignedIn {
                 NavigationLink {
-                    ChangePasswordView()
+                    ChangePasswordView(viewModel: container.makeChangePasswordViewModel())
                 } label: {
                     SettingsSimpleRow(symbol: "key.fill", title: Localization.string("auth.changePassword"))
                 }
@@ -91,14 +93,14 @@ struct SettingsView: View {
                 .accessibilityIdentifier("settings.account.logout")
             } else {
                 NavigationLink {
-                    SignInView()
+                    SignInView(viewModel: container.makeSignInViewModel())
                 } label: {
                     SettingsSimpleRow(symbol: "person.badge.key", title: Localization.string("auth.signIn"))
                 }
                 .accessibilityIdentifier("settings.account.signIn")
 
                 NavigationLink {
-                    SignUpView()
+                    SignUpView(viewModel: container.makeSignUpViewModel())
                 } label: {
                     SettingsSimpleRow(symbol: "person.crop.circle.badge.plus", title: Localization.string("auth.signUp"))
                 }

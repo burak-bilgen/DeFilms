@@ -13,6 +13,8 @@ final class AppContainer {
     let toastCenter: ToastCenter
     private let movieCatalogService: MovieCatalogServicing
     private let movieDetailService: MovieDetailServicing
+    private let favoritesService: FavoritesServicing
+    private let authFormService: AuthFormServicing
 
     init(
         networkService: NetworkServiceProtocol = NetworkManager.shared,
@@ -31,11 +33,16 @@ final class AppContainer {
             networkService: networkService,
             imagePrefetcher: PosterImagePrefetcher()
         )
+        self.favoritesService = FavoritesService(
+            repository: favoritesRepository,
+            sessionManager: sessionManager
+        )
+        self.authFormService = AuthFormService(sessionManager: sessionManager)
     }
 
     func makeFavoritesStore() -> FavoritesStore {
         FavoritesStore(
-            repository: favoritesRepository,
+            favoritesService: favoritesService,
             sessionManager: sessionManager
         )
     }
@@ -74,5 +81,17 @@ final class AppContainer {
             bundle: .main,
             sessionManager: sessionManager
         )
+    }
+
+    func makeSignInViewModel() -> SignInViewModel {
+        SignInViewModel(authFormService: authFormService)
+    }
+
+    func makeSignUpViewModel() -> SignUpViewModel {
+        SignUpViewModel(authFormService: authFormService)
+    }
+
+    func makeChangePasswordViewModel() -> ChangePasswordViewModel {
+        ChangePasswordViewModel(authFormService: authFormService)
     }
 }

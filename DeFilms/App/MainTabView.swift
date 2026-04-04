@@ -75,7 +75,10 @@ struct MainTabView: View {
                     Label(Localization.string("tab.favorites"), systemImage: selection == .favorites ? "rectangle.stack.badge.play.fill" : "rectangle.stack.badge.play")
                 }
 
-            SettingsView(viewModel: container.makeSettingsViewModel())
+            SettingsView(
+                container: container,
+                viewModel: container.makeSettingsViewModel()
+            )
                 .tag(Tab.settings)
                 .tabItem {
                     Label(Localization.string("tab.settings"), systemImage: selection == .settings ? "gearshape.fill" : "gearshape")

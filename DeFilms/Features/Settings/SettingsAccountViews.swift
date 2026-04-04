@@ -9,11 +9,14 @@ import SwiftUI
 import UIKit
 
 struct SignInView: View {
-    @EnvironmentObject private var sessionManager: AuthSessionManager
     @EnvironmentObject private var toastCenter: ToastCenter
     @Environment(\.dismiss) private var dismiss
 
-    @StateObject private var viewModel = SignInViewModel()
+    @StateObject private var viewModel: SignInViewModel
+
+    init(viewModel: SignInViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     private var isSubmitEnabled: Bool {
         !viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
@@ -40,7 +43,7 @@ struct SignInView: View {
 
             Section {
                 Button(Localization.string("auth.signIn")) {
-                    if viewModel.submit(using: sessionManager) {
+                    if viewModel.submit() {
                         dismiss()
                     }
                 }
@@ -56,11 +59,14 @@ struct SignInView: View {
 }
 
 struct SignUpView: View {
-    @EnvironmentObject private var sessionManager: AuthSessionManager
     @EnvironmentObject private var toastCenter: ToastCenter
     @Environment(\.dismiss) private var dismiss
 
-    @StateObject private var viewModel = SignUpViewModel()
+    @StateObject private var viewModel: SignUpViewModel
+
+    init(viewModel: SignUpViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     private var isSubmitEnabled: Bool {
         !viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
@@ -93,7 +99,7 @@ struct SignUpView: View {
 
             Section {
                 Button(Localization.string("auth.createAccount")) {
-                    if viewModel.submit(using: sessionManager) {
+                    if viewModel.submit() {
                         dismiss()
                     }
                 }
@@ -109,11 +115,14 @@ struct SignUpView: View {
 }
 
 struct ChangePasswordView: View {
-    @EnvironmentObject private var sessionManager: AuthSessionManager
     @EnvironmentObject private var toastCenter: ToastCenter
     @Environment(\.dismiss) private var dismiss
 
-    @StateObject private var viewModel = ChangePasswordViewModel()
+    @StateObject private var viewModel: ChangePasswordViewModel
+
+    init(viewModel: ChangePasswordViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     private var isSubmitEnabled: Bool {
         !viewModel.currentPassword.isEmpty &&
@@ -146,7 +155,7 @@ struct ChangePasswordView: View {
 
             Section {
                 Button(Localization.string("auth.changePassword")) {
-                    if viewModel.submit(using: sessionManager) {
+                    if viewModel.submit() {
                         dismiss()
                     }
                 }

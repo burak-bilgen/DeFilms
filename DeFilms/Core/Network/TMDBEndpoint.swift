@@ -65,7 +65,7 @@ enum TMDBEndpoint: Endpoint {
         .get
     }
 
-    var queryItems: [URLQueryItem] {
+    func queryItems(for language: AppLanguage) -> [URLQueryItem] {
         switch self {
         case let .searchMovie(query, page):
             return [
@@ -103,7 +103,7 @@ enum TMDBEndpoint: Endpoint {
             return [
                 URLQueryItem(
                     name: "include_image_language",
-                    value: "\(AppPreferences.persistedLanguage.rawValue),en,null"
+                    value: "\(language.rawValue),en,null"
                 )
             ]
         case .movieCredits:

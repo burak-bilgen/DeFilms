@@ -14,15 +14,15 @@ final class FavoritesStore: ObservableObject {
     @Published private(set) var lists: [FavoriteList] = []
     @Published private(set) var toastItem: ToastItem?
 
-    private let repository: FavoritesRepositoryProtocol
+    private let favoritesService: FavoritesServicing
     private let sessionManager: AuthSessionManager
     private var cancellables: Set<AnyCancellable> = []
 
     init(
-        repository: FavoritesRepositoryProtocol,
+        favoritesService: FavoritesServicing,
         sessionManager: AuthSessionManager
     ) {
-        self.repository = repository
+        self.favoritesService = favoritesService
         self.sessionManager = sessionManager
 
         sessionManager.$session
@@ -35,21 +35,20 @@ final class FavoritesStore: ObservableObject {
     }
 
     func createList(named name: String) -> FavoriteList? {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            return nil
-        }
-
-        if let existingList = existingList(named: trimmed) {
-            return existingList
-        }
-
         do {
-            let list = try repository.createList(named: trimmed, userIdentifier: currentUserIdentifier)
+            let list = try favoritesService.createList(named: name, existingLists: lists)
             reloadLists()
-            AppLogger.log("Created favorite list: \(trimmed)", category: .favorites, level: .success)
+            AppLogger.log("Created favorite list: \(list.name)", category: .favorites, level: .success)
             toastItem = .success(Localization.string("favorites.toast.listCreated"))
             return list
+        } catch FavoritesServiceError.invalidListName {
+            return nil
+        } catch FavoritesServiceError.duplicateListName {
+            if let existingList = existingList(named: name) {
+                return existingList
+            }
+            toastItem = .error(Localization.string("favorites.toast.duplicateList"))
+            return nil
         } catch {
             AppLogger.log("Failed to create favorite list", category: .favorites, level: .error)
             toastItem = .error(Localization.string("favorites.toast.genericError"))
@@ -59,7 +58,7 @@ final class FavoritesStore: ObservableObject {
 
     func add(movie: Movie, to listID: UUID) {
         do {
-            try repository.add(movie: movie, to: listID, userIdentifier: currentUserIdentifier)
+            try favoritesService.add(movie: movie, to: listID)
             reloadLists()
             AppLogger.log("Added movie \(movie.id) to favorites", category: .favorites, level: .success)
         } catch {
@@ -71,7 +70,7 @@ final class FavoritesStore: ObservableObject {
 
     func remove(movieID: Int, from listID: UUID) {
         do {
-            try repository.remove(movieID: movieID, from: listID, userIdentifier: currentUserIdentifier)
+            try favoritesService.remove(movieID: movieID, from: listID)
             reloadLists()
             AppLogger.log("Removed movie \(movieID) from list \(listID.uuidString)", category: .favorites, level: .success)
         } catch {
@@ -82,19 +81,16 @@ final class FavoritesStore: ObservableObject {
     }
 
     func renameList(listID: UUID, name: String) -> Bool {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return false }
-
-        if let existingList = existingList(named: trimmed), existingList.id != listID {
-            toastItem = .error(Localization.string("favorites.toast.duplicateList"))
-            return false
-        }
-
         do {
-            try repository.renameList(listID: listID, name: trimmed, userIdentifier: currentUserIdentifier)
+            try favoritesService.renameList(listID: listID, name: name, existingLists: lists)
             reloadLists()
             toastItem = .success(Localization.string("favorites.toast.listRenamed"))
             return true
+        } catch FavoritesServiceError.invalidListName {
+            return false
+        } catch FavoritesServiceError.duplicateListName {
+            toastItem = .error(Localization.string("favorites.toast.duplicateList"))
+            return false
         } catch {
             toastItem = .error(Localization.string("favorites.toast.genericError"))
             return false
@@ -103,7 +99,7 @@ final class FavoritesStore: ObservableObject {
 
     func deleteList(listID: UUID) {
         do {
-            try repository.deleteList(listID: listID, userIdentifier: currentUserIdentifier)
+            try favoritesService.deleteList(listID: listID)
             reloadLists()
             toastItem = .success(Localization.string("favorites.toast.listDeleted"))
         } catch {
@@ -113,11 +109,10 @@ final class FavoritesStore: ObservableObject {
 
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) {
         do {
-            try repository.move(
+            try favoritesService.move(
                 movieID: movieID,
                 from: sourceListID,
-                to: destinationListID,
-                userIdentifier: currentUserIdentifier
+                to: destinationListID
             )
             reloadLists()
             toastItem = .success(Localization.string("favorites.toast.movieMoved"))
@@ -161,19 +156,11 @@ final class FavoritesStore: ObservableObject {
         lists.first(where: { $0.id == listID })
     }
 
-    private var currentUserIdentifier: String {
-        sessionManager.currentUserIdentifier
-    }
-
     private func reloadLists() {
-        try? repository.adoptListsIfNeeded(
-            for: currentUserIdentifier,
-            from: sessionManager.legacyUserIdentifiers
-        )
-        let updatedLists = (try? repository.fetchLists(for: currentUserIdentifier)) ?? []
+        let updatedLists = (try? favoritesService.loadLists()) ?? []
         withAnimation(.easeInOut(duration: 0.24)) {
             lists = updatedLists
         }
-        AppLogger.log("Favorites reloaded for \(currentUserIdentifier)", category: .favorites)
+        AppLogger.log("Favorites reloaded for \(sessionManager.currentUserIdentifier)", category: .favorites)
     }
 }

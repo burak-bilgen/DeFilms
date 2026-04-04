@@ -12,10 +12,15 @@ final class SignInViewModel: ObservableObject {
     @Published var password: String = ""
     @Published private(set) var toastItem: ToastItem?
 
-    func submit(using sessionManager: AuthSessionManaging) -> Bool {
+    private let authFormService: AuthFormServicing
+
+    init(authFormService: AuthFormServicing) {
+        self.authFormService = authFormService
+    }
+
+    func submit() -> Bool {
         do {
-            try sessionManager.signIn(email: email, password: password)
-            toastItem = .success(Localization.string("auth.toast.signedIn"))
+            toastItem = .success(try authFormService.signIn(email: email, password: password))
             return true
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("auth.error.generic")
@@ -36,10 +41,21 @@ final class SignUpViewModel: ObservableObject {
     @Published var confirmPassword: String = ""
     @Published private(set) var toastItem: ToastItem?
 
-    func submit(using sessionManager: AuthSessionManaging) -> Bool {
+    private let authFormService: AuthFormServicing
+
+    init(authFormService: AuthFormServicing) {
+        self.authFormService = authFormService
+    }
+
+    func submit() -> Bool {
         do {
-            try sessionManager.signUp(email: email, password: password, confirmPassword: confirmPassword)
-            toastItem = .success(Localization.string("auth.toast.accountCreated"))
+            toastItem = .success(
+                try authFormService.signUp(
+                    email: email,
+                    password: password,
+                    confirmPassword: confirmPassword
+                )
+            )
             return true
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("auth.error.generic")
@@ -60,14 +76,19 @@ final class ChangePasswordViewModel: ObservableObject {
     @Published var confirmPassword: String = ""
     @Published private(set) var toastItem: ToastItem?
 
-    func submit(using sessionManager: AuthSessionManaging) -> Bool {
+    private let authFormService: AuthFormServicing
+
+    init(authFormService: AuthFormServicing) {
+        self.authFormService = authFormService
+    }
+
+    func submit() -> Bool {
         do {
-            try sessionManager.changePassword(
+            let success = try authFormService.changePassword(
                 currentPassword: currentPassword,
                 newPassword: newPassword,
                 confirmPassword: confirmPassword
             )
-            let success = Localization.string("auth.changePassword.success")
             currentPassword = ""
             newPassword = ""
             confirmPassword = ""

@@ -11,41 +11,47 @@ final class NetworkManager: NetworkServiceProtocol {
     static let shared = NetworkManager()
 
     private let session: URLSession
+    private let decoder: JSONDecoder
+    private let requestBuilder: NetworkRequestBuilding
 
-    init(session: URLSession = .shared) {
+    init(
+        session: URLSession = .shared,
+        decoder: JSONDecoder = JSONDecoder(),
+        requestBuilder: NetworkRequestBuilding = NetworkRequestBuilder()
+    ) {
         self.session = session
+        self.decoder = decoder
+        self.requestBuilder = requestBuilder
     }
 
     func request<T: Decodable>(endpoint: Endpoint) async throws -> T {
-        guard let apiKey = APIConfig.apiKey, !apiKey.isEmpty else {
-            AppLogger.log("Missing API key", category: .network, level: .error)
-            throw NetworkError.missingAPIKey
+        let request: URLRequest
+        do {
+            request = try requestBuilder.makeRequest(endpoint: endpoint)
+        } catch let error as NetworkError {
+            if case .missingAPIKey = error {
+                AppLogger.log("Missing API key", category: .network, level: .error)
+            }
+            throw error
         }
 
-        guard var urlComponents = URLComponents(string: APIConfig.baseURL + endpoint.path) else {
-            throw NetworkError.invalidURL
+        AppLogger.log("Request started: \(request.httpMethod ?? "") \(request.url?.absoluteString ?? "")", category: .network)
+
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch is CancellationError {
+            AppLogger.log("Request cancelled", category: .network, level: .warning)
+            throw NetworkError.cancelled
+        } catch let error as URLError {
+            AppLogger.log("Transport error: \(error.code.rawValue)", category: .network, level: .error)
+            throw mapTransportError(error)
+        } catch {
+            AppLogger.log("Unknown request failure", category: .network, level: .error)
+            throw NetworkError.requestFailed
         }
-
-        var queryItems = endpoint.queryItems
-        
-        queryItems.append(URLQueryItem(name: "api_key", value: apiKey))
-
-        if !queryItems.contains(where: { $0.name == "language" }) {
-            queryItems.append(URLQueryItem(name: "language", value: AppPreferences.persistedLanguage.tmdbLanguageCode))
-        }
-        
-        urlComponents.queryItems = queryItems
-
-        guard let url = urlComponents.url else {
-            throw NetworkError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = endpoint.method.rawValue
-
-        AppLogger.log("Request started: \(request.httpMethod ?? "") \(url.absoluteString)", category: .network)
-
-        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             AppLogger.log("Invalid HTTP response", category: .network, level: .error)
@@ -58,13 +64,23 @@ final class NetworkManager: NetworkServiceProtocol {
         }
 
         do {
-            let decoder = JSONDecoder()
             let decoded = try decoder.decode(T.self, from: data)
             AppLogger.log("Request completed successfully", category: .network, level: .success)
             return decoded
         } catch {
-            AppLogger.log("Decoding failed for \(url.absoluteString)", category: .network, level: .error)
+            AppLogger.log("Decoding failed for \(request.url?.absoluteString ?? "")", category: .network, level: .error)
             throw NetworkError.decodingError
+        }
+    }
+
+    private func mapTransportError(_ error: URLError) -> NetworkError {
+        switch error.code {
+        case .timedOut:
+            return .requestTimedOut
+        case .cancelled:
+            return .cancelled
+        default:
+            return .requestFailed
         }
     }
 }

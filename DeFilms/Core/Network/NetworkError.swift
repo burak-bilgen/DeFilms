@@ -7,12 +7,15 @@
 
 import Foundation
 
-enum NetworkError: Error, LocalizedError {
+enum NetworkError: Error, LocalizedError, Equatable {
     case invalidURL
     case invalidResponse
     case decodingError
     case serverError(statusCode: Int)
     case missingAPIKey
+    case requestFailed
+    case requestTimedOut
+    case cancelled
 
     var errorDescription: String? {
         switch self {
@@ -21,6 +24,9 @@ enum NetworkError: Error, LocalizedError {
         case .decodingError: return Localization.string("network.error.decoding")
         case .serverError(let statusCode): return Localization.string("network.error.server", statusCode)
         case .missingAPIKey: return Localization.string("network.error.missingAPIKey")
+        case .requestFailed: return Localization.string("network.error.invalidResponse")
+        case .requestTimedOut: return Localization.string("network.error.invalidResponse")
+        case .cancelled: return nil
         }
     }
 }
