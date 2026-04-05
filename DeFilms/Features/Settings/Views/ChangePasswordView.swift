@@ -28,19 +28,22 @@ struct ChangePasswordView: View {
                     title: Localization.string("auth.currentPassword"),
                     text: $viewModel.currentPassword,
                     systemImage: "lock.rotation",
-                    kind: .password
+                    kind: .password,
+                    accessibilityIdentifier: "auth.changePassword.currentPassword"
                 )
                 AuthInputField(
                     title: Localization.string("auth.newPassword"),
                     text: $viewModel.newPassword,
                     systemImage: "lock.open.fill",
-                    kind: .newPassword
+                    kind: .newPassword,
+                    accessibilityIdentifier: "auth.changePassword.newPassword"
                 )
                 AuthInputField(
                     title: Localization.string("auth.confirmPassword"),
                     text: $viewModel.confirmPassword,
                     systemImage: "checkmark.shield.fill",
-                    kind: .newPassword
+                    kind: .newPassword,
+                    accessibilityIdentifier: "auth.changePassword.confirmPassword"
                 )
             }
 
@@ -51,6 +54,7 @@ struct ChangePasswordView: View {
                     }
                 }
                 .disabled(!isSubmitEnabled)
+                .accessibilityIdentifier("auth.changePassword.submit")
             }
         }
         .onChange(of: viewModel.toastItem?.id) { _ in

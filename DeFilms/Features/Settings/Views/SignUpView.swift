@@ -28,19 +28,22 @@ struct SignUpView: View {
                     title: Localization.string("auth.email"),
                     text: $viewModel.email,
                     systemImage: "envelope.fill",
-                    kind: .email
+                    kind: .email,
+                    accessibilityIdentifier: "auth.signUp.email"
                 )
                 AuthInputField(
                     title: Localization.string("auth.password"),
                     text: $viewModel.password,
                     systemImage: "lock.fill",
-                    kind: .password
+                    kind: .password,
+                    accessibilityIdentifier: "auth.signUp.password"
                 )
                 AuthInputField(
                     title: Localization.string("auth.confirmPassword"),
                     text: $viewModel.confirmPassword,
                     systemImage: "checkmark.shield.fill",
-                    kind: .password
+                    kind: .password,
+                    accessibilityIdentifier: "auth.signUp.confirmPassword"
                 )
             }
 
@@ -51,6 +54,7 @@ struct SignUpView: View {
                     }
                 }
                 .disabled(!isSubmitEnabled)
+                .accessibilityIdentifier("auth.signUp.submit")
             }
         }
         .onChange(of: viewModel.toastItem?.id) { _ in

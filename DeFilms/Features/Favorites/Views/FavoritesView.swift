@@ -69,6 +69,7 @@ struct FavoritesView: View {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel(Localization.string("favorites.create.title"))
+                .accessibilityIdentifier("favorites.create.button")
             }
         }
         .alert(

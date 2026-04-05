@@ -95,6 +95,7 @@ struct MovieDetailView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .statusBar(hidden: true)
+        .accessibilityIdentifier("movies.detail.screen")
         .task {
             await viewModel.loadIfNeeded()
         }

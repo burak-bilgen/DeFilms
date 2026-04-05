@@ -18,6 +18,7 @@ struct DeFilmsApp: App {
     private let persistenceController = PersistenceController.shared
 
     init() {
+        Self.configureLaunchStateIfNeeded()
         let container = AppContainer()
         let preferences = AppPreferences()
         let authManager = container.sessionManager
@@ -46,5 +47,16 @@ struct DeFilmsApp: App {
                 .environmentObject(toastCenter)
                 .toast(item: $toastCenter.item, duration: 1.8)
         }
+    }
+
+    private static func configureLaunchStateIfNeeded() {
+        let arguments = ProcessInfo.processInfo.arguments
+
+        guard arguments.contains("UITest.ResetState") else { return }
+
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: AppPreferences.onboardingKey)
+        defaults.removeObject(forKey: AppPreferences.languageKey)
+        defaults.removeObject(forKey: AppPreferences.themeKey)
     }
 }

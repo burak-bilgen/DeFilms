@@ -97,15 +97,18 @@ struct OnboardingView: View {
         VStack(spacing: 8) {
             Button(Localization.string("auth.signUp"), action: signUp)
             .buttonStyle(OnboardingPrimaryButtonStyle())
+            .accessibilityIdentifier("onboarding.signUp")
 
             Button(Localization.string("auth.signIn"), action: signIn)
             .buttonStyle(OnboardingSecondaryButtonStyle())
+            .accessibilityIdentifier("onboarding.signIn")
 
             Button(Localization.string("onboarding.action.guest"), action: continueAsGuest)
             .buttonStyle(.plain)
             .font(.subheadline.weight(.semibold))
             .foregroundStyle(Color.primary.opacity(0.72))
             .padding(.top, 15)
+            .accessibilityIdentifier("onboarding.continueAsGuest")
             
             Spacer(minLength: 50)
 

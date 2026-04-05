@@ -17,7 +17,7 @@ struct NetworkRequestBuilder: NetworkRequestBuilding {
     init(
         apiKeyProvider: @escaping () -> String? = { APIConfig.apiKey },
         languageProvider: @escaping () -> AppLanguage = { AppPreferences.persistedLanguage },
-        timeoutInterval: TimeInterval = 20
+        timeoutInterval: TimeInterval = 15
     ) {
         self.apiKeyProvider = apiKeyProvider
         self.languageProvider = languageProvider

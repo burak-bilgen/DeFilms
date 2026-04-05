@@ -45,6 +45,7 @@ struct NewFavoriteListView: View {
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
                     .accessibilityLabel(Localization.string("favorites.picker.placeholder"))
+                    .accessibilityIdentifier("favorites.create.textField")
                     .padding(.horizontal, 16)
                     .frame(height: 54)
                     .background(AppPalette.cardBackground)
@@ -68,6 +69,7 @@ struct NewFavoriteListView: View {
             .disabled(trimmedListName.isEmpty)
             .opacity(trimmedListName.isEmpty ? 0.5 : 1)
             .accessibilityLabel(Localization.string("favorites.action.create"))
+            .accessibilityIdentifier("favorites.create.submit")
 
             Spacer(minLength: 0)
         }

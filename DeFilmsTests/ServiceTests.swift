@@ -5,8 +5,8 @@ import XCTest
 final class FavoritesServiceTests: XCTestCase {
     func testCreateListRejectsDuplicateNamesCaseInsensitively() throws {
         let service = FavoritesService(
-            repository: MockFavoritesRepository(),
-            sessionManager: MockAuthSessionManager()
+            repository: ServiceTestFavoritesRepository(),
+            sessionManager: ServiceTestAuthSessionManager()
         )
         let existing = [FavoriteList(id: UUID(), name: "Weekend", movies: [])]
 
@@ -18,9 +18,9 @@ final class FavoritesServiceTests: XCTestCase {
     }
 
     func testLoadListsAdoptsLegacyIdentifiersBeforeFetching() throws {
-        let repository = MockFavoritesRepository()
+        let repository = ServiceTestFavoritesRepository()
         repository.lists = [FavoriteList(id: UUID(), name: "Sci-Fi", movies: [])]
-        let sessionManager = MockAuthSessionManager(
+        let sessionManager = ServiceTestAuthSessionManager(
             session: AuthSession(email: "user@example.com", token: "token", userIdentifier: "user-id")
         )
         let service = FavoritesService(repository: repository, sessionManager: sessionManager)
@@ -38,7 +38,7 @@ final class FavoritesServiceTests: XCTestCase {
 @MainActor
 final class AuthFormServiceTests: XCTestCase {
     func testSignInReturnsLocalizedSuccessMessage() throws {
-        let sessionManager = MockAuthSessionManager()
+        let sessionManager = ServiceTestAuthSessionManager()
         let service = AuthFormService(sessionManager: sessionManager)
 
         let message = try service.signIn(email: "user@example.com", password: "password")
@@ -48,7 +48,7 @@ final class AuthFormServiceTests: XCTestCase {
     }
 
     func testChangePasswordPropagatesUnderlyingError() {
-        let sessionManager = MockAuthSessionManager(changePasswordError: AuthError.invalidPasswordFormat)
+        let sessionManager = ServiceTestAuthSessionManager(changePasswordError: AuthError.invalidPasswordFormat)
         let service = AuthFormService(sessionManager: sessionManager)
 
         XCTAssertThrowsError(
@@ -124,12 +124,6 @@ final class MovieDetailServiceTests: XCTestCase {
             ],
             totalPages: 1
         )
-        network.personExternalIDs = [
-            1: PersonExternalIDsResponse(imdbID: "nm0010736"),
-            2: PersonExternalIDsResponse(imdbID: "nm0719637"),
-            3: PersonExternalIDsResponse(imdbID: "nm0898288")
-        ]
-
         let service = TMDBMovieDetailService(
             networkService: network,
             imagePrefetcher: MockMovieImagePrefetcher()
@@ -144,8 +138,6 @@ final class MovieDetailServiceTests: XCTestCase {
         XCTAssertEqual(payload.trailer?.key, "abc")
         XCTAssertEqual(payload.streamingPlatforms.first?.name, "Netflix")
         XCTAssertEqual(payload.similarMovies.map(\.id), [99])
-        XCTAssertEqual(payload.directors.first?.imdbID, "nm0898288")
-        XCTAssertEqual(payload.cast.first?.imdbID, "nm0010736")
     }
 }
 
@@ -156,8 +148,6 @@ private final class MockMovieDetailNetworkService: NetworkServiceProtocol {
     var videos: MovieVideoResponse?
     var watchProviders: MovieWatchProvidersResponse?
     var similar: MovieResponse?
-    var personExternalIDs: [Int: PersonExternalIDsResponse] = [:]
-
     func request<T: Decodable>(endpoint: Endpoint) async throws -> T {
         let value: Any
 
@@ -176,8 +166,6 @@ private final class MockMovieDetailNetworkService: NetworkServiceProtocol {
                 value = try unwrap(watchProviders)
             case .similarMovies:
                 value = try unwrap(similar)
-            case let .personExternalIDs(personID):
-                value = try unwrap(personExternalIDs[personID])
             default:
                 throw ServiceTestError.unexpectedEndpoint
             }
@@ -201,7 +189,7 @@ private actor MockMovieImagePrefetcher: MovieImagePrefetching {
     func prefetch(urls: [URL]) async {}
 }
 
-private final class MockFavoritesRepository: FavoritesRepositoryProtocol {
+private final class ServiceTestFavoritesRepository: FavoritesRepositoryProtocol {
     var lists: [FavoriteList] = []
     private(set) var lastAdoptedUserIdentifier: String?
     private(set) var lastLegacyUserIdentifiers: [String] = []
@@ -229,7 +217,7 @@ private final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) throws {}
 }
 
-private final class MockAuthSessionManager: AuthSessionManaging {
+private final class ServiceTestAuthSessionManager: AuthSessionManaging {
     var session: AuthSession?
     var isSignedIn: Bool { session != nil }
     var currentUserIdentifier: String { session?.userIdentifier ?? guestUserIdentifier }

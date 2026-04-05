@@ -80,12 +80,10 @@ final class TMDBMovieDetailService: MovieDetailServicing {
             let response: MovieCreditsResponse = try await networkService.request(
                 endpoint: TMDBEndpoint.movieCredits(movieID: movieID)
             )
-            let primaryDirectors = Array(response.crew.filter { $0.job == "Director" }.prefix(3))
-            let primaryCast = Array(response.cast.prefix(6))
-
-            async let enrichedDirectors = enrichDirectorsWithIMDb(primaryDirectors)
-            async let enrichedCast = enrichCastWithIMDb(primaryCast)
-            return await (enrichedDirectors, enrichedCast)
+            return (
+                directors: Array(response.crew.filter { $0.job == "Director" }.prefix(3)),
+                cast: Array(response.cast.prefix(6))
+            )
         } catch {
             AppLogger.log("Credits load failed", category: .movie, level: .error)
             return ([], [])
@@ -147,44 +145,6 @@ final class TMDBMovieDetailService: MovieDetailServicing {
             youtubeVideos.first(where: { $0.type == "Trailer" }) ??
             youtubeVideos.first(where: { $0.official }) ??
             youtubeVideos.first
-    }
-
-    private func enrichCastWithIMDb(_ castMembers: [MovieCastMember]) async -> [MovieCastMember] {
-        var enrichedCast: [MovieCastMember] = []
-
-        for member in castMembers {
-            do {
-                let response: PersonExternalIDsResponse = try await networkService.request(
-                    endpoint: TMDBEndpoint.personExternalIDs(personID: member.id)
-                )
-                var updatedMember = member
-                updatedMember.imdbID = response.imdbID
-                enrichedCast.append(updatedMember)
-            } catch {
-                enrichedCast.append(member)
-            }
-        }
-
-        return enrichedCast
-    }
-
-    private func enrichDirectorsWithIMDb(_ crewMembers: [MovieCrewMember]) async -> [MovieCrewMember] {
-        var enrichedDirectors: [MovieCrewMember] = []
-
-        for member in crewMembers {
-            do {
-                let response: PersonExternalIDsResponse = try await networkService.request(
-                    endpoint: TMDBEndpoint.personExternalIDs(personID: member.id)
-                )
-                var updatedMember = member
-                updatedMember.imdbID = response.imdbID
-                enrichedDirectors.append(updatedMember)
-            } catch {
-                enrichedDirectors.append(member)
-            }
-        }
-
-        return enrichedDirectors
     }
 
     private func preferredPlatforms(from results: [String: MovieWatchProviderRegion]) -> [MovieStreamingPlatform] {

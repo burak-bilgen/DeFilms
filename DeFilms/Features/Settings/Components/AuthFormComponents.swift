@@ -71,8 +71,23 @@ struct AuthInputField: View {
     @Binding var text: String
     let systemImage: String
     let kind: Kind
+    let accessibilityIdentifier: String?
     @State private var isFocused = false
     @State private var isPasswordVisible = false
+
+    init(
+        title: String,
+        text: Binding<String>,
+        systemImage: String,
+        kind: Kind,
+        accessibilityIdentifier: String? = nil
+    ) {
+        self.title = title
+        _text = text
+        self.systemImage = systemImage
+        self.kind = kind
+        self.accessibilityIdentifier = accessibilityIdentifier
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -87,12 +102,14 @@ struct AuthInputField: View {
                             placeholder: kind.placeholder,
                             text: $text,
                             isSecureEntry: !isPasswordVisible,
-                            onFocusChange: { isFocused = $0 }
+                            onFocusChange: { isFocused = $0 },
+                            accessibilityIdentifier: accessibilityIdentifier
                         )
                     } else {
                         TextField(kind.placeholder, text: $text, onEditingChanged: { editing in
                             isFocused = editing
                         })
+                        .accessibilityIdentifier(accessibilityIdentifier ?? "")
                     }
                 }
                 .textContentType(kind.textContentType)
@@ -158,6 +175,7 @@ struct NeutralSecureField: UIViewRepresentable {
     @Binding var text: String
     let isSecureEntry: Bool
     let onFocusChange: (Bool) -> Void
+    let accessibilityIdentifier: String?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text, onFocusChange: onFocusChange)
@@ -167,6 +185,7 @@ struct NeutralSecureField: UIViewRepresentable {
         let textField = UITextField(frame: .zero)
         textField.delegate = context.coordinator
         textField.placeholder = placeholder
+        textField.accessibilityIdentifier = accessibilityIdentifier
         textField.isSecureTextEntry = isSecureEntry
         textField.textContentType = nil
         textField.passwordRules = nil
@@ -198,6 +217,7 @@ struct NeutralSecureField: UIViewRepresentable {
         }
 
         uiView.placeholder = placeholder
+        uiView.accessibilityIdentifier = accessibilityIdentifier
         if uiView.isSecureTextEntry != isSecureEntry {
             uiView.isSecureTextEntry = isSecureEntry
             if uiView.isFirstResponder {

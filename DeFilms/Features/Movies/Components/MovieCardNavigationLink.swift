@@ -81,5 +81,6 @@ struct MovieCardNavigationLink: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Localization.string("movies.accessibility.cardSummary", movie.title, movie.releaseYear))
         .accessibilityHint(Localization.string("movies.accessibility.openDetails"))
+        .accessibilityIdentifier("movie.card.\(movie.id)")
     }
 }

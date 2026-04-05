@@ -8,7 +8,7 @@
 import Foundation
 
 final class NetworkManager: NetworkServiceProtocol {
-    static let shared = NetworkManager()
+    static let shared = NetworkManager(session: NetworkManager.makeDefaultSession())
 
     private struct APIErrorPayload: Decodable {
         let statusMessage: String?
@@ -23,7 +23,7 @@ final class NetworkManager: NetworkServiceProtocol {
     private let requestBuilder: NetworkRequestBuilding
 
     init(
-        session: URLSession = .shared,
+        session: URLSession = NetworkManager.makeDefaultSession(),
         decoder: JSONDecoder = JSONDecoder(),
         requestBuilder: NetworkRequestBuilding = NetworkRequestBuilder()
     ) {
@@ -154,5 +154,14 @@ final class NetworkManager: NetworkServiceProtocol {
 
     private func decodeServerErrorMessage(from data: Data) -> String? {
         try? decoder.decode(APIErrorPayload.self, from: data).statusMessage
+    }
+
+    private static func makeDefaultSession() -> URLSession {
+        let configuration = URLSessionConfiguration.default
+        configuration.requestCachePolicy = .reloadRevalidatingCacheData
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 30
+        configuration.waitsForConnectivity = true
+        return URLSession(configuration: configuration)
     }
 }
