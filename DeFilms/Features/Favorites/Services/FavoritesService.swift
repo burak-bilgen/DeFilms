@@ -24,8 +24,8 @@ enum FavoritesServiceError: LocalizedError, Equatable {
 
 protocol FavoritesServicing {
     func loadLists() throws -> [FavoriteList]
-    func createList(named name: String, existingLists: [FavoriteList]) throws -> FavoriteList
-    func renameList(listID: UUID, name: String, existingLists: [FavoriteList]) throws
+    func createList(named name: String, lists: [FavoriteList]) throws -> FavoriteList
+    func renameList(listID: UUID, name: String, lists: [FavoriteList]) throws
     func deleteList(listID: UUID) throws
     func add(movie: Movie, to listID: UUID) throws
     func remove(movieID: Int, from listID: UUID) throws
@@ -56,12 +56,12 @@ final class FavoritesService: FavoritesServicing {
         }
     }
 
-    func createList(named name: String, existingLists: [FavoriteList]) throws -> FavoriteList {
-        let trimmedName = try validateListName(name, existingLists: existingLists)
+    func createList(named name: String, lists: [FavoriteList]) throws -> FavoriteList {
+        let listName = try validateListName(name, in: lists)
 
         do {
             return try repository.createList(
-                named: trimmedName,
+                named: listName,
                 userIdentifier: currentUserIdentifier
             )
         } catch {
@@ -69,17 +69,17 @@ final class FavoritesService: FavoritesServicing {
         }
     }
 
-    func renameList(listID: UUID, name: String, existingLists: [FavoriteList]) throws {
-        let trimmedName = try validateListName(
+    func renameList(listID: UUID, name: String, lists: [FavoriteList]) throws {
+        let listName = try validateListName(
             name,
-            existingLists: existingLists,
+            in: lists,
             excluding: listID
         )
 
         do {
             try repository.renameList(
                 listID: listID,
-                name: trimmedName,
+                name: listName,
                 userIdentifier: currentUserIdentifier
             )
         } catch {
@@ -141,23 +141,23 @@ final class FavoritesService: FavoritesServicing {
 
     private func validateListName(
         _ name: String,
-        existingLists: [FavoriteList],
+        in lists: [FavoriteList],
         excluding listID: UUID? = nil
     ) throws -> String {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else {
+        let listName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !listName.isEmpty else {
             throw FavoritesServiceError.invalidListName
         }
 
-        let duplicate = existingLists.first {
+        let matchingList = lists.first {
             $0.id != listID &&
-            $0.name.localizedCaseInsensitiveCompare(trimmedName) == .orderedSame
+            $0.name.localizedCaseInsensitiveCompare(listName) == .orderedSame
         }
 
-        guard duplicate == nil else {
+        guard matchingList == nil else {
             throw FavoritesServiceError.duplicateListName
         }
 
-        return trimmedName
+        return listName
     }
 }

@@ -27,25 +27,25 @@ final class FavoritesStore: ObservableObject {
 
         sessionManager.$session
             .sink { [weak self] _ in
-                self?.reloadLists()
+                self?.refreshLists()
             }
             .store(in: &cancellables)
 
-        reloadLists()
+        refreshLists()
     }
 
     func createList(named name: String) -> FavoriteList? {
         do {
-            let list = try favoritesService.createList(named: name, existingLists: lists)
-            reloadLists()
+            let list = try favoritesService.createList(named: name, lists: lists)
+            refreshLists()
             AppLogger.log("Created favorite list", category: .favorites, level: .success)
             toastItem = .success(Localization.string("favorites.toast.listCreated"))
             return list
         } catch FavoritesServiceError.invalidListName {
             return nil
         } catch FavoritesServiceError.duplicateListName {
-            if let existingList = existingList(named: name) {
-                return existingList
+            if let matchingList = list(named: name) {
+                return matchingList
             }
             toastItem = .error(Localization.string("favorites.toast.duplicateList"))
             return nil
@@ -59,7 +59,7 @@ final class FavoritesStore: ObservableObject {
     func add(movie: Movie, to listID: UUID) {
         do {
             try favoritesService.add(movie: movie, to: listID)
-            reloadLists()
+            refreshLists()
             AppLogger.log("Added movie to favorites", category: .favorites, level: .success)
         } catch {
             AppLogger.log("Failed to add movie to favorites", category: .favorites, level: .error)
@@ -71,7 +71,7 @@ final class FavoritesStore: ObservableObject {
     func remove(movieID: Int, from listID: UUID) {
         do {
             try favoritesService.remove(movieID: movieID, from: listID)
-            reloadLists()
+            refreshLists()
             AppLogger.log("Removed movie from list", category: .favorites, level: .success)
         } catch {
             AppLogger.log("Failed to remove movie from list", category: .favorites, level: .error)
@@ -82,8 +82,8 @@ final class FavoritesStore: ObservableObject {
 
     func renameList(listID: UUID, name: String) -> Bool {
         do {
-            try favoritesService.renameList(listID: listID, name: name, existingLists: lists)
-            reloadLists()
+            try favoritesService.renameList(listID: listID, name: name, lists: lists)
+            refreshLists()
             toastItem = .success(Localization.string("favorites.toast.listRenamed"))
             return true
         } catch FavoritesServiceError.invalidListName {
@@ -100,7 +100,7 @@ final class FavoritesStore: ObservableObject {
     func deleteList(listID: UUID) {
         do {
             try favoritesService.deleteList(listID: listID)
-            reloadLists()
+            refreshLists()
             toastItem = .success(Localization.string("favorites.toast.listDeleted"))
         } catch {
             toastItem = .error(Localization.string("favorites.toast.genericError"))
@@ -114,7 +114,7 @@ final class FavoritesStore: ObservableObject {
                 from: sourceListID,
                 to: destinationListID
             )
-            reloadLists()
+            refreshLists()
             toastItem = .success(Localization.string("favorites.toast.movieMoved"))
         } catch {
             toastItem = .error(Localization.string("favorites.toast.genericError"))
@@ -144,7 +144,7 @@ final class FavoritesStore: ObservableObject {
         )
     }
 
-    func existingList(named name: String) -> FavoriteList? {
+    func list(named name: String) -> FavoriteList? {
         lists.first { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }
     }
 
@@ -156,11 +156,11 @@ final class FavoritesStore: ObservableObject {
         lists.first(where: { $0.id == listID })
     }
 
-    private func reloadLists() {
-        let updatedLists = (try? favoritesService.loadLists()) ?? []
+    private func refreshLists() {
+        let latestLists = (try? favoritesService.loadLists()) ?? []
         withAnimation(.easeInOut(duration: 0.24)) {
-            lists = updatedLists
+            lists = latestLists
         }
-        AppLogger.log("Favorites reloaded", category: .favorites)
+        AppLogger.log("Favorites refreshed", category: .favorites)
     }
 }

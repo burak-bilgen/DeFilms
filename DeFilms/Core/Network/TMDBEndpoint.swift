@@ -25,7 +25,6 @@ enum TMDBEndpoint: Endpoint {
     case movieCredits(movieID: Int)
     case movieWatchProviders(movieID: Int)
     case similarMovies(movieID: Int, page: Int)
-    case personExternalIDs(personID: Int)
     case genreList
 
     var path: String {
@@ -54,8 +53,6 @@ enum TMDBEndpoint: Endpoint {
             return "/movie/\(movieID)/watch/providers"
         case let .similarMovies(movieID, _):
             return "/movie/\(movieID)/similar"
-        case let .personExternalIDs(personID):
-            return "/person/\(personID)/external_ids"
         case .genreList:
             return "/genre/movie/list"
         }
@@ -75,12 +72,7 @@ enum TMDBEndpoint: Endpoint {
     }
 
     var retryPolicy: NetworkRetryPolicy {
-        switch self {
-        case .personExternalIDs:
-            return .none
-        default:
-            return .transient(maxRetryCount: 1)
-        }
+        .transient(maxRetryCount: 1)
     }
 
     func queryItems(for language: AppLanguage) -> [URLQueryItem] {
@@ -132,8 +124,6 @@ enum TMDBEndpoint: Endpoint {
             return [
                 URLQueryItem(name: "page", value: String(page))
             ]
-        case .personExternalIDs:
-            return []
         case .genreList:
             return []
         }

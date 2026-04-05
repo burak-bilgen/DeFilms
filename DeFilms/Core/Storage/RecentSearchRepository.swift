@@ -38,28 +38,28 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
     }
 
     func addSearch(_ query: String, for userIdentifier: String, limit: Int) throws {
-        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedQuery.isEmpty else { return }
+        let searchText = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !searchText.isEmpty else { return }
 
         let context = persistenceController.viewContext
 
-        let duplicateRequest = RecentSearchEntity.fetchRequest()
-        duplicateRequest.predicate = NSPredicate(format: "query =[c] %@ AND userIdentifier == %@", trimmedQuery, userIdentifier)
-        let duplicates = try context.fetch(duplicateRequest)
-        for item in duplicates {
+        let matchingSearchRequest = RecentSearchEntity.fetchRequest()
+        matchingSearchRequest.predicate = NSPredicate(format: "query =[c] %@ AND userIdentifier == %@", searchText, userIdentifier)
+        let existingMatches = try context.fetch(matchingSearchRequest)
+        for item in existingMatches {
             context.delete(item)
         }
 
         let entity = RecentSearchEntity(context: context)
         entity.id = UUID()
-        entity.query = trimmedQuery
+        entity.query = searchText
         entity.userIdentifier = userIdentifier
         entity.createdAt = Date()
 
-        let overflowRequest = RecentSearchEntity.fetchRequest()
-        overflowRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
-        overflowRequest.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
-        let allSearches = try context.fetch(overflowRequest)
+        let searchesRequest = RecentSearchEntity.fetchRequest()
+        searchesRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+        searchesRequest.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
+        let allSearches = try context.fetch(searchesRequest)
 
         for search in allSearches.dropFirst(limit) {
             context.delete(search)

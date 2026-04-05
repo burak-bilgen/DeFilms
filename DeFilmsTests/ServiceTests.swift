@@ -11,7 +11,7 @@ final class FavoritesServiceTests: XCTestCase {
         let existing = [FavoriteList(id: UUID(), name: "Weekend", movies: [])]
 
         XCTAssertThrowsError(
-            try service.createList(named: " weekend ", existingLists: existing)
+            try service.createList(named: " weekend ", lists: existing)
         ) { error in
             XCTAssertEqual(error as? FavoritesServiceError, .duplicateListName)
         }

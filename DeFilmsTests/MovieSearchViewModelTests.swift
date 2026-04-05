@@ -85,8 +85,8 @@ struct MovieSearchViewModelTests {
 
         await viewModel.search()
         await viewModel.loadNextSearchPageIfNeeded(
-            currentMovie: firstPageMovies[2],
-            displayedMovies: viewModel.filteredSearchResults
+            after: firstPageMovies[2],
+            in: viewModel.filteredSearchResults
         )
 
         #expect(viewModel.currentSearchPageNumber == 2)

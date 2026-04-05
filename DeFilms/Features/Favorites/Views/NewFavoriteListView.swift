@@ -15,7 +15,7 @@ struct NewFavoriteListView: View {
     @FocusState private var isTextFieldFocused: Bool
     @State private var listName: String = ""
 
-    private var trimmedListName: String {
+    private var proposedListName: String {
         listName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -55,7 +55,7 @@ struct NewFavoriteListView: View {
                     .onSubmit(createList)
             }
 
-            if trimmedListName.isEmpty {
+            if proposedListName.isEmpty {
                 Text(Localization.string("favorites.form.requiredHint"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -66,8 +66,8 @@ struct NewFavoriteListView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryProminentButtonStyle())
-            .disabled(trimmedListName.isEmpty)
-            .opacity(trimmedListName.isEmpty ? 0.5 : 1)
+            .disabled(proposedListName.isEmpty)
+            .opacity(proposedListName.isEmpty ? 0.5 : 1)
             .accessibilityLabel(Localization.string("favorites.action.create"))
             .accessibilityIdentifier("favorites.create.submit")
 
@@ -90,7 +90,7 @@ struct NewFavoriteListView: View {
     }
 
     private func createList() {
-        guard !trimmedListName.isEmpty else { return }
+        guard !proposedListName.isEmpty else { return }
         guard let list = favoritesStore.createList(named: listName) else { return }
         if let movie {
             favoritesStore.add(movie: movie, to: list.id)

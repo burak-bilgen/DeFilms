@@ -11,7 +11,7 @@ struct MoviesSearchBar: View {
     let onSubmit: () -> Void
     let onClear: () -> Void
 
-    private var trimmedText: String {
+    private var searchQuery: String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -56,8 +56,8 @@ struct MoviesSearchBar: View {
                 onSubmit()
             }
             .buttonStyle(PrimaryProminentButtonStyle())
-            .disabled(trimmedText.isEmpty)
-            .opacity(trimmedText.isEmpty ? 0.5 : 1)
+            .disabled(searchQuery.isEmpty)
+            .opacity(searchQuery.isEmpty ? 0.5 : 1)
             .accessibilityIdentifier("movies.search.submitButton")
         }
         .padding(AppSpacing.xxs + 2)

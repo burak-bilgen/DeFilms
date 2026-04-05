@@ -26,8 +26,8 @@ struct MoviesView: View {
     }
 
     private var hasActiveFilters: Bool {
-        let trimmedYear = viewModel.filterYear.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !trimmedYear.isEmpty || viewModel.minRating > 0 || viewModel.selectedGenreID != nil
+        let releaseYearText = viewModel.filterYear.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !releaseYearText.isEmpty || viewModel.minRating > 0 || viewModel.selectedGenreID != nil
     }
 
     private var hasActiveSorting: Bool {
@@ -90,7 +90,7 @@ struct MoviesView: View {
                             .transition(.move(edge: .top).combined(with: .opacity))
                     }
 
-                    searchSection
+                    searchBar
                         .padding(.horizontal)
                         .animation(.easeInOut(duration: 0.2), value: viewModel.shouldShowBrowseContent)
 
@@ -114,27 +114,27 @@ struct MoviesView: View {
                     }
 
                     if viewModel.shouldShowBrowseContent {
-                        MoviesBrowseContentSection(
+                        MoviesBrowseSectionView(
                             searchHistory: viewModel.searchHistory,
                             screenState: viewModel.screenState,
                             browseSections: viewModel.browseSections,
-                            onSelectRecentSearch: selectRecentSearch,
+                            onSelectRecentSearch: runRecentSearch,
                             onClearSearchHistory: viewModel.clearSearchHistory,
-                            onReloadBrowseContent: reloadBrowseContent,
+                            onReloadBrowseContent: refreshBrowseContent,
                             localizedBrowseTitle: localizedBrowseTitle
                         )
                             .transition(.opacity)
                     } else {
-                        MoviesSearchContentSection(
+                        MoviesSearchResultsView(
                             screenState: viewModel.screenState,
                             query: viewModel.query,
                             displayedMovies: displayedSearchMovies,
                             searchColumns: searchColumns,
                             isLoadingNextSearchPage: viewModel.isLoadingNextSearchPage,
-                            onOpenMovie: openMovieDetail,
+                            onOpenMovie: showMovieDetail,
                             onLoadNextPage: loadNextSearchPage,
                             onResetFiltersAndSort: viewModel.resetFiltersAndSort,
-                            onPerformSearch: performSearch
+                            onPerformSearch: submitSearch
                         )
                             .transition(.opacity)
                     }
@@ -175,26 +175,26 @@ struct MoviesView: View {
         }
     }
 
-    private var searchSection: some View {
+    private var searchBar: some View {
         MoviesSearchBar(
             text: $viewModel.query,
             isFocused: $isSearchFocused,
-            onSubmit: performSearch,
+            onSubmit: submitSearch,
             onClear: viewModel.clearSearch
         )
     }
 
-    private func performSearch() {
+    private func submitSearch() {
         Task {
             isSearchFocused = false
-            AppLogger.log("Search submitted from UI", category: .search)
+            AppLogger.log("Search submitted", category: .search)
             await viewModel.search(force: true)
         }
     }
 
-    private func reloadBrowseContent() {
+    private func refreshBrowseContent() {
         Task {
-            await viewModel.reloadBrowseContent()
+            await viewModel.refreshBrowseContent()
         }
     }
 
@@ -205,19 +205,19 @@ struct MoviesView: View {
         }
     }
 
-    private func selectRecentSearch(_ selected: String) {
+    private func runRecentSearch(_ recentQuery: String) {
         Task {
-            await viewModel.selectRecentSearch(selected)
+            await viewModel.search(usingRecentQuery: recentQuery)
         }
     }
 
-    private func openMovieDetail(_ movie: Movie) {
+    private func showMovieDetail(_ movie: Movie) {
         coordinator.push(.detail(movie))
     }
 
-    private func loadNextSearchPage(for movie: Movie, displayedMovies: [Movie]) {
+    private func loadNextSearchPage(after movie: Movie, in displayedMovies: [Movie]) {
         Task {
-            await viewModel.loadNextSearchPageIfNeeded(currentMovie: movie, displayedMovies: displayedMovies)
+            await viewModel.loadNextSearchPageIfNeeded(after: movie, in: displayedMovies)
         }
     }
 

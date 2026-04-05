@@ -110,14 +110,6 @@ struct MovieCastMember: Codable, Equatable, Identifiable {
     }
 }
 
-struct PersonExternalIDsResponse: Codable {
-    let imdbID: String?
-
-    enum CodingKeys: String, CodingKey {
-        case imdbID = "imdb_id"
-    }
-}
-
 struct MovieCrewMember: Codable, Equatable, Identifiable {
     let id: Int
     let name: String

@@ -238,11 +238,11 @@ struct NeutralSecureField: UIViewRepresentable {
         }
 
         @objc func textDidChange(_ textField: UITextField) {
-            let sanitizedText = (textField.text ?? "").filter { !$0.isWhitespace }
-            if textField.text != sanitizedText {
-                textField.text = sanitizedText
+            let textWithoutSpaces = (textField.text ?? "").filter { !$0.isWhitespace }
+            if textField.text != textWithoutSpaces {
+                textField.text = textWithoutSpaces
             }
-            text = sanitizedText
+            text = textWithoutSpaces
         }
 
         func textFieldDidBeginEditing(_ textField: UITextField) {

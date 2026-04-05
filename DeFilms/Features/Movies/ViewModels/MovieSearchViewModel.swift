@@ -66,7 +66,7 @@ final class MovieSearchViewModel: ObservableObject {
 
         sessionManager.$session
             .sink { [weak self] _ in
-                self?.loadHistory()
+                self?.refreshSearchHistory()
             }
             .store(in: &cancellables)
 
@@ -76,12 +76,12 @@ final class MovieSearchViewModel: ObservableObject {
             .sink { [weak self] newValue in
                 guard let self else { return }
                 Task { @MainActor in
-                    await self.handleDebouncedQueryChange(newValue)
+                    await self.searchIfNeeded(afterDebounce: newValue)
                 }
             }
             .store(in: &cancellables)
 
-        loadHistory()
+        refreshSearchHistory()
     }
 
     var browseSections: [MovieBrowseSection] {
@@ -103,8 +103,8 @@ final class MovieSearchViewModel: ObservableObject {
     var filteredSearchResults: [Movie] {
         var results = searchResults
 
-        let trimmedYear = filterYear.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let year = Int(trimmedYear), trimmedYear.count == 4 {
+        let releaseYearText = filterYear.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let year = Int(releaseYearText), releaseYearText.count == 4 {
             results = results.filter { $0.releaseYear == String(year) }
         }
 
@@ -147,7 +147,7 @@ final class MovieSearchViewModel: ObservableObject {
         await loadBrowseContent()
     }
 
-    func reloadBrowseContent() async {
+    func refreshBrowseContent() async {
         hasLoadedBrowseContent = false
         await loadBrowseContent()
     }
@@ -174,12 +174,12 @@ final class MovieSearchViewModel: ObservableObject {
         do {
             AppLogger.log("Search started", category: .search)
             let response = try await movieCatalogService.searchMovies(query: searchText, page: 1)
-            applySearchPage(response, appendResults: false)
+            updateSearchResults(with: response, appendingResults: false)
             await movieCatalogService.prefetchImages(for: response.results)
             lastExecutedSearchQuery = searchText
             lastLoadedLanguage = AppPreferences.persistedLanguage
             try searchHistoryService.saveSearch(searchText)
-            loadHistory()
+            refreshSearchHistory()
             screenState = filteredSearchResults.isEmpty ? .emptyResults : .loadedResults
             AppLogger.log("Search completed with \(response.results.count) results", category: .search, level: .success)
         } catch {
@@ -203,8 +203,8 @@ final class MovieSearchViewModel: ObservableObject {
         screenState = .browse
     }
 
-    func selectRecentSearch(_ item: String) async {
-        query = item
+    func search(usingRecentQuery recentQuery: String) async {
+        query = recentQuery
         await search()
     }
 
@@ -251,12 +251,12 @@ final class MovieSearchViewModel: ObservableObject {
 
         do {
             genres = try await movieCatalogService.loadGenres()
-            AppLogger.log("Loaded genres", category: .movie, level: .success)
+            AppLogger.log("Genres loaded", category: .movie, level: .success)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.filter.error")
             errorMessage = message
             toastItem = .error(message)
-            AppLogger.log("Genre loading failed", category: .movie, level: .error)
+            AppLogger.log("Failed to load genres", category: .movie, level: .error)
         }
     }
 
@@ -290,18 +290,18 @@ final class MovieSearchViewModel: ObservableObject {
         toastItem = nil
     }
 
-    private func loadHistory() {
+    private func refreshSearchHistory() {
         searchHistory = (try? searchHistoryService.loadSearchHistory()) ?? []
     }
 
-    private func handleDebouncedQueryChange(_ value: String) async {
-        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func searchIfNeeded(afterDebounce value: String) async {
+        let searchText = value.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !trimmedValue.isEmpty else { return }
+        guard !searchText.isEmpty else { return }
         await search()
     }
 
-    func loadNextSearchPageIfNeeded(currentMovie: Movie, displayedMovies: [Movie]) async {
+    func loadNextSearchPageIfNeeded(after currentMovie: Movie, in displayedMovies: [Movie]) async {
         guard canLoadMoreSearchResults, !isLoadingNextSearchPage else { return }
         guard let currentIndex = displayedMovies.firstIndex(where: { $0.id == currentMovie.id }) else { return }
 
@@ -326,7 +326,7 @@ final class MovieSearchViewModel: ObservableObject {
                 page: nextPage
             )
 
-            applySearchPage(response, appendResults: true)
+            updateSearchResults(with: response, appendingResults: true)
             await movieCatalogService.prefetchImages(for: response.results)
         } catch {
             AppLogger.log("Pagination failed", category: .search, level: .error)
@@ -338,11 +338,11 @@ final class MovieSearchViewModel: ObservableObject {
         totalSearchPages = 1
     }
 
-    private func applySearchPage(_ response: MovieResponse, appendResults: Bool) {
+    private func updateSearchResults(with response: MovieResponse, appendingResults: Bool) {
         currentSearchPage = response.page
         totalSearchPages = max(response.totalPages, 1)
 
-        if appendResults {
+        if appendingResults {
             let existingMovieIDs = Set(searchResults.map(\.id))
             let newResults = response.results.filter { !existingMovieIDs.contains($0.id) }
             withAnimation(.easeOut(duration: 0.24)) {

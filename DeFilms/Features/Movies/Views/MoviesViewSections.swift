@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-struct MoviesBrowseContentSection: View {
+struct MoviesBrowseSectionView: View {
     let searchHistory: [String]
     let screenState: MoviesScreenState
     let browseSections: [MovieBrowseSection]
@@ -49,7 +49,7 @@ struct MoviesBrowseContentSection: View {
     }
 }
 
-struct MoviesSearchContentSection: View {
+struct MoviesSearchResultsView: View {
     let screenState: MoviesScreenState
     let query: String
     let displayedMovies: [Movie]

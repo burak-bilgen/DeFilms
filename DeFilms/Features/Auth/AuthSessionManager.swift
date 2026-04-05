@@ -219,8 +219,8 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             return
         }
 
-        let restoredIdentifier = restoreUserIdentifier(for: email)
-        session = AuthSession(email: email, token: token, userIdentifier: restoredIdentifier)
+        let userIdentifier = restoreUserIdentifier(for: email)
+        session = AuthSession(email: email, token: token, userIdentifier: userIdentifier)
         AppLogger.log("Session restored", category: .auth, level: .success)
     }
 
@@ -313,7 +313,6 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 enum AuthError: Error, LocalizedError, Equatable {
     case emptyFields
     case invalidEmail
-    case weakPassword
     case invalidPasswordFormat
     case passwordMismatch
     case accountExists
@@ -329,8 +328,6 @@ enum AuthError: Error, LocalizedError, Equatable {
             return Localization.string("auth.error.emptyFields")
         case .invalidEmail:
             return Localization.string("auth.error.invalidEmail")
-        case .weakPassword:
-            return Localization.string("auth.error.weakPassword")
         case .invalidPasswordFormat:
             return Localization.string("auth.error.invalidPasswordFormat")
         case .passwordMismatch:
