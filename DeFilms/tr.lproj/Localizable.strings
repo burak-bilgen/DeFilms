@@ -32,9 +32,9 @@
 "settings.section.about" = "Hakkında";
 "settings.appearance.theme" = "Tema";
 "settings.language.appLanguage" = "Uygulama Dili";
-"settings.account.status" = "Kayıtlı Kullanıcı";
+"settings.account.status" = "Kayıtlı kullanıcı";
 "settings.account.logout" = "Çıkış Yap";
-"settings.account.logout.message" = "Bu cihazdaki yerel oturum kaldırılacak.";
+"settings.account.logout.message" = "Bu cihazdaki yerel oturum sonlandırılacak.";
 "settings.account.signedOutDescription" = "Favorilerini kullanıcı bazlı saklamak için giriş yapabilir veya hesap oluşturabilirsin.";
 "settings.about.version" = "Sürüm";
 
@@ -48,11 +48,11 @@
 "auth.toast.signedOut" = "Çıkış yapıldı.";
 "auth.email" = "E-posta";
 "auth.password" = "Şifre";
-"auth.confirmPassword" = "Şifre Tekrar";
+"auth.confirmPassword" = "Şifreyi Onayla";
 "auth.currentPassword" = "Mevcut Şifre";
 "auth.newPassword" = "Yeni Şifre";
-"auth.placeholder.email" = "ornek@mail.com";
-"auth.placeholder.password" = "Şifreni gir";
+"auth.placeholder.email" = "ornek@example.com";
+"auth.placeholder.password" = "Şifreni Gir";
 "auth.placeholder.newPassword" = "Yeni bir şifre oluştur";
 "auth.password.show" = "Şifreyi göster";
 "auth.password.hide" = "Şifreyi gizle";
@@ -135,13 +135,15 @@
 "favorites.remove.movie.message" = "\"%@\" bu listeden çıkarılacak.";
 "favorites.remove.from.list.message" = "Bu filmi \"%@\" listesinden çıkarmak istiyor musun?";
 "favorites.move.title" = "Filmi Taşı";
-"favorites.move.message" = "\"%@\" için hedef liste seç.";
+"favorites.move.message" = "\"%@\" için hedef listeyi seç.";
+"favorites.move.confirm" = "Taşı";
+"favorites.move.confirm.message" = "\"%@\" filmi \"%@\" listesine taşınsın mı?";
 "favorites.share.button" = "Listeyi Paylaş";
-"favorites.share.header" = "Hey! DeFilms'deki %@ listeme göz at.";
+"favorites.share.header" = "Merhaba! DeFilms'teki %@ listeme göz at.";
 
-"movies.section.popular" = "Popüler";
-"movies.section.trendingToday" = "Bugün Trend";
-"movies.section.trendingWeek" = "Bu Hafta Trend";
+"movies.section.popular" = "Popüler Filmler";
+"movies.section.trendingToday" = "Bugünün Trendleri";
+"movies.section.trendingWeek" = "Bu Haftanın Trendleri";
 "movies.section.upcoming" = "Yakında";
 "movies.section.nowPlaying" = "Vizyonda";
 "movies.section.topRated" = "En Beğenilenler";
@@ -166,13 +168,13 @@
 "movies.sort.titleAsc" = "Alfabetik A-Z";
 "movies.sort.titleDesc" = "Alfabetik Z-A";
 "movies.sort.dateAsc" = "Tarih: Eskiden Yeniye";
-"movies.sort.dateDesc" = "Tarih: Yeniden Eskiye";
-"movies.sort.ratingDesc" = "Puana Göre";
+"movies.sort.dateDesc" = "Tarih: yeniden eskiye";
+"movies.sort.ratingDesc" = "Puana göre";
 "movies.action.searchAgain" = "Tekrar Ara";
 "movies.accessibility.searchField" = "Film arama alanı";
 "movies.accessibility.clearSearch" = "Arama metnini temizle";
 "movies.accessibility.recentSearch" = "Son arama, %@";
-"movies.searchHistory.clear" = "Arama Geçmişini Temizle";
+"movies.searchHistory.clear" = "Arama geçmişini temizle";
 "movies.searchHistory.clear.confirmTitle" = "Son aramaları temizlemek istediğine emin misin?";
 "movies.searchHistory.clear.confirmMessage" = "Arama geçmişin kaldırılacak.";
 "movies.searchHistory.clear.confirmAction" = "Temizle";
@@ -182,7 +184,7 @@
 "movies.message.noResults.title" = "Sonuç Yok";
 "movies.message.noResults.body" = "\"%@\" için film bulunamadı.";
 "movies.message.filteredEmpty.title" = "Eşleşen Sonuç Yok";
-"movies.message.filteredEmpty.body" = "Daha fazla sonuç görmek için filtreleri veya sıralamayı temizle.";
+"movies.message.filteredEmpty.body" = "Daha fazla sonuç görmek için filtreleri veya sıralamayı sıfırla.";
 "movies.message.searchFailed.title" = "Arama Başarısız";
 "movies.detail.error" = "Film detayları yüklenemedi.";
 "movies.detail.limited.title" = "Sınırlı Detay";
@@ -192,7 +194,7 @@
 "movies.detail.cast" = "Oyuncular";
 "movies.detail.director" = "Yönetmen";
 "movies.detail.genres" = "Türler";
-"movies.detail.availableOn" = "Yayında Olduğu Platformlar";
+"movies.detail.availableOn" = "Yayınlandığı Platformlar";
 "movies.detail.similar" = "Benzer Filmler";
 "movies.detail.rating" = "Puan %@";
 "movies.detail.info.release" = "YAYIN";
@@ -204,7 +206,7 @@
 "movies.detail.runtimeHero" = "Süre: %@";
 "movies.detail.releaseLabel" = "Yayın: %@";
 "movies.detail.runtimeLabel" = "Süre: %@";
-"movies.detail.trailer.watch" = "FRAGMAN";
+"movies.detail.trailer.watch" = "Fragmanı İzle";
 "movies.detail.trailer.missing" = "Bu film için uygun bir fragman bulunmuyor.";
 "movies.detail.imdb" = "IMDb";
 "movies.runtime.hoursMinutes" = "%d sa %d dk";

@@ -66,9 +66,9 @@ struct ConnectionBlockingView: View {
             )
         case .turkish:
             return ConnectionBlockingCopy(
-                title: "Internet baglantisi gerekli",
-                message: "DeFilms film verilerini yuklemek icin aktif bir Wi-Fi veya mobil veri baglantisina ihtiyac duyar. Baglantiyi geri getirip tekrar deneyin.",
-                buttonTitle: isChecking ? "Kontrol ediliyor..." : "Tekrar Kontrol Et"
+                title: "İnternet bağlantısı gerekli",
+                message: "DeFilms, film verilerini yüklemek için etkin bir Wi‑Fi veya mobil veri bağlantısına ihtiyaç duyar. Bağlantıyı geri getirip tekrar deneyin.",
+                buttonTitle: isChecking ? "Kontrol ediliyor..." : "Tekrar kontrol et"
             )
         case .arabic:
             return ConnectionBlockingCopy(

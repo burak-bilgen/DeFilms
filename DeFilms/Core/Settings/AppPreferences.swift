@@ -103,6 +103,7 @@ final class AppPreferences: ObservableObject {
         selectedTheme = AppTheme(rawValue: themeValue ?? "") ?? .system
         selectedLanguage = AppLanguage(rawValue: languageValue ?? "") ?? .english
         hasCompletedOnboarding = defaults.bool(forKey: Self.onboardingKey)
+        AppLayoutDirectionController.apply(selectedLanguage.layoutDirection)
         AppLogger.log("Preferences loaded", category: .app)
     }
 
@@ -126,6 +127,7 @@ final class AppPreferences: ObservableObject {
 
         isApplyingLanguageChange = true
         selectedLanguage = language
+        AppLayoutDirectionController.apply(language.layoutDirection)
 
         let task = Task { @MainActor [weak self] in
             // Give SwiftUI a short blocking window while locale/layout direction

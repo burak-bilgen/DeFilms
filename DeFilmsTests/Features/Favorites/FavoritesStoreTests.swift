@@ -32,7 +32,7 @@ final class FavoritesStoreTests: XCTestCase {
         XCTAssertEqual(viewModel.lists.map(\.name), ["Weekend", "Sci-Fi"])
     }
 
-    func test_FavoritesViewModel_createRenameAndDeleteList_updatesPublishedLists() async {
+    func test_FavoritesViewModel_createRenameAndDeleteList_updatesPublishedLists() async throws {
         let repository = MockFavoritesRepository()
         let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
         let store = FavoritesStore(
@@ -91,6 +91,24 @@ final class FavoritesStoreTests: XCTestCase {
 
         XCTAssertEqual(result?.id, repository.lists.first?.id)
         XCTAssertEqual(repository.lists.count, 1)
+        XCTAssertEqual(repository.createListCallCount, 0)
+    }
+
+    func test_FavoritesStore_sameNormalizedRename_isNoOp() async {
+        let list = FavoriteList(id: UUID(), name: "Café", movies: [])
+        let repository = MockFavoritesRepository()
+        repository.lists = [list]
+        let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
+        let store = FavoritesStore(
+            favoritesService: FavoritesService(repository: repository, sessionManager: sessionManager),
+            sessionManager: sessionManager
+        )
+
+        let didRename = await store.renameList(listID: list.id, name: " cafe ")
+
+        XCTAssertTrue(didRename)
+        XCTAssertEqual(repository.renameListCallCount, 0)
+        XCTAssertNil(store.toastItem)
     }
 
     func test_FavoritesStore_renameDuplicate_publishesDuplicateToast() async {
@@ -171,6 +189,58 @@ final class FavoritesStoreTests: XCTestCase {
         XCTAssertEqual(store.toastItem?.message, Localization.string("favorites.toast.genericError"))
         XCTAssertEqual(store.list(withID: sourceListID)?.movies.count, 1)
         XCTAssertTrue(store.list(withID: destinationListID)?.movies.isEmpty == true)
+    }
+
+    func test_FavoritesStore_addExistingMovie_isNoOp() async {
+        let listID = UUID()
+        let existingMovie = FavoriteMovie(id: 7, title: "Arrival", posterPath: nil, releaseDate: nil, voteAverage: nil)
+        let repository = MockFavoritesRepository()
+        repository.lists = [FavoriteList(id: listID, name: "Weekend", movies: [existingMovie])]
+        let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
+        let store = FavoritesStore(
+            favoritesService: FavoritesService(repository: repository, sessionManager: sessionManager),
+            sessionManager: sessionManager
+        )
+
+        await store.add(movie: existingMovie.asMovie, to: listID)
+
+        XCTAssertEqual(repository.addMovieCallCount, 0)
+    }
+
+    func test_FavoritesStore_moveWithinSameList_isNoOp() async {
+        let listID = UUID()
+        let repository = MockFavoritesRepository()
+        repository.lists = [
+            FavoriteList(
+                id: listID,
+                name: "Weekend",
+                movies: [FavoriteMovie(id: 7, title: "Arrival", posterPath: nil, releaseDate: nil, voteAverage: nil)]
+            )
+        ]
+        let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
+        let store = FavoritesStore(
+            favoritesService: FavoritesService(repository: repository, sessionManager: sessionManager),
+            sessionManager: sessionManager
+        )
+
+        await store.move(movieID: 7, from: listID, to: listID)
+
+        XCTAssertEqual(repository.moveMovieCallCount, 0)
+        XCTAssertNil(store.toastItem)
+    }
+
+    func test_FavoritesStore_deleteMissingList_isNoOp() async {
+        let repository = MockFavoritesRepository()
+        let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
+        let store = FavoritesStore(
+            favoritesService: FavoritesService(repository: repository, sessionManager: sessionManager),
+            sessionManager: sessionManager
+        )
+
+        await store.deleteList(listID: UUID())
+
+        XCTAssertEqual(repository.deleteListCallCount, 0)
+        XCTAssertNil(store.toastItem)
     }
 
     func test_FavoriteListDetailViewModel_initialState_exposesListDestinationsAndShareText() {

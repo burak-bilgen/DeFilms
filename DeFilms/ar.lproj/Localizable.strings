@@ -136,6 +136,8 @@
 "favorites.remove.from.list.message" = "إزالة هذا الفيلم من \"%@\"؟";
 "favorites.move.title" = "نقل الفيلم";
 "favorites.move.message" = "اختر قائمة وجهة لـ \"%@\".";
+"favorites.move.confirm" = "نقل";
+"favorites.move.confirm.message" = "هل تريد نقل \"%@\" إلى \"%@\"؟";
 "favorites.share.button" = "مشاركة القائمة";
 "favorites.share.header" = "مرحبًا! ألقِ نظرة على قائمتي %@ في DeFilms.";
 

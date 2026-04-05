@@ -18,6 +18,21 @@ final class FavoritesServiceTests: XCTestCase {
         }
     }
 
+    func testCreateListRejectsDuplicateNamesDiacriticInsensitively() async throws {
+        let service = FavoritesService(
+            repository: ServiceTestFavoritesRepository(),
+            sessionManager: ServiceTestAuthSessionManager()
+        )
+        let existing = [FavoriteList(id: UUID(), name: "Café", movies: [])]
+
+        do {
+            _ = try await service.createList(named: " cafe ", lists: existing)
+            XCTFail("Expected duplicate list name error")
+        } catch {
+            XCTAssertEqual(error as? FavoritesServiceError, .duplicateListName)
+        }
+    }
+
     func testLoadListsAdoptsLegacyIdentifiersBeforeFetching() async throws {
         let repository = ServiceTestFavoritesRepository()
         repository.lists = [FavoriteList(id: UUID(), name: "Sci-Fi", movies: [])]

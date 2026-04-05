@@ -10,6 +10,7 @@ struct FavoriteListRow: View {
     let openList: () -> Void
     let renameList: () -> Void
     let deleteList: () -> Void
+    @State private var isActionsPresented = false
 
     var body: some View {
         Button(action: openList) {
@@ -19,9 +20,20 @@ struct FavoriteListRow: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Localization.string("favorites.accessibility.listSummary", list.name, list.movies.count))
         .accessibilityHint(Localization.string("movies.accessibility.openDetails"))
-        .contextMenu {
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.45)
+                .onEnded { _ in
+                    isActionsPresented = true
+                }
+        )
+        .confirmationDialog(
+            list.name,
+            isPresented: $isActionsPresented,
+            titleVisibility: .visible
+        ) {
             Button(Localization.string("favorites.rename.title"), action: renameList)
             Button(Localization.string("favorites.delete.confirm"), role: .destructive, action: deleteList)
+            Button(Localization.string("common.cancel"), role: .cancel) {}
         }
     }
 }

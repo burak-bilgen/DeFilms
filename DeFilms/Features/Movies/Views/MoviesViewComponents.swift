@@ -94,6 +94,7 @@ struct MoviesSearchControlsRow: View {
     let selectSortOption: (MovieSortOption) -> Void
     let resetSort: () -> Void
     let resetFiltersAndSort: () -> Void
+    @State private var isSortOptionsPresented = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -108,28 +109,15 @@ struct MoviesSearchControlsRow: View {
             }
 
             if shouldShowSortControl {
-                Menu {
-                    ForEach(MovieSortOption.allCases) { option in
-                        Button {
-                            selectSortOption(option)
-                        } label: {
-                            if selectedSortOption == option {
-                                Label(option.title, systemImage: "checkmark")
-                            } else {
-                                Text(option.title)
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    Button(Localization.string("movies.sort.reset"), action: resetSort)
+                Button {
+                    isSortOptionsPresented = true
                 } label: {
                     SearchControlBubble(
                         title: Localization.string("movies.sort.title"),
                         systemImage: "arrow.up.arrow.down.circle"
                     )
                 }
+                .buttonStyle(PressableScaleButtonStyle())
             }
 
             if shouldShowResetControls {
@@ -149,6 +137,29 @@ struct MoviesSearchControlsRow: View {
                 .stroke(AppPalette.border, lineWidth: 1)
         )
         .clipShape(Capsule())
+        .confirmationDialog(
+            Localization.string("movies.sort.title"),
+            isPresented: $isSortOptionsPresented,
+            titleVisibility: .visible
+        ) {
+            ForEach(MovieSortOption.allCases) { option in
+                Button {
+                    selectSortOption(option)
+                } label: {
+                    Text(
+                        selectedSortOption == option
+                            ? "\(option.title) ✓"
+                            : option.title
+                    )
+                }
+            }
+
+            Button(Localization.string("movies.sort.reset")) {
+                resetSort()
+            }
+
+            Button(Localization.string("common.cancel"), role: .cancel) {}
+        }
     }
 }
 

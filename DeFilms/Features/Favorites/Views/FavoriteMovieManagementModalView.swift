@@ -20,6 +20,7 @@ struct FavoriteMovieManagementModalView: View {
     @State private var isCreatingList = false
     @State private var listName = ""
     @State private var isRemoveConfirmationPresented = false
+    @State private var pendingDestinationList: FavoriteList?
     @State private var isDismissing = false
 
     private var proposedListName: String {
@@ -60,6 +61,34 @@ struct FavoriteMovieManagementModalView: View {
         .presentationBackground(.clear)
         .animation(AppAnimation.emphasizedSpring, value: isPresented)
         .animation(AppAnimation.gentleSpring, value: isCreatingList)
+        .alert(
+            Localization.string("favorites.move.title"),
+            isPresented: Binding(
+                get: { pendingDestinationList != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        pendingDestinationList = nil
+                    }
+                }
+            )
+        ) {
+            Button(Localization.string("favorites.move.confirm")) {
+                guard let pendingDestinationList else { return }
+                moveMovie(pendingDestinationList.id)
+                dismissAnimated()
+            }
+            Button(Localization.string("common.cancel"), role: .cancel) {
+                pendingDestinationList = nil
+            }
+        } message: {
+            Text(
+                Localization.string(
+                    "favorites.move.confirm.message",
+                    movie.title,
+                    pendingDestinationList?.name ?? ""
+                )
+            )
+        }
         .alert(
             Localization.string("favorites.remove.movie.title"),
             isPresented: $isRemoveConfirmationPresented
@@ -160,8 +189,7 @@ struct FavoriteMovieManagementModalView: View {
                     VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         ForEach(destinationLists) { destination in
                             Button {
-                                moveMovie(destination.id)
-                                dismissAnimated()
+                                pendingDestinationList = destination
                             } label: {
                                 HStack(spacing: AppSpacing.sm) {
                                     VStack(alignment: .leading, spacing: AppSpacing.xxs) {

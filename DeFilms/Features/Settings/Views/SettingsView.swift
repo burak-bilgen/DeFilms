@@ -44,7 +44,6 @@ struct SettingsView: View {
         } message: {
             Text(Localization.string("settings.account.logout.message"))
         }
-        .environment(\.layoutDirection, preferences.layoutDirection)
     }
 
     private var accountOverviewSection: some View {

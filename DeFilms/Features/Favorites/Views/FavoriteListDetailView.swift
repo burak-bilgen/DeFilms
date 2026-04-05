@@ -17,6 +17,7 @@ struct FavoriteListDetailView: View {
     @State private var renameText: String = ""
     @State private var isRenamePresented = false
     @State private var isDeletePresented = false
+    @State private var isListActionsPresented = false
     @State private var moviePendingManagement: FavoriteMovie?
 
     var body: some View {
@@ -61,15 +62,8 @@ struct FavoriteListDetailView: View {
                     }
 
                     ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            Button(Localization.string("favorites.rename.title")) {
-                                renameText = list.name
-                                isRenamePresented = true
-                            }
-
-                            Button(Localization.string("favorites.delete.confirm"), role: .destructive) {
-                                isDeletePresented = true
-                            }
+                        Button {
+                            isListActionsPresented = true
                         } label: {
                             Image(systemName: "ellipsis.circle")
                         }
@@ -86,6 +80,24 @@ struct FavoriteListDetailView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(.systemGroupedBackground))
             }
+        }
+        .confirmationDialog(
+            Localization.string("favorites.manage.movie"),
+            isPresented: $isListActionsPresented,
+            titleVisibility: .hidden
+        ) {
+            if let list = viewModel.list {
+                Button(Localization.string("favorites.rename.title")) {
+                    renameText = list.name
+                    isRenamePresented = true
+                }
+
+                Button(Localization.string("favorites.delete.confirm"), role: .destructive) {
+                    isDeletePresented = true
+                }
+            }
+
+            Button(Localization.string("common.cancel"), role: .cancel) {}
         }
         .alert(Localization.string("favorites.rename.title"), isPresented: $isRenamePresented) {
             TextField(Localization.string("favorites.picker.placeholder"), text: $renameText)

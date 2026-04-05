@@ -16,6 +16,7 @@ struct PosterImageView: View {
     @State private var image: UIImage?
     @State private var isLoading: Bool
     @State private var loadedURL: URL?
+    @State private var retrySeed = 0
 
     init(url: URL?, cornerRadius: CGFloat, placeholderSystemImage: String) {
         self.url = url
@@ -38,9 +39,17 @@ struct PosterImageView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-        .task(id: url) {
+        .task(id: taskIdentifier) {
             await loadImage()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .connectivityDidRestore)) { _ in
+            guard image == nil, url != nil else { return }
+            retrySeed += 1
+        }
+    }
+
+    private var taskIdentifier: String {
+        "\(url?.absoluteString ?? "nil")-\(retrySeed)"
     }
 
     private var placeholder: some View {
@@ -79,6 +88,11 @@ struct PosterImageView: View {
         loadedURL = nil
         isLoading = true
 
+        guard await ConnectivityStateStore.shared.connected() else {
+            isLoading = false
+            return
+        }
+
         guard let loadedImage = await PosterImagePipeline.shared.image(for: url) else {
             isLoading = false
             image = nil
@@ -98,11 +112,18 @@ actor PosterImagePipeline {
     static let shared = PosterImagePipeline()
 
     private let cache = NSCache<NSURL, UIImage>()
+    private let session: URLSession
     private var inFlightTasks: [URL: Task<UIImage?, Never>] = [:]
 
     private init() {
         cache.countLimit = 300
         cache.totalCostLimit = 80 * 1024 * 1024
+        let configuration = URLSessionConfiguration.default
+        configuration.requestCachePolicy = .returnCacheDataElseLoad
+        configuration.timeoutIntervalForRequest = 20
+        configuration.timeoutIntervalForResource = 45
+        configuration.waitsForConnectivity = true
+        session = URLSession(configuration: configuration)
     }
 
     func cachedImage(for url: URL) -> UIImage? {
@@ -121,10 +142,10 @@ actor PosterImagePipeline {
         let task = Task<UIImage?, Never> {
             var request = URLRequest(url: url)
             request.cachePolicy = .returnCacheDataElseLoad
-            request.timeoutInterval = 30
+            request.timeoutInterval = 20
 
             do {
-                let (data, _) = try await URLSession.shared.data(for: request)
+                let (data, _) = try await self.session.data(for: request)
                 guard let loadedImage = UIImage(data: data) else { return nil }
                 await self.insert(loadedImage, for: url)
                 return loadedImage
@@ -146,10 +167,10 @@ actor PosterImagePipeline {
             let task = Task<UIImage?, Never> {
                 var request = URLRequest(url: url)
                 request.cachePolicy = .returnCacheDataElseLoad
-                request.timeoutInterval = 30
+                request.timeoutInterval = 20
 
                 do {
-                    let (data, _) = try await URLSession.shared.data(for: request)
+                    let (data, _) = try await self.session.data(for: request)
                     guard let loadedImage = UIImage(data: data) else { return nil }
                     await self.insert(loadedImage, for: url)
                     return loadedImage

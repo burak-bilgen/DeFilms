@@ -34,7 +34,7 @@
 "settings.language.appLanguage" = "App Language";
 "settings.account.status" = "Registered User";
 "settings.account.logout" = "Log Out";
-"settings.account.logout.message" = "Your local session will be removed from this device.";
+"settings.account.logout.message" = "Your local session will be signed out on this device.";
 "settings.account.signedOutDescription" = "Sign in or create an account to keep your favorites separated by user.";
 "settings.about.version" = "Version";
 
@@ -90,8 +90,8 @@
 "favorites.empty.signedIn" = "Create a list from any movie and it will appear here.";
 "favorites.empty.signedOut" = "Add movies to your guest list or sign in to keep them for your account.";
 "favorites.count" = "%d movies";
-"favorites.action.add" = "Add Favorite";
-"favorites.action.remove" = "Remove Favorite";
+"favorites.action.add" = "Add to Favorites";
+"favorites.action.remove" = "Remove from Favorites";
 "favorites.action.create" = "Create";
 "favorites.accessibility.manage" = "Manage favorite lists";
 "favorites.accessibility.listSummary" = "%@, %d movies";
@@ -111,13 +111,13 @@
 "favorites.picker.newList" = "Create New List";
 "favorites.form.requiredHint" = "Enter a list name to continue.";
 "favorites.create.title" = "New List";
-"favorites.create.heading" = "Create a favorite list";
+"favorites.create.heading" = "Create a Favorites List";
 "favorites.create.subtitle.empty" = "Build a list and it will appear on your favorites screen.";
 "favorites.create.subtitle.movie" = "Create a list and this movie will be added right away.";
 "favorites.summary.title" = "Your Lists";
 "favorites.summary.subtitle" = "%d lists, %d movies saved";
 "favorites.summary.lists" = "%d lists";
-"favorites.list.card.subtitle" = "%d movies inside";
+"favorites.list.card.subtitle" = "%d movies";
 "favorites.list.detail.subtitle" = "%d movies in this list";
 "favorites.list.empty.title" = "This list is empty";
 "favorites.list.empty.message" = "Movies you save to \"%@\" will appear here.";
@@ -136,10 +136,12 @@
 "favorites.remove.from.list.message" = "Remove this movie from \"%@\"?";
 "favorites.move.title" = "Move Movie";
 "favorites.move.message" = "Choose a destination list for \"%@\".";
+"favorites.move.confirm" = "Move";
+"favorites.move.confirm.message" = "Move \"%@\" to \"%@\"?";
 "favorites.share.button" = "Share List";
 "favorites.share.header" = "Hey! Check out my %@ list on DeFilms.";
 
-"movies.section.popular" = "Popular";
+"movies.section.popular" = "Popular Movies";
 "movies.section.trendingToday" = "Trending Today";
 "movies.section.trendingWeek" = "Trending This Week";
 "movies.section.upcoming" = "Upcoming";
@@ -167,7 +169,7 @@
 "movies.sort.titleDesc" = "Alphabetical Z-A";
 "movies.sort.dateAsc" = "Date: Old to New";
 "movies.sort.dateDesc" = "Date: New to Old";
-"movies.sort.ratingDesc" = "Rating";
+"movies.sort.ratingDesc" = "Highest Rated";
 "movies.action.searchAgain" = "Search Again";
 "movies.accessibility.searchField" = "Movie search field";
 "movies.accessibility.clearSearch" = "Clear search text";
@@ -192,7 +194,7 @@
 "movies.detail.cast" = "Cast";
 "movies.detail.director" = "Director";
 "movies.detail.genres" = "Genres";
-"movies.detail.availableOn" = "Available On";
+"movies.detail.availableOn" = "Streaming On";
 "movies.detail.similar" = "Similar Movies";
 "movies.detail.rating" = "Rating %@";
 "movies.detail.info.release" = "RELEASE";

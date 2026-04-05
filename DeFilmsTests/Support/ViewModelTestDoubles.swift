@@ -89,6 +89,12 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     var moveMovieError: Error?
     private(set) var lastAdoptedUserIdentifier: String?
     private(set) var lastLegacyUserIdentifiers: [String] = []
+    private(set) var createListCallCount = 0
+    private(set) var renameListCallCount = 0
+    private(set) var deleteListCallCount = 0
+    private(set) var addMovieCallCount = 0
+    private(set) var removeMovieCallCount = 0
+    private(set) var moveMovieCallCount = 0
 
     init(
         createListError: Error? = nil,
@@ -116,6 +122,7 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     }
 
     func createList(named name: String, userIdentifier: String) async throws -> FavoriteList {
+        createListCallCount += 1
         if let createListError { throw createListError }
         let list = FavoriteList(id: UUID(), name: name, movies: [])
         lists.append(list)
@@ -123,21 +130,25 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     }
 
     func renameList(listID: UUID, name: String, userIdentifier: String) async throws {
+        renameListCallCount += 1
         if let renameListError { throw renameListError }
         guard let index = lists.firstIndex(where: { $0.id == listID }) else { return }
         lists[index].name = name
     }
 
     func deleteList(listID: UUID, userIdentifier: String) async throws {
+        deleteListCallCount += 1
         if let deleteListError { throw deleteListError }
         lists.removeAll { $0.id == listID }
     }
 
     func add(movie: Movie, to listID: UUID, userIdentifier: String) async throws {
+        addMovieCallCount += 1
         if let addMovieError { throw addMovieError }
     }
 
     func remove(movieID: Int, from listID: UUID, userIdentifier: String) async throws {
+        removeMovieCallCount += 1
         if let removeMovieError { throw removeMovieError }
         guard let index = lists.firstIndex(where: { $0.id == listID }) else { return }
         lists[index].movies.removeAll { $0.id == movieID }
@@ -146,6 +157,7 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     func remove(movieID: Int, userIdentifier: String) async throws {}
 
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) async throws {
+        moveMovieCallCount += 1
         if let moveMovieError { throw moveMovieError }
     }
 }

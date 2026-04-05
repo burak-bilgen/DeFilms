@@ -230,6 +230,52 @@ final class MovieDetailViewModelTests: XCTestCase {
         XCTAssertEqual(detailService.loadCount, 2)
     }
 
+    func test_MovieDetailViewModel_reloadFailure_clearsPreviousDetailState() async {
+        let movie = Movie(
+            id: 61,
+            title: "Reload Failure",
+            overview: nil,
+            posterPath: nil,
+            backdropPath: nil,
+            releaseDate: "2024-01-01",
+            voteAverage: 7.1,
+            genreIDs: nil
+        )
+        let payload = MovieDetailPayload(
+            detail: MovieDetail(
+                id: 61,
+                title: "Reload Failure",
+                overview: "Loaded once",
+                posterPath: nil,
+                backdropPath: nil,
+                releaseDate: "2024-01-01",
+                voteAverage: 7.1,
+                runtime: 110,
+                genres: []
+            ),
+            trailer: MovieVideo(key: "abc123", name: "Trailer", site: "YouTube", type: "Trailer", official: true),
+            gallery: [MovieImageAsset(filePath: "/gallery.jpg")],
+            directors: [MovieCrewMember(id: 1, name: "Director", job: "Director", profilePath: nil)],
+            cast: [MovieCastMember(id: 2, name: "Actor", character: "Lead", profilePath: nil)],
+            streamingPlatforms: [MovieStreamingPlatform(id: 3, name: "Max", logoURL: nil, linkURL: nil)],
+            similarMovies: [Movie(id: 99, title: "Other", overview: nil, posterPath: nil, backdropPath: nil, releaseDate: nil, voteAverage: nil, genreIDs: nil)]
+        )
+        let detailService = MockMovieDetailService(payload: payload)
+        let viewModel = MovieDetailViewModel(movie: movie, detailService: detailService)
+
+        await viewModel.load()
+        detailService.error = TestLocalizedError(message: "Reload failed")
+        detailService.payload = nil
+
+        await viewModel.reloadForLanguageChange()
+
+        XCTAssertNil(viewModel.detail)
+        XCTAssertTrue(viewModel.gallery.isEmpty)
+        XCTAssertTrue(viewModel.cast.isEmpty)
+        XCTAssertTrue(viewModel.streamingPlatforms.isEmpty)
+        XCTAssertEqual(viewModel.errorMessage, "Reload failed")
+    }
+
     func test_MovieDetailViewModel_galleryURLs_deduplicatesFallbackAssets() {
         let sharedURLPath = "/shared.jpg"
         let movie = Movie(

@@ -39,6 +39,7 @@ struct DeFilmsApp: App {
                 container: container,
                 favoritesStore: favoritesStore
             )
+                .id("app-root-\(preferences.selectedLanguage.rawValue)")
                 .environment(\.managedObjectContext, persistenceController.viewContext)
                 .environment(\.locale, preferences.locale)
                 .environment(\.layoutDirection, preferences.layoutDirection)
