@@ -11,13 +11,28 @@ struct AppEntryView: View {
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var sessionManager: AuthSessionManager
     @EnvironmentObject private var toastCenter: ToastCenter
+    @EnvironmentObject private var connectivityMonitor: ConnectivityMonitor
     @StateObject private var flowCoordinator = AppFlowCoordinator()
 
     var body: some View {
-        MainTabView(
-            container: container,
-            favoritesStore: favoritesStore
-        )
+        ZStack {
+            MainTabView(
+                container: container,
+                favoritesStore: favoritesStore
+            )
+            .blur(radius: connectivityMonitor.isConnected ? 0 : 6)
+            .allowsHitTesting(connectivityMonitor.isConnected)
+
+            if !connectivityMonitor.isConnected {
+                ConnectionBlockingView(
+                    isChecking: connectivityMonitor.isChecking,
+                    retryAction: connectivityMonitor.retryConnectionCheck
+                )
+                .transition(.opacity)
+                .zIndex(1)
+            }
+        }
+            .animation(AppAnimation.standard, value: connectivityMonitor.isConnected)
             .fullScreenCover(isPresented: onboardingBinding) {
                 OnboardingView(
                     continueAsGuest: dismissOnboarding,
@@ -58,7 +73,7 @@ struct AppEntryView: View {
 
     private var onboardingBinding: Binding<Bool> {
         Binding(
-            get: { !preferences.hasCompletedOnboarding },
+            get: { !preferences.hasCompletedOnboarding && connectivityMonitor.isConnected },
             set: { isPresented in
                 if isPresented == false {
                     preferences.hasCompletedOnboarding = true

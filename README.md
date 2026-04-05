@@ -1,7 +1,7 @@
 # DeFilms
 
 ## Overview
-DeFilms is a movie discovery and curation app built on top of the TMDB API. The product direction is inspired by DeFacto, but adapted to a movie-focused experience: fast browsing, detail-rich discovery, and list-based personal curation.
+DeFilms is a movie discovery and curation app built on top of the TMDB API. The product direction centers on fast browsing, detail-rich discovery, and list-based personal curation.
 
 This project was approached as a small production app rather than a throwaway case study. The implementation prioritizes stable navigation, recoverable persistence, localized UX, feature-oriented structure, and testable state management. The intent was to make decisions that would still hold up if the app continued toward App Store release.
 
@@ -13,12 +13,14 @@ This project was approached as a small production app rather than a throwaway ca
 - Guest mode and lightweight local account mode
 - Light mode, dark mode, English, Turkish, and Arabic support
 - Coordinator-based navigation across app, movies, favorites, and settings flows
+- Internet availability gate with a retryable blocking screen when neither Wi-Fi nor cellular data is available
 
 ### Product-focused details
 - Browse content appears before image prefetch work completes, which improves perceived responsiveness.
 - Favorites are modeled as named lists instead of a single global collection to support real user intent.
 - Confirmation flows were moved to stable presentation layers to avoid clipped or misplaced dialogs.
 - UI loading and transition work was tuned to reduce poster jank and abrupt state changes.
+- The app intentionally blocks usage when the device has no reachable network path, because its core value depends on live catalog data rather than degraded offline placeholders.
 
 ## Architecture
 DeFilms uses a feature-oriented MVVM architecture with explicit app composition and protocol-driven infrastructure.
@@ -27,7 +29,7 @@ DeFilms uses a feature-oriented MVVM architecture with explicit app composition 
 - `App`
   - Application lifecycle, composition root, app-level routing, and root views
 - `Core`
-  - Cross-cutting infrastructure such as networking, storage, localization, logging, settings, and shared UI primitives
+  - Cross-cutting infrastructure such as networking, connectivity, storage, localization, logging, settings, and shared UI primitives
 - `Features`
   - Vertical feature slices: `Movies`, `Favorites`, `Settings`, `Auth`, and `Onboarding`
 - `DeFilmsTests`
@@ -63,6 +65,8 @@ This pays off in a few concrete ways:
   - Used for networking and local data flows to keep async code linear and readable.
 - **URLSession**
   - Chosen as the networking foundation to keep request and error handling explicit.
+- **Network framework**
+  - Used for path monitoring so the app can react to Wi-Fi and cellular reachability changes at runtime.
 - **Core Data**
   - Used for favorites and recent searches to support realistic local persistence and migration scenarios.
 - **Keychain**
@@ -116,6 +120,7 @@ The suite is intentionally weighted toward ViewModels and orchestration points r
 ### Notes
 - The app includes UI test launch arguments for seeded state, locale changes, theme changes, and mocked movie content.
 - Visual reference tests use baseline fingerprints rather than committed image files.
+- The app requires an active network connection to enter the main experience. If no connection is available, a blocking screen is shown until a retry succeeds.
 
 ## Localization
 Supported languages:
@@ -181,12 +186,13 @@ The output above is representative of the intended suite shape and reporting sty
 - Snapshot baselines need an initial approval pass before visual reference tests become fully assertive in a fresh environment.
 - Service and repository testing is solid but still not as deep as ViewModel coverage.
 - There is no analytics, remote config, or background sync layer yet.
+- There is currently no offline read-only fallback mode; the app deliberately blocks the primary experience when there is no reachable network path.
 
 ## Future Improvements
 - Replace local auth with a real backend integration
 - Add deeper persistence recovery and migration tests
 - Expand semantic accessibility labeling for custom controls
-- Add explicit offline states for browse and detail screens
+- Introduce a more nuanced offline strategy if product requirements shift toward limited cached browsing
 - Introduce CI-level snapshot review workflow
 - Split a few larger UI composition files if those screens continue to grow
 

@@ -15,6 +15,7 @@ struct DeFilmsApp: App {
     @StateObject private var sessionManager: AuthSessionManager
     @StateObject private var favoritesStore: FavoritesStore
     @StateObject private var toastCenter: ToastCenter
+    @StateObject private var connectivityMonitor: ConnectivityMonitor
     private let persistenceController = PersistenceController.shared
 
     init() {
@@ -28,6 +29,7 @@ struct DeFilmsApp: App {
         _sessionManager = StateObject(wrappedValue: authManager)
         _toastCenter = StateObject(wrappedValue: toastCenter)
         _favoritesStore = StateObject(wrappedValue: container.favoritesFactory.makeStore())
+        _connectivityMonitor = StateObject(wrappedValue: ConnectivityMonitor())
         AppLogger.log("Application configured", category: .app, level: .success)
     }
 
@@ -45,6 +47,7 @@ struct DeFilmsApp: App {
                 .environmentObject(sessionManager)
                 .environmentObject(favoritesStore)
                 .environmentObject(toastCenter)
+                .environmentObject(connectivityMonitor)
                 .toast(item: $toastCenter.item, duration: 1.8)
         }
     }
