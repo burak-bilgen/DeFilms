@@ -55,11 +55,12 @@ struct FavoritesView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
                 }
-                .background(Color(.systemGroupedBackground))
+                .background(AppPalette.screenBackground)
                 .animation(.easeInOut(duration: 0.22), value: viewModel.lists.map(\.id))
             }
         }
         .navigationTitle(Localization.string("favorites.title"))
+        .background(AppPalette.screenBackground)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -154,23 +155,29 @@ private struct FavoritesEmptyState: View {
     let action: () -> Void
 
     var body: some View {
-        VStack(spacing: AppSpacing.lg) {
-            Image(systemName: "rectangle.stack.badge.plus")
-                .font(.system(size: 54, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
+        VStack {
+            VStack(spacing: AppSpacing.lg) {
+                Image(systemName: "rectangle.stack.badge.plus")
+                    .font(.system(size: 54, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
 
-            Text(title)
-                .font(.title3.weight(.bold))
+                Text(title)
+                    .font(.title3.weight(.bold))
 
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, AppSpacing.xxl)
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, AppSpacing.xxl)
 
-            Button(actionTitle, action: action)
-                .buttonStyle(PrimaryProminentButtonStyle())
+                Button(actionTitle, action: action)
+                    .buttonStyle(PrimaryProminentButtonStyle())
+            }
+            .padding(AppSpacing.xxl)
+            .frame(maxWidth: 420)
+            .appCardSurface()
+            .padding(.horizontal, AppSpacing.md)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppPalette.screenBackground)

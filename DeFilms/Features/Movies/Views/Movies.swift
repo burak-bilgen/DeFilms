@@ -50,13 +50,23 @@ struct MoviesView: View {
         hasActiveFilters || hasActiveSorting
     }
 
+    private var shouldShowSearchSummary: Bool {
+        !viewModel.shouldShowBrowseContent && (searchResultCount > 0 || hasActiveFilters || hasActiveSorting)
+    }
+
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: AppSpacing.sm) {
             headerBar
                 .padding(.horizontal)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
+                    if shouldShowSearchSummary {
+                        searchSummaryCard
+                            .padding(.horizontal)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
                     searchSection
                         .padding(.horizontal)
                         .animation(.easeInOut(duration: 0.2), value: viewModel.shouldShowBrowseContent)
@@ -75,7 +85,7 @@ struct MoviesView: View {
                             .transition(.opacity)
                     }
                 }
-                .padding(.top, viewModel.shouldShowBrowseContent ? AppSpacing.xxl : 0)
+                .padding(.top, viewModel.shouldShowBrowseContent ? AppSpacing.lg : 0)
                 .padding(.bottom, AppSpacing.xxl)
                 .animation(.easeInOut(duration: 0.22), value: viewModel.shouldShowBrowseContent)
             }
@@ -113,11 +123,13 @@ struct MoviesView: View {
 
     private var headerBar: some View {
         HStack(alignment: .center) {
-            Image("AppLogo")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 70)
-                .accessibilityLabel(Localization.string("app.logo"))
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Image("AppLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 72)
+                    .accessibilityLabel(Localization.string("app.logo"))
+            }
 
             Spacer()
 
@@ -136,6 +148,52 @@ struct MoviesView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(Localization.string("favorites.navigate"))
         }
+    }
+
+    private var searchSummaryCard: some View {
+        HStack(alignment: .center, spacing: AppSpacing.md) {
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Text(
+                    viewModel.shouldShowBrowseContent
+                    ? Localization.string("movies.search.placeholder")
+                    : Localization.string("movies.results.count", searchResultCount)
+                )
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.primary)
+
+                Text(summarySubtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: AppSpacing.md)
+
+            summaryBadge(
+                text: hasActiveFilters || hasActiveSorting
+                ? Localization.string("movies.filter.title")
+                : Localization.string("movies.sort.relevance"),
+                systemImage: hasActiveFilters || hasActiveSorting
+                ? "slider.horizontal.3"
+                : "sparkles"
+            )
+        }
+        .padding(AppSpacing.md)
+        .background(
+            LinearGradient(
+                colors: [
+                    AppPalette.cardBackground,
+                    AppPalette.cardAccentBackground
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous)
+                .stroke(AppPalette.border, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
     }
 
     private var searchSection: some View {
@@ -199,13 +257,15 @@ struct MoviesView: View {
                 .accessibilityLabel(Localization.string("movies.filter.reset"))
                 .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.92)))
             }
-
-            Spacer()
-
-            Text(Localization.string("movies.results.count", searchResultCount))
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
         }
+        .padding(.horizontal, AppSpacing.sm)
+        .padding(.vertical, AppSpacing.xs)
+        .background(AppPalette.cardBackground.opacity(0.8))
+        .overlay(
+            Capsule()
+                .stroke(AppPalette.border, lineWidth: 1)
+        )
+        .clipShape(Capsule())
     }
 
     @ViewBuilder
@@ -381,6 +441,24 @@ struct MoviesView: View {
         guard let item else { return }
         toastCenter.show(message: item.message, style: item.style)
         viewModel.clearToast()
+    }
+
+    private var summarySubtitle: String {
+        if hasActiveFilters || hasActiveSorting {
+            return Localization.string("movies.message.filteredEmpty.body")
+        }
+
+        return viewModel.query
+    }
+
+    private func summaryBadge(text: String, systemImage: String) -> some View {
+        Label(text, systemImage: systemImage)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 12)
+            .frame(height: 32)
+            .background(Color.primary.opacity(0.06))
+            .clipShape(Capsule())
     }
 }
 

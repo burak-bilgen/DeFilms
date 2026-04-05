@@ -32,7 +32,7 @@
 "settings.section.about" = "Hakkında";
 "settings.appearance.theme" = "Tema";
 "settings.language.appLanguage" = "Uygulama Dili";
-"settings.account.status" = "Oturum Açık";
+"settings.account.status" = "Kayıtlı Kullanıcı";
 "settings.account.logout" = "Çıkış Yap";
 "settings.account.logout.message" = "Bu cihazdaki yerel oturum kaldırılacak.";
 "settings.account.signedOutDescription" = "Favorilerini kullanıcı bazlı saklamak için giriş yapabilir veya hesap oluşturabilirsin.";

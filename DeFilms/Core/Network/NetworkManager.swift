@@ -25,6 +25,7 @@ final class NetworkManager: NetworkServiceProtocol {
     }
 
     func request<T: Decodable>(endpoint: Endpoint) async throws -> T {
+        let endpointDescription = "\(endpoint.method.rawValue) \(endpoint.path)"
         let request: URLRequest
         do {
             request = try requestBuilder.makeRequest(endpoint: endpoint)
@@ -35,7 +36,7 @@ final class NetworkManager: NetworkServiceProtocol {
             throw error
         }
 
-        AppLogger.log("Request started", category: .network)
+        AppLogger.log("Request started: \(endpointDescription)", category: .network)
 
         let data: Data
         let response: URLResponse
@@ -43,32 +44,44 @@ final class NetworkManager: NetworkServiceProtocol {
         do {
             (data, response) = try await session.data(for: request)
         } catch is CancellationError {
-            AppLogger.log("Request cancelled", category: .network, level: .warning)
+            AppLogger.log("Request cancelled: \(endpointDescription)", category: .network, level: .warning)
             throw NetworkError.cancelled
         } catch let error as URLError {
-            AppLogger.log("Transport error: \(error.code.rawValue)", category: .network, level: .error)
+            AppLogger.log(
+                "Request failed: \(endpointDescription) [transport=\(error.code.rawValue)]",
+                category: .network,
+                level: .error
+            )
             throw mapTransportError(error)
         } catch {
-            AppLogger.log("Unknown request failure", category: .network, level: .error)
+            AppLogger.log("Request failed: \(endpointDescription) [unknown]", category: .network, level: .error)
             throw NetworkError.requestFailed
         }
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            AppLogger.log("Invalid HTTP response", category: .network, level: .error)
+            AppLogger.log("Request failed: \(endpointDescription) [invalid-response]", category: .network, level: .error)
             throw NetworkError.invalidResponse
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            AppLogger.log("Server responded with status \(httpResponse.statusCode)", category: .network, level: .error)
+            AppLogger.log(
+                "Request failed: \(endpointDescription) [status=\(httpResponse.statusCode)]",
+                category: .network,
+                level: .error
+            )
             throw NetworkError.serverError(statusCode: httpResponse.statusCode)
         }
 
         do {
             let decoded = try decoder.decode(T.self, from: data)
-            AppLogger.log("Request completed successfully", category: .network, level: .success)
+            AppLogger.log(
+                "Request succeeded: \(endpointDescription) [status=\(httpResponse.statusCode)]",
+                category: .network,
+                level: .success
+            )
             return decoded
         } catch {
-            AppLogger.log("Response decoding failed", category: .network, level: .error)
+            AppLogger.log("Request failed: \(endpointDescription) [decoding]", category: .network, level: .error)
             throw NetworkError.decodingError
         }
     }

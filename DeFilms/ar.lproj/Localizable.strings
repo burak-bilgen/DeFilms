@@ -32,7 +32,7 @@
 "settings.section.about" = "حول";
 "settings.appearance.theme" = "السمة";
 "settings.language.appLanguage" = "لغة التطبيق";
-"settings.account.status" = "تم تسجيل الدخول";
+"settings.account.status" = "مستخدم مسجل";
 "settings.account.logout" = "تسجيل الخروج";
 "settings.account.logout.message" = "ستتم إزالة جلستك المحلية من هذا الجهاز.";
 "settings.account.signedOutDescription" = "سجّل الدخول أو أنشئ حسابًا للاحتفاظ بالمفضلة بشكل منفصل لكل مستخدم.";

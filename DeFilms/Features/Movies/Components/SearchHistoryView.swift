@@ -49,7 +49,11 @@ struct SearchHistoryView: View {
                                     .lineLimit(1)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
-                                .background(Color.gray.opacity(0.12))
+                                .background(AppPalette.cardBackground)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(AppPalette.border, lineWidth: 1)
+                                )
                                 .clipShape(Capsule())
                             }
                             .buttonStyle(.plain)
@@ -62,6 +66,7 @@ struct SearchHistoryView: View {
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
+        .padding(.vertical, AppSpacing.xs)
         .animation(.easeInOut(duration: 0.22), value: history)
         .confirmationDialog(
             Localization.string("movies.searchHistory.clear.confirmTitle"),

@@ -32,7 +32,7 @@
 "settings.section.about" = "About";
 "settings.appearance.theme" = "Theme";
 "settings.language.appLanguage" = "App Language";
-"settings.account.status" = "Signed In";
+"settings.account.status" = "Registered User";
 "settings.account.logout" = "Log Out";
 "settings.account.logout.message" = "Your local session will be removed from this device.";
 "settings.account.signedOutDescription" = "Sign in or create an account to keep your favorites separated by user.";

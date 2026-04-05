@@ -24,12 +24,15 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                accountOverviewSection
                 appearanceSection
                 languageSection
                 accountSection
                 aboutSection
             }
             .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(AppPalette.screenBackground)
             .navigationTitle(Localization.string("settings.title"))
             .alert(Localization.string("settings.account.logout"), isPresented: $showLogoutConfirmation) {
                 Button(Localization.string("settings.account.logout"), role: .destructive) {
@@ -43,6 +46,17 @@ struct SettingsView: View {
         }
         .id(preferences.interfaceLayoutID)
         .environment(\.layoutDirection, preferences.layoutDirection)
+    }
+
+    private var accountOverviewSection: some View {
+        Section {
+            SettingsAccountOverviewCard(
+                email: viewModel.signedInEmail,
+                isSignedIn: sessionManager.isSignedIn
+            )
+            .listRowInsets(EdgeInsets(top: AppSpacing.xxs, leading: 0, bottom: 0, trailing: 0))
+            .listRowBackground(Color.clear)
+        }
     }
 
     private var appearanceSection: some View {
@@ -124,6 +138,55 @@ struct SettingsView: View {
             )
         }
     }
+}
+
+private struct SettingsAccountOverviewCard: View {
+    let email: String?
+    let isSignedIn: Bool
+
+    var body: some View {
+        HStack(alignment: .top, spacing: AppSpacing.md) {
+            ZStack {
+                Circle()
+                    .fill(Color.primary.opacity(0.08))
+                    .frame(width: 52, height: 52)
+
+                Image(systemName: isSignedIn ? "person.crop.circle.fill.badge.checkmark" : "person.crop.circle.badge.plus")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text(isSignedIn ? Localization.string("settings.account.status") : Localization.string("settings.section.account"))
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+
+                Text(email ?? Localization.string("settings.account.signedOutDescription"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(AppSpacing.lg)
+        .background(
+            LinearGradient(
+                colors: [
+                    AppPalette.cardBackground,
+                    AppPalette.cardAccentBackground
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous)
+                .stroke(AppPalette.border, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
 }
 
 private struct SettingsValueRow: View {
