@@ -38,7 +38,7 @@ final class FavoritesStore: ObservableObject {
         do {
             let list = try favoritesService.createList(named: name, existingLists: lists)
             reloadLists()
-            AppLogger.log("Created favorite list: \(list.name)", category: .favorites, level: .success)
+            AppLogger.log("Created favorite list", category: .favorites, level: .success)
             toastItem = .success(Localization.string("favorites.toast.listCreated"))
             return list
         } catch FavoritesServiceError.invalidListName {
@@ -60,9 +60,9 @@ final class FavoritesStore: ObservableObject {
         do {
             try favoritesService.add(movie: movie, to: listID)
             reloadLists()
-            AppLogger.log("Added movie \(movie.id) to favorites", category: .favorites, level: .success)
+            AppLogger.log("Added movie to favorites", category: .favorites, level: .success)
         } catch {
-            AppLogger.log("Failed to add movie \(movie.id) to favorites", category: .favorites, level: .error)
+            AppLogger.log("Failed to add movie to favorites", category: .favorites, level: .error)
             toastItem = .error(Localization.string("favorites.toast.genericError"))
             return
         }
@@ -72,9 +72,9 @@ final class FavoritesStore: ObservableObject {
         do {
             try favoritesService.remove(movieID: movieID, from: listID)
             reloadLists()
-            AppLogger.log("Removed movie \(movieID) from list \(listID.uuidString)", category: .favorites, level: .success)
+            AppLogger.log("Removed movie from list", category: .favorites, level: .success)
         } catch {
-            AppLogger.log("Failed to remove movie \(movieID) from list", category: .favorites, level: .error)
+            AppLogger.log("Failed to remove movie from list", category: .favorites, level: .error)
             toastItem = .error(Localization.string("favorites.toast.genericError"))
             return
         }
@@ -161,6 +161,6 @@ final class FavoritesStore: ObservableObject {
         withAnimation(.easeInOut(duration: 0.24)) {
             lists = updatedLists
         }
-        AppLogger.log("Favorites reloaded for \(sessionManager.currentUserIdentifier)", category: .favorites)
+        AppLogger.log("Favorites reloaded", category: .favorites)
     }
 }

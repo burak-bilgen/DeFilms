@@ -125,7 +125,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         )
         try saveAccounts(accounts)
         try startSession(for: emailAddress)
-        AppLogger.log("User signed up: \(emailAddress)", category: .auth, level: .success)
+        AppLogger.log("User signed up", category: .auth, level: .success)
     }
 
     func signIn(email: String, password: String) throws {
@@ -150,7 +150,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         }
 
         try startSession(for: emailAddress)
-        AppLogger.log("User signed in: \(emailAddress)", category: .auth, level: .success)
+        AppLogger.log("User signed in", category: .auth, level: .success)
     }
 
     func changePassword(currentPassword: String, newPassword: String, confirmPassword: String) throws {
@@ -187,7 +187,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
         accounts[index].passwordHash = hash(password: newPassword)
         try saveAccounts(accounts)
-        AppLogger.log("Password changed for \(email)", category: .auth, level: .success)
+        AppLogger.log("Password changed", category: .auth, level: .success)
     }
 
     func signOut() {
@@ -221,7 +221,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
         let restoredIdentifier = restoreUserIdentifier(for: email)
         session = AuthSession(email: email, token: token, userIdentifier: restoredIdentifier)
-        AppLogger.log("Session restored for \(email)", category: .auth, level: .success)
+        AppLogger.log("Session restored", category: .auth, level: .success)
     }
 
     private func startSession(for email: String) throws {

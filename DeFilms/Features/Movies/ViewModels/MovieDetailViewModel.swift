@@ -125,7 +125,7 @@ final class MovieDetailViewModel: ObservableObject {
         similarMovies = []
 
         do {
-            AppLogger.log("Loading detail for movie \(movie.id)", category: .movie)
+            AppLogger.log("Loading movie detail", category: .movie)
             let payload = try await detailService.loadPayload(for: movie)
             detail = payload.detail
             trailer = payload.trailer
@@ -134,12 +134,12 @@ final class MovieDetailViewModel: ObservableObject {
             cast = payload.cast
             streamingPlatforms = payload.streamingPlatforms
             similarMovies = payload.similarMovies
-            AppLogger.log("Loaded detail for movie \(movie.id)", category: .movie, level: .success)
+            AppLogger.log("Loaded movie detail", category: .movie, level: .success)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.detail.error")
             errorMessage = message
             toastItem = .error(message)
-            AppLogger.log("Detail load failed for movie \(movie.id)", category: .movie, level: .error)
+            AppLogger.log("Movie detail load failed", category: .movie, level: .error)
         }
 
         isLoading = false

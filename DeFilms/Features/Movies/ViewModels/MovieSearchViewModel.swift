@@ -172,7 +172,7 @@ final class MovieSearchViewModel: ObservableObject {
         screenState = .searching
 
         do {
-            AppLogger.log("Search started for '\(searchText)'", category: .search)
+            AppLogger.log("Search started", category: .search)
             let response = try await movieCatalogService.searchMovies(query: searchText, page: 1)
             applySearchPage(response, appendResults: false)
             await movieCatalogService.prefetchImages(for: response.results)
@@ -189,7 +189,7 @@ final class MovieSearchViewModel: ObservableObject {
             resetSearchPagination()
             screenState = .error(message: message)
             toastItem = .error(message)
-            AppLogger.log("Search failed for '\(searchText)'", category: .search, level: .error)
+            AppLogger.log("Search failed", category: .search, level: .error)
         }
     }
 
@@ -329,7 +329,7 @@ final class MovieSearchViewModel: ObservableObject {
             applySearchPage(response, appendResults: true)
             await movieCatalogService.prefetchImages(for: response.results)
         } catch {
-            AppLogger.log("Pagination failed for '\(searchText)'", category: .search, level: .error)
+            AppLogger.log("Pagination failed", category: .search, level: .error)
         }
     }
 

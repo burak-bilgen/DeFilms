@@ -37,7 +37,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
         request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
 
-        AppLogger.log("Fetching favorite lists for \(userIdentifier)", category: .persistence)
+        AppLogger.log("Fetching favorite lists", category: .persistence)
         return try persistenceController.viewContext.fetch(request).map(mapList)
     }
 
@@ -73,7 +73,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
 
         if didChange {
             try context.save()
-            AppLogger.log("Adopted favorite lists for \(userIdentifier)", category: .persistence, level: .success)
+            AppLogger.log("Adopted favorite lists", category: .persistence, level: .success)
         }
     }
 
@@ -86,7 +86,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         entity.createdAt = Date()
         entity.movies = []
         try context.save()
-        AppLogger.log("Persisted favorite list \(name)", category: .persistence, level: .success)
+        AppLogger.log("Persisted favorite list", category: .persistence, level: .success)
         return mapList(entity)
     }
 
@@ -95,7 +95,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         guard let list = try fetchListEntity(listID: listID, userIdentifier: userIdentifier, context: context) else { return }
         list.name = name
         try context.save()
-        AppLogger.log("Renamed favorite list \(listID.uuidString)", category: .persistence, level: .success)
+        AppLogger.log("Renamed favorite list", category: .persistence, level: .success)
     }
 
     func deleteList(listID: UUID, userIdentifier: String) throws {
@@ -103,7 +103,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         guard let list = try fetchListEntity(listID: listID, userIdentifier: userIdentifier, context: context) else { return }
         context.delete(list)
         try context.save()
-        AppLogger.log("Deleted favorite list \(listID.uuidString)", category: .persistence, level: .success)
+        AppLogger.log("Deleted favorite list", category: .persistence, level: .success)
     }
 
     func add(movie: Movie, to listID: UUID, userIdentifier: String) throws {
@@ -125,7 +125,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         entity.list = list
 
         try context.save()
-        AppLogger.log("Persisted favorite movie \(movie.id)", category: .persistence, level: .success)
+        AppLogger.log("Persisted favorite movie", category: .persistence, level: .success)
     }
 
     func remove(movieID: Int, from listID: UUID, userIdentifier: String) throws {
@@ -137,7 +137,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         }
 
         try context.save()
-        AppLogger.log("Deleted favorite movie \(movieID) from list", category: .persistence, level: .success)
+        AppLogger.log("Deleted favorite movie from list", category: .persistence, level: .success)
     }
 
     func remove(movieID: Int, userIdentifier: String) throws {
@@ -150,7 +150,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
             context.delete(movie)
         }
         try context.save()
-        AppLogger.log("Deleted favorite movie \(movieID) from all lists", category: .persistence, level: .success)
+        AppLogger.log("Deleted favorite movie from all lists", category: .persistence, level: .success)
     }
 
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) throws {
@@ -170,7 +170,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         }
 
         try context.save()
-        AppLogger.log("Moved favorite movie \(movieID)", category: .persistence, level: .success)
+        AppLogger.log("Moved favorite movie", category: .persistence, level: .success)
     }
 
     private func fetchListEntity(listID: UUID, userIdentifier: String, context: NSManagedObjectContext) throws -> FavoriteListEntity? {

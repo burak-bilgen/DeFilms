@@ -70,7 +70,7 @@ final class TMDBMovieDetailService: MovieDetailServicing {
             )
             return Array(response.backdrops.prefix(6))
         } catch {
-            AppLogger.log("Image load failed for movie \(movieID)", category: .movie, level: .error)
+            AppLogger.log("Image load failed", category: .movie, level: .error)
             return []
         }
     }
@@ -87,7 +87,7 @@ final class TMDBMovieDetailService: MovieDetailServicing {
             async let enrichedCast = enrichCastWithIMDb(primaryCast)
             return await (enrichedDirectors, enrichedCast)
         } catch {
-            AppLogger.log("Credits load failed for movie \(movieID)", category: .movie, level: .error)
+            AppLogger.log("Credits load failed", category: .movie, level: .error)
             return ([], [])
         }
     }
@@ -111,7 +111,7 @@ final class TMDBMovieDetailService: MovieDetailServicing {
             )
             return selectPreferredTrailer(from: fallbackVideos.results)
         } catch {
-            AppLogger.log("Trailer load failed for movie \(movieID)", category: .movie, level: .error)
+            AppLogger.log("Trailer load failed", category: .movie, level: .error)
             return nil
         }
     }
@@ -123,7 +123,7 @@ final class TMDBMovieDetailService: MovieDetailServicing {
             )
             return preferredPlatforms(from: response.results)
         } catch {
-            AppLogger.log("Watch providers load failed for movie \(movieID)", category: .movie, level: .error)
+            AppLogger.log("Watch providers load failed", category: .movie, level: .error)
             return []
         }
     }
@@ -135,7 +135,7 @@ final class TMDBMovieDetailService: MovieDetailServicing {
             )
             return Array(response.results.filter { $0.id != movie.id }.prefix(12))
         } catch {
-            AppLogger.log("Similar movies load failed for movie \(movie.id)", category: .movie, level: .error)
+            AppLogger.log("Similar movies load failed", category: .movie, level: .error)
             return []
         }
     }

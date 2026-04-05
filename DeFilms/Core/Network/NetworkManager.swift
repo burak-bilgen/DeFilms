@@ -35,7 +35,7 @@ final class NetworkManager: NetworkServiceProtocol {
             throw error
         }
 
-        AppLogger.log("Request started: \(request.httpMethod ?? "") \(request.url?.absoluteString ?? "")", category: .network)
+        AppLogger.log("Request started", category: .network)
 
         let data: Data
         let response: URLResponse
@@ -68,7 +68,7 @@ final class NetworkManager: NetworkServiceProtocol {
             AppLogger.log("Request completed successfully", category: .network, level: .success)
             return decoded
         } catch {
-            AppLogger.log("Decoding failed for \(request.url?.absoluteString ?? "")", category: .network, level: .error)
+            AppLogger.log("Response decoding failed", category: .network, level: .error)
             throw NetworkError.decodingError
         }
     }

@@ -33,7 +33,7 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
         request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
 
         let results = try persistenceController.viewContext.fetch(request).map(\.query)
-        AppLogger.log("Fetched \(results.count) recent searches for \(userIdentifier)", category: .persistence)
+        AppLogger.log("Fetched recent searches", category: .persistence)
         return results
     }
 
@@ -66,7 +66,7 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
         }
 
         try context.save()
-        AppLogger.log("Saved recent search '\(trimmedQuery)'", category: .persistence, level: .success)
+        AppLogger.log("Saved recent search", category: .persistence, level: .success)
     }
 
     func clearRecentSearches(for userIdentifier: String) throws {
@@ -80,7 +80,7 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
         }
 
         try context.save()
-        AppLogger.log("Cleared recent searches for \(userIdentifier)", category: .persistence, level: .success)
+        AppLogger.log("Cleared recent searches", category: .persistence, level: .success)
     }
 
     private func migrateLegacySearchesIfNeeded() {
