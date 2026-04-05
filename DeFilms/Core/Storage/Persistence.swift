@@ -19,10 +19,8 @@ struct PersistenceController {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
         }
 
-        container.loadPersistentStores { _, error in
-            if let error = error as NSError? {
-                fatalError("Unresolved Core Data error: \(error), \(error.userInfo)")
-            }
+        if loadPersistentStoresWithRecovery() == false {
+            fatalError("Failed to recover Core Data store.")
         }
 
         container.viewContext.automaticallyMergesChangesFromParent = true
@@ -56,6 +54,70 @@ struct PersistenceController {
         }
 
         return value
+    }
+
+    private func loadPersistentStoresWithRecovery() -> Bool {
+        if loadPersistentStores() {
+            return true
+        }
+
+        AppLogger.log("Persistent store load failed, attempting reset", category: .persistence, level: .error)
+
+        guard resetPersistentStores() else {
+            AppLogger.log("Persistent store reset failed", category: .persistence, level: .error)
+            return false
+        }
+
+        let didRecover = loadPersistentStores()
+        AppLogger.log(
+            didRecover ? "Persistent store recovered after reset" : "Persistent store could not be recovered after reset",
+            category: .persistence,
+            level: didRecover ? .success : .error
+        )
+        return didRecover
+    }
+
+    private func loadPersistentStores() -> Bool {
+        var loadError: NSError?
+        let semaphore = DispatchSemaphore(value: 0)
+
+        container.loadPersistentStores { _, error in
+            loadError = error as NSError?
+            semaphore.signal()
+        }
+
+        semaphore.wait()
+        return loadError == nil
+    }
+
+    private func resetPersistentStores() -> Bool {
+        let coordinator = container.persistentStoreCoordinator
+
+        for description in container.persistentStoreDescriptions {
+            guard let storeURL = description.url else { continue }
+            guard FileManager.default.fileExists(atPath: storeURL.path) else { continue }
+
+            do {
+                if let existingStore = coordinator.persistentStores.first(where: { $0.url == storeURL }) {
+                    try coordinator.remove(existingStore)
+                }
+            } catch {
+                AppLogger.log("Failed to detach persistent store before reset", category: .persistence, level: .error)
+            }
+
+            do {
+                try coordinator.destroyPersistentStore(
+                    at: storeURL,
+                    type: NSPersistentStore.StoreType(rawValue: description.type),
+                    options: description.options
+                )
+            } catch {
+                AppLogger.log("Failed to destroy persistent store during reset", category: .persistence, level: .error)
+                return false
+            }
+        }
+
+        return true
     }
 }
 

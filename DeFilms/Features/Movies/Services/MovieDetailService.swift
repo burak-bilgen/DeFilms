@@ -53,12 +53,16 @@ final class TMDBMovieDetailService: MovieDetailServicing {
             similarMovies: similarMoviesTask
         )
 
-        await imagePrefetcher.prefetch(urls: payload.streamingPlatforms.compactMap(\.logoURL))
-        await imagePrefetcher.prefetch(
-            urls: payload.similarMovies.flatMap { movie in
-                [movie.posterURL, movie.backdropURL].compactMap { $0 }
-            }
-        )
+        Task {
+            await imagePrefetcher.prefetch(urls: payload.streamingPlatforms.compactMap(\.logoURL))
+        }
+        Task {
+            await imagePrefetcher.prefetch(
+                urls: payload.similarMovies.flatMap { movie in
+                    [movie.posterURL, movie.backdropURL].compactMap { $0 }
+                }
+            )
+        }
 
         return payload
     }

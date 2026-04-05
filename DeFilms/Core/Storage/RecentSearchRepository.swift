@@ -19,6 +19,7 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
 
     private let persistenceController: PersistenceController
     private let legacyStorageKey = "MovieSearchHistory"
+    private let legacyGuestIdentifier = "guest"
 
     init(persistenceController: PersistenceController = .shared) {
         self.persistenceController = persistenceController
@@ -85,22 +86,70 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
 
     private func migrateLegacySearchesIfNeeded() async {
         let userDefaults = UserDefaults.standard
-        let guestIdentifier = "guest"
         AppLogger.log("Starting legacy recent-search migration", category: .persistence, level: .warning)
         guard
             let searches = userDefaults.stringArray(forKey: legacyStorageKey),
-            let existing = try? await fetchRecentSearches(for: guestIdentifier, limit: searches.count),
-            existing.isEmpty
+            searches.isEmpty == false
         else {
             userDefaults.removeObject(forKey: legacyStorageKey)
             return
         }
 
-        for query in searches.reversed() {
-            try? await addSearch(query, for: guestIdentifier, limit: max(searches.count, 10))
+        if let existing = try? await fetchRecentSearches(for: legacyGuestIdentifier, limit: searches.count),
+           existing.isEmpty == false {
+            if legacySearchMigrationMatchesSource(searches, importedSearches: existing) {
+                userDefaults.removeObject(forKey: legacyStorageKey)
+            }
+            return
         }
 
-        userDefaults.removeObject(forKey: legacyStorageKey)
-        AppLogger.log("Legacy recent-search migration finished", category: .persistence, level: .success)
+        do {
+            try importLegacySearches(searches)
+            let importedSearches = try await fetchRecentSearches(
+                for: legacyGuestIdentifier,
+                limit: max(searches.count, 10)
+            )
+
+            guard legacySearchMigrationMatchesSource(searches, importedSearches: importedSearches) else {
+                AppLogger.log("Legacy recent-search migration verification failed", category: .persistence, level: .error)
+                return
+            }
+
+            userDefaults.removeObject(forKey: legacyStorageKey)
+            AppLogger.log("Legacy recent-search migration finished", category: .persistence, level: .success)
+        } catch {
+            AppLogger.log("Legacy recent-search migration failed", category: .persistence, level: .error)
+        }
+    }
+
+    private func importLegacySearches(_ searches: [String]) throws {
+        let normalizedSearches = normalizedLegacySearches(searches)
+
+        try persistenceController.performWrite { context in
+            for (index, query) in normalizedSearches.enumerated() {
+                let entity = RecentSearchEntity(context: context)
+                entity.id = UUID()
+                entity.query = query
+                entity.userIdentifier = legacyGuestIdentifier
+                entity.createdAt = Date().addingTimeInterval(TimeInterval(-index))
+            }
+        }
+    }
+
+    private func legacySearchMigrationMatchesSource(_ sourceSearches: [String], importedSearches: [String]) -> Bool {
+        normalizedLegacySearches(sourceSearches) == importedSearches
+    }
+
+    private func normalizedLegacySearches(_ searches: [String]) -> [String] {
+        var deduplicated: [String] = []
+
+        for query in searches.reversed() {
+            let searchText = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !searchText.isEmpty else { continue }
+            guard !deduplicated.contains(where: { $0.compare(searchText, options: .caseInsensitive) == .orderedSame }) else { continue }
+            deduplicated.append(searchText)
+        }
+
+        return deduplicated
     }
 }

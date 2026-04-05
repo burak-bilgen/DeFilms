@@ -25,6 +25,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
 
     private let persistenceController: PersistenceController
     private let legacyStorageKey = "FavoriteListsStorage"
+    private let legacyGuestIdentifier = "guest"
 
     init(persistenceController: PersistenceController = .shared) {
         self.persistenceController = persistenceController
@@ -213,39 +214,75 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
             return
         }
 
-        let guestIdentifier = "guest"
         AppLogger.log("Starting legacy favorites migration", category: .persistence, level: .warning)
 
-        if let existing = try? await fetchLists(for: guestIdentifier), existing.isEmpty == false {
-            userDefaults.removeObject(forKey: legacyStorageKey)
+        if let existing = try? await fetchLists(for: legacyGuestIdentifier), existing.isEmpty == false {
+            if legacyFavoritesMigrationMatchesSource(lists, importedLists: existing) {
+                userDefaults.removeObject(forKey: legacyStorageKey)
+            }
             return
         }
 
-        for list in lists {
-            do {
-                let createdList = try await createList(named: list.name, userIdentifier: guestIdentifier)
-                for movie in list.movies {
-                    let mappedMovie = Movie(
-                        id: movie.id,
-                        title: movie.title,
-                        overview: nil,
-                        posterPath: movie.posterPath,
-                        backdropPath: nil,
-                        releaseDate: movie.releaseDate,
-                        voteAverage: movie.voteAverage,
-                        genreIDs: nil
-                    )
-                    try await add(movie: mappedMovie, to: createdList.id, userIdentifier: guestIdentifier)
-                }
-            } catch {
-                continue
-            }
-        }
+        do {
+            try importLegacyFavorites(lists)
+            let importedLists = try await fetchLists(for: legacyGuestIdentifier)
 
-        userDefaults.removeObject(forKey: legacyStorageKey)
-        AppLogger.log("Legacy favorites migration finished", category: .persistence, level: .success)
+            guard legacyFavoritesMigrationMatchesSource(lists, importedLists: importedLists) else {
+                AppLogger.log("Legacy favorites migration verification failed", category: .persistence, level: .error)
+                return
+            }
+
+            userDefaults.removeObject(forKey: legacyStorageKey)
+            AppLogger.log("Legacy favorites migration finished", category: .persistence, level: .success)
+        } catch {
+            AppLogger.log("Legacy favorites migration failed", category: .persistence, level: .error)
+        }
     }
 
+    private func importLegacyFavorites(_ lists: [FavoriteList]) throws {
+        try persistenceController.performWrite { context in
+            for list in lists {
+                let entity = FavoriteListEntity(context: context)
+                entity.id = list.id
+                entity.name = list.name
+                entity.userIdentifier = legacyGuestIdentifier
+                entity.createdAt = Date()
+
+                for movie in list.movies {
+                    let movieEntity = FavoriteMovieEntity(context: context)
+                    movieEntity.movieID = Int64(movie.id)
+                    movieEntity.title = movie.title
+                    movieEntity.posterPath = movie.posterPath
+                    movieEntity.releaseDate = movie.releaseDate
+                    if let voteAverage = movie.voteAverage {
+                        movieEntity.voteAverage = NSNumber(value: voteAverage)
+                    }
+                    movieEntity.list = entity
+                }
+            }
+        }
+    }
+
+    private func legacyFavoritesMigrationMatchesSource(_ sourceLists: [FavoriteList], importedLists: [FavoriteList]) -> Bool {
+        guard sourceLists.count == importedLists.count else { return false }
+
+        let importedByName = Dictionary(
+            uniqueKeysWithValues: importedLists.map {
+                ($0.name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current), $0)
+            }
+        )
+
+        for sourceList in sourceLists {
+            let normalizedName = sourceList.name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            guard let importedList = importedByName[normalizedName] else { return false }
+
+            let sourceMovieIDs = Set(sourceList.movies.map(\.id))
+            let importedMovieIDs = Set(importedList.movies.map(\.id))
+            guard sourceMovieIDs == importedMovieIDs else { return false }
+        }
+
+        return true
+    }
 }
 
 private func mapFavoriteList(_ entity: FavoriteListEntity) -> FavoriteList {

@@ -182,12 +182,14 @@ final class MovieSearchViewModel: ObservableObject {
             AppLogger.log("Search started", category: .search)
             let response = try await movieCatalogService.searchMovies(query: searchText, page: 1)
             updateSearchResults(with: response, appendingResults: false)
-            await movieCatalogService.prefetchImages(for: response.results)
             lastExecutedSearchQuery = searchText
             lastLoadedLanguage = AppPreferences.persistedLanguage
             try await searchHistoryService.saveSearch(searchText)
             await refreshSearchHistory()
             screenState = filteredSearchResults.isEmpty ? .emptyResults : .loadedResults
+            Task {
+                await self.movieCatalogService.prefetchImages(for: response.results)
+            }
             AppLogger.log("Search completed with \(response.results.count) results", category: .search, level: .success)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.search.error.generic")
@@ -279,10 +281,12 @@ final class MovieSearchViewModel: ObservableObject {
             upcomingMovies = browseContent.upcomingMovies
             nowPlayingMovies = browseContent.nowPlayingMovies
             topRatedMovies = browseContent.topRatedMovies
-            await movieCatalogService.prefetchImages(for: browseContent.allMovies)
             hasLoadedBrowseContent = true
             lastLoadedLanguage = AppPreferences.persistedLanguage
             screenState = .browse
+            Task {
+                await self.movieCatalogService.prefetchImages(for: browseContent.allMovies)
+            }
             AppLogger.log("Browse loading completed", category: .movie, level: .success)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.browse.error")
@@ -336,7 +340,9 @@ final class MovieSearchViewModel: ObservableObject {
             )
 
             updateSearchResults(with: response, appendingResults: true)
-            await movieCatalogService.prefetchImages(for: response.results)
+            Task {
+                await self.movieCatalogService.prefetchImages(for: response.results)
+            }
         } catch {
             AppLogger.log("Pagination failed", category: .search, level: .error)
         }

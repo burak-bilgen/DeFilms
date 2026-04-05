@@ -166,10 +166,15 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     private func refreshLists() async {
-        let latestLists = (try? await favoritesService.loadLists()) ?? []
-        withAnimation(.easeInOut(duration: 0.24)) {
-            lists = latestLists
+        do {
+            let latestLists = try await favoritesService.loadLists()
+            withAnimation(.easeInOut(duration: 0.24)) {
+                lists = latestLists
+            }
+            AppLogger.log("Favorites refreshed", category: .favorites)
+        } catch {
+            AppLogger.log("Failed to refresh favorites", category: .favorites, level: .error)
+            toastItem = .error(Localization.string("favorites.toast.genericError"))
         }
-        AppLogger.log("Favorites refreshed", category: .favorites)
     }
 }
