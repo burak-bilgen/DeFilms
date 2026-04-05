@@ -41,6 +41,12 @@ enum AppPalette {
     static let shadow = Color.black.opacity(0.06)
 }
 
+enum AppAnimation {
+    static let standard = Animation.easeInOut(duration: 0.22)
+    static let gentleSpring = Animation.spring(response: 0.38, dampingFraction: 0.86)
+    static let emphasizedSpring = Animation.spring(response: 0.46, dampingFraction: 0.82)
+}
+
 struct AppCardModifier: ViewModifier {
     var cornerRadius: CGFloat = AppCornerRadius.lg
     var background: Color = AppPalette.cardBackground
@@ -53,6 +59,22 @@ struct AppCardModifier: ViewModifier {
                     .stroke(AppPalette.border, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+}
+
+struct AppElevatedCardModifier: ViewModifier {
+    var cornerRadius: CGFloat = AppCornerRadius.lg
+    var background: Color = AppPalette.cardBackground
+
+    func body(content: Content) -> some View {
+        content
+            .background(background)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(AppPalette.border, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .shadow(color: AppPalette.shadow, radius: 14, x: 0, y: 8)
     }
 }
 
@@ -69,11 +91,28 @@ struct PrimaryProminentButtonStyle: ButtonStyle {
     }
 }
 
+struct PressableScaleButtonStyle: ButtonStyle {
+    var pressedScale: CGFloat = 0.985
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? pressedScale : 1)
+            .animation(AppAnimation.gentleSpring, value: configuration.isPressed)
+    }
+}
+
 extension View {
     func appCardSurface(
         cornerRadius: CGFloat = AppCornerRadius.lg,
         background: Color = AppPalette.cardBackground
     ) -> some View {
         modifier(AppCardModifier(cornerRadius: cornerRadius, background: background))
+    }
+
+    func appElevatedSurface(
+        cornerRadius: CGFloat = AppCornerRadius.lg,
+        background: Color = AppPalette.cardBackground
+    ) -> some View {
+        modifier(AppElevatedCardModifier(cornerRadius: cornerRadius, background: background))
     }
 }

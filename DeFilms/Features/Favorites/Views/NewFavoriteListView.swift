@@ -52,7 +52,11 @@ struct NewFavoriteListView: View {
                     .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
                     .focused($isTextFieldFocused)
                     .submitLabel(.done)
-                    .onSubmit(createList)
+                    .onSubmit {
+                        Task {
+                            await createList()
+                        }
+                    }
             }
 
             if proposedListName.isEmpty {
@@ -61,7 +65,11 @@ struct NewFavoriteListView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Button(action: createList) {
+            Button {
+                Task {
+                    await createList()
+                }
+            } label: {
                 Text(Localization.string("favorites.action.create"))
                     .frame(maxWidth: .infinity)
             }
@@ -89,11 +97,11 @@ struct NewFavoriteListView: View {
         }
     }
 
-    private func createList() {
+    private func createList() async {
         guard !proposedListName.isEmpty else { return }
-        guard let list = favoritesStore.createList(named: listName) else { return }
+        guard let list = await favoritesStore.createList(named: listName) else { return }
         if let movie {
-            favoritesStore.add(movie: movie, to: list.id)
+            await favoritesStore.add(movie: movie, to: list.id)
         }
         onListCreated?(list)
         dismiss()

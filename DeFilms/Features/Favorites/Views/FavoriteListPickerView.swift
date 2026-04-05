@@ -50,7 +50,9 @@ struct FavoriteListPickerView: View {
                         if favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) {
                             listPendingRemoval = list
                         } else {
-                            favoritesStore.add(movie: movie, to: list.id)
+                            Task {
+                                await favoritesStore.add(movie: movie, to: list.id)
+                            }
                         }
                     } label: {
                         HStack(spacing: 12) {
@@ -100,7 +102,7 @@ struct FavoriteListPickerView: View {
         .frame(width: 300)
         .background(Color(.systemBackground))
         .accessibilityElement(children: .contain)
-        .confirmationDialog(
+        .alert(
             Localization.string("favorites.remove.movie.title"),
             isPresented: Binding(
                 get: { listPendingRemoval != nil },
@@ -109,13 +111,14 @@ struct FavoriteListPickerView: View {
                         listPendingRemoval = nil
                     }
                 }
-            ),
-            titleVisibility: .visible
+            )
         ) {
             Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
                 if let listPendingRemoval {
-                    favoritesStore.remove(movieID: movie.id, from: listPendingRemoval.id)
-                    self.listPendingRemoval = nil
+                    Task {
+                        await favoritesStore.remove(movieID: movie.id, from: listPendingRemoval.id)
+                        self.listPendingRemoval = nil
+                    }
                 }
             }
             Button(Localization.string("common.cancel"), role: .cancel) {

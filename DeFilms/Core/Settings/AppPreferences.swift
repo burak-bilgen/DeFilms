@@ -59,43 +59,47 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 }
 
+@MainActor
 final class AppPreferences: ObservableObject {
+    private let defaults: UserDefaults
+
     @Published var selectedTheme: AppTheme {
         didSet {
-            UserDefaults.standard.set(selectedTheme.rawValue, forKey: Self.themeKey)
+            defaults.set(selectedTheme.rawValue, forKey: Self.themeKey)
             AppLogger.log("Theme changed to \(selectedTheme.rawValue)", category: .theme, level: .success)
         }
     }
 
     @Published var selectedLanguage: AppLanguage {
         didSet {
-            UserDefaults.standard.set(selectedLanguage.rawValue, forKey: Self.languageKey)
+            defaults.set(selectedLanguage.rawValue, forKey: Self.languageKey)
             AppLogger.log("Language changed to \(selectedLanguage.rawValue)", category: .localization, level: .success)
         }
     }
 
     @Published var hasCompletedOnboarding: Bool {
         didSet {
-            UserDefaults.standard.set(hasCompletedOnboarding, forKey: Self.onboardingKey)
+            defaults.set(hasCompletedOnboarding, forKey: Self.onboardingKey)
         }
     }
 
-    static let themeKey = "app.theme"
-    static let languageKey = "app.language"
-    static let onboardingKey = "app.onboarding.completed"
+    nonisolated static let themeKey = "app.theme"
+    nonisolated static let languageKey = "app.language"
+    nonisolated static let onboardingKey = "app.onboarding.completed"
 
-    static var persistedLanguage: AppLanguage {
+    nonisolated static var persistedLanguage: AppLanguage {
         let languageValue = UserDefaults.standard.string(forKey: Self.languageKey)
         return AppLanguage(rawValue: languageValue ?? "") ?? .english
     }
 
-    init() {
-        let themeValue = UserDefaults.standard.string(forKey: Self.themeKey)
-        let languageValue = UserDefaults.standard.string(forKey: Self.languageKey)
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        let themeValue = defaults.string(forKey: Self.themeKey)
+        let languageValue = defaults.string(forKey: Self.languageKey)
 
         selectedTheme = AppTheme(rawValue: themeValue ?? "") ?? .system
         selectedLanguage = AppLanguage(rawValue: languageValue ?? "") ?? .english
-        hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Self.onboardingKey)
+        hasCompletedOnboarding = defaults.bool(forKey: Self.onboardingKey)
         AppLogger.log("Preferences loaded", category: .app)
     }
 

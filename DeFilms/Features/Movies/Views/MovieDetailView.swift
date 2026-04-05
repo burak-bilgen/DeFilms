@@ -13,6 +13,7 @@ struct MovieDetailView: View {
     @EnvironmentObject private var toastCenter: ToastCenter
     @Environment(\.colorScheme) private var colorScheme
     @State private var scrollOffset: CGFloat = 0
+    @State private var isContentVisible = false
 
     init(viewModel: MovieDetailViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -43,12 +44,16 @@ struct MovieDetailView: View {
 
                             MovieDetailContentCardView(viewModel: viewModel)
                                 .padding(.horizontal, 18)
+                                .opacity(isContentVisible ? 1 : 0)
+                                .offset(y: isContentVisible ? 0 : 24)
 
                             if !viewModel.directors.isEmpty {
                                 MoviePeopleCarouselSection(
                                     title: Localization.string("movies.detail.director"),
                                     members: viewModel.directors
                                 )
+                                .opacity(isContentVisible ? 1 : 0)
+                                .offset(y: isContentVisible ? 0 : 28)
                             }
 
                             if !viewModel.cast.isEmpty {
@@ -56,6 +61,8 @@ struct MovieDetailView: View {
                                     title: Localization.string("movies.detail.cast"),
                                     members: viewModel.cast
                                 )
+                                .opacity(isContentVisible ? 1 : 0)
+                                .offset(y: isContentVisible ? 0 : 32)
                             }
 
                             if !viewModel.streamingPlatforms.isEmpty {
@@ -63,6 +70,8 @@ struct MovieDetailView: View {
                                     title: Localization.string("movies.detail.availableOn"),
                                     platforms: viewModel.streamingPlatforms
                                 )
+                                .opacity(isContentVisible ? 1 : 0)
+                                .offset(y: isContentVisible ? 0 : 36)
                             }
 
                             if !viewModel.similarMovies.isEmpty {
@@ -70,6 +79,8 @@ struct MovieDetailView: View {
                                     title: Localization.string("movies.detail.similar"),
                                     movies: viewModel.similarMovies
                                 )
+                                .opacity(isContentVisible ? 1 : 0)
+                                .offset(y: isContentVisible ? 0 : 40)
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -98,6 +109,16 @@ struct MovieDetailView: View {
         .accessibilityIdentifier("movies.detail.screen")
         .task {
             await viewModel.loadIfNeeded()
+        }
+        .onChange(of: viewModel.detail?.id) { detailID in
+            guard detailID != nil else {
+                isContentVisible = false
+                return
+            }
+
+            withAnimation(AppAnimation.emphasizedSpring) {
+                isContentVisible = true
+            }
         }
         .onChange(of: preferences.selectedLanguage.rawValue) { _ in
             Task {

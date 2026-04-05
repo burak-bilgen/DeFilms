@@ -49,6 +49,7 @@ struct SettingsAccountOverviewCard: View {
                 .stroke(AppPalette.border, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
+        .shadow(color: AppPalette.shadow.opacity(0.75), radius: 12, x: 0, y: 8)
         .accessibilityElement(children: .combine)
     }
 }

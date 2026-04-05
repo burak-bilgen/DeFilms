@@ -12,15 +12,15 @@ final class FavoriteListDetailViewModel: ObservableObject {
 
     let listID: UUID
 
-    private let favoritesStore: FavoritesStore
+    private let favoritesStore: FavoritesStoreManaging
     private var cancellables: Set<AnyCancellable> = []
 
-    init(listID: UUID, favoritesStore: FavoritesStore) {
+    init(listID: UUID, favoritesStore: FavoritesStoreManaging) {
         self.listID = listID
         self.favoritesStore = favoritesStore
         self.list = favoritesStore.list(withID: listID)
 
-        favoritesStore.$lists
+        favoritesStore.listsPublisher
             .sink { [weak self] _ in
                 self?.refreshCurrentList()
             }
@@ -48,20 +48,20 @@ final class FavoriteListDetailViewModel: ObservableObject {
         """
     }
 
-    func renameList(name: String) -> Bool {
-        favoritesStore.renameList(listID: listID, name: name)
+    func renameList(name: String) async -> Bool {
+        await favoritesStore.renameList(listID: listID, name: name)
     }
 
-    func deleteList() {
-        favoritesStore.deleteList(listID: listID)
+    func deleteList() async {
+        await favoritesStore.deleteList(listID: listID)
     }
 
-    func remove(movieID: Int) {
-        favoritesStore.remove(movieID: movieID, from: listID)
+    func remove(movieID: Int) async {
+        await favoritesStore.remove(movieID: movieID, from: listID)
     }
 
-    func move(movieID: Int, to destinationListID: UUID) {
-        favoritesStore.move(movieID: movieID, from: listID, to: destinationListID)
+    func move(movieID: Int, to destinationListID: UUID) async {
+        await favoritesStore.move(movieID: movieID, from: listID, to: destinationListID)
     }
 
     private func refreshCurrentList() {

@@ -35,7 +35,40 @@ struct PersistenceController {
 
     func newBackgroundContext() -> NSManagedObjectContext {
         let context = container.newBackgroundContext()
+        context.automaticallyMergesChangesFromParent = true
         context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return context
+    }
+
+    func performRead<T>(_ work: (NSManagedObjectContext) throws -> T) throws -> T {
+        let context = newBackgroundContext()
+        return try context.performSynchronously(work)
+    }
+
+    func performWrite<T>(_ work: (NSManagedObjectContext) throws -> T) throws -> T {
+        let context = newBackgroundContext()
+        let value = try context.performSynchronously(work)
+
+        if context.hasChanges {
+            try context.performSynchronously { context in
+                try context.save()
+            }
+        }
+
+        return value
+    }
+}
+
+private extension NSManagedObjectContext {
+    func performSynchronously<T>(_ work: (NSManagedObjectContext) throws -> T) throws -> T {
+        var result: Result<T, Error>?
+
+        performAndWait {
+            result = Result {
+                try work(self)
+            }
+        }
+
+        return try result!.get()
     }
 }

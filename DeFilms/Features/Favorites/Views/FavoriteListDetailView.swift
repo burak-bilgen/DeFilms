@@ -96,19 +96,23 @@ struct FavoriteListDetailView: View {
                 .textInputAutocapitalization(.never)
             Button(Localization.string("common.cancel"), role: .cancel) {}
             Button(Localization.string("favorites.rename.confirm")) {
-                _ = viewModel.renameList(name: renameText)
+                Task {
+                    _ = await viewModel.renameList(name: renameText)
+                }
             }
         }
-        .confirmationDialog(Localization.string("favorites.delete.title"), isPresented: $isDeletePresented, titleVisibility: .visible) {
+        .alert(Localization.string("favorites.delete.title"), isPresented: $isDeletePresented) {
             Button(Localization.string("favorites.delete.confirm"), role: .destructive) {
-                viewModel.deleteList()
-                dismiss()
+                Task {
+                    await viewModel.deleteList()
+                    dismiss()
+                }
             }
             Button(Localization.string("common.cancel"), role: .cancel) {}
         } message: {
             Text(Localization.string("favorites.delete.message", viewModel.list?.name ?? ""))
         }
-        .confirmationDialog(
+        .alert(
             Localization.string("favorites.remove.movie.title"),
             isPresented: Binding(
                 get: { moviePendingRemoval != nil },
@@ -117,13 +121,14 @@ struct FavoriteListDetailView: View {
                         moviePendingRemoval = nil
                     }
                 }
-            ),
-            titleVisibility: .visible
+            )
         ) {
             Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
                 if let moviePendingRemoval {
-                    viewModel.remove(movieID: moviePendingRemoval.id)
-                    self.moviePendingRemoval = nil
+                    Task {
+                        await viewModel.remove(movieID: moviePendingRemoval.id)
+                        self.moviePendingRemoval = nil
+                    }
                 }
             }
             Button(Localization.string("common.cancel"), role: .cancel) {
@@ -152,8 +157,10 @@ struct FavoriteListDetailView: View {
                 ForEach(viewModel.destinationLists) { destination in
                     Button(destination.name) {
                         if let moviePendingMove {
-                            viewModel.move(movieID: moviePendingMove.id, to: destination.id)
-                            self.moviePendingMove = nil
+                            Task {
+                                await viewModel.move(movieID: moviePendingMove.id, to: destination.id)
+                                self.moviePendingMove = nil
+                            }
                         }
                     }
                 }
@@ -174,7 +181,9 @@ struct FavoriteListDetailView: View {
             if let moviePendingMove {
                 NavigationStack {
                     NewFavoriteListView(movie: moviePendingMove.asMovie) { _ in
-                        viewModel.remove(movieID: moviePendingMove.id)
+                        Task {
+                            await viewModel.remove(movieID: moviePendingMove.id)
+                        }
                     }
                 }
             }

@@ -45,16 +45,16 @@ final class MockMovieSearchHistoryService: MovieSearchHistoryServicing {
         self.history = history
     }
 
-    func loadSearchHistory() throws -> [String] {
+    func loadSearchHistory() async throws -> [String] {
         history
     }
 
-    func saveSearch(_ query: String) throws {
+    func saveSearch(_ query: String) async throws {
         history.removeAll { $0.caseInsensitiveCompare(query) == .orderedSame }
         history.insert(query, at: 0)
     }
 
-    func clearSearchHistory() throws {
+    func clearSearchHistory() async throws {
         didClearHistory = true
         history = []
     }
@@ -87,46 +87,46 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
         self.moveMovieError = moveMovieError
     }
 
-    func fetchLists(for userIdentifier: String) throws -> [FavoriteList] {
+    func fetchLists(for userIdentifier: String) async throws -> [FavoriteList] {
         lists
     }
 
-    func adoptListsIfNeeded(for userIdentifier: String, from legacyUserIdentifiers: [String]) throws {
+    func adoptListsIfNeeded(for userIdentifier: String, from legacyUserIdentifiers: [String]) async throws {
         lastAdoptedUserIdentifier = userIdentifier
         lastLegacyUserIdentifiers = legacyUserIdentifiers
     }
 
-    func createList(named name: String, userIdentifier: String) throws -> FavoriteList {
+    func createList(named name: String, userIdentifier: String) async throws -> FavoriteList {
         if let createListError { throw createListError }
         let list = FavoriteList(id: UUID(), name: name, movies: [])
         lists.append(list)
         return list
     }
 
-    func renameList(listID: UUID, name: String, userIdentifier: String) throws {
+    func renameList(listID: UUID, name: String, userIdentifier: String) async throws {
         if let renameListError { throw renameListError }
         guard let index = lists.firstIndex(where: { $0.id == listID }) else { return }
         lists[index].name = name
     }
 
-    func deleteList(listID: UUID, userIdentifier: String) throws {
+    func deleteList(listID: UUID, userIdentifier: String) async throws {
         if let deleteListError { throw deleteListError }
         lists.removeAll { $0.id == listID }
     }
 
-    func add(movie: Movie, to listID: UUID, userIdentifier: String) throws {
+    func add(movie: Movie, to listID: UUID, userIdentifier: String) async throws {
         if let addMovieError { throw addMovieError }
     }
 
-    func remove(movieID: Int, from listID: UUID, userIdentifier: String) throws {
+    func remove(movieID: Int, from listID: UUID, userIdentifier: String) async throws {
         if let removeMovieError { throw removeMovieError }
         guard let index = lists.firstIndex(where: { $0.id == listID }) else { return }
         lists[index].movies.removeAll { $0.id == movieID }
     }
 
-    func remove(movieID: Int, userIdentifier: String) throws {}
+    func remove(movieID: Int, userIdentifier: String) async throws {}
 
-    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) throws {
+    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) async throws {
         if let moveMovieError { throw moveMovieError }
     }
 }

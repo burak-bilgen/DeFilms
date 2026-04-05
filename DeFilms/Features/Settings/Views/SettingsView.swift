@@ -13,6 +13,7 @@ struct SettingsView: View {
 
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var sessionManager: AuthSessionManager
+    @EnvironmentObject private var coordinator: SettingsCoordinator
 
     @State private var showLogoutConfirmation = false
 
@@ -34,6 +35,7 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .background(AppPalette.screenBackground)
             .navigationTitle(Localization.string("settings.title"))
+            .animation(AppAnimation.standard, value: sessionManager.isSignedIn)
             .alert(Localization.string("settings.account.logout"), isPresented: $showLogoutConfirmation) {
                 Button(Localization.string("settings.account.logout"), role: .destructive) {
                     viewModel.signOut()
@@ -92,11 +94,12 @@ struct SettingsView: View {
     private var accountSection: some View {
         Section {
             if sessionManager.isSignedIn {
-                NavigationLink {
-                    ChangePasswordView(viewModel: container.settingsFactory.makeChangePasswordViewModel())
+                Button {
+                    coordinator.show(.changePassword)
                 } label: {
                     SettingsSimpleRow(symbol: "key.fill", title: Localization.string("auth.changePassword"))
                 }
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("settings.account.changePassword")
 
                 Button(role: .destructive) {
@@ -106,18 +109,20 @@ struct SettingsView: View {
                 }
                 .accessibilityIdentifier("settings.account.logout")
             } else {
-                NavigationLink {
-                    SignInView(viewModel: container.settingsFactory.makeSignInViewModel())
+                Button {
+                    coordinator.show(.signIn)
                 } label: {
                     SettingsSimpleRow(symbol: "person.badge.key", title: Localization.string("auth.signIn"))
                 }
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("settings.account.signIn")
 
-                NavigationLink {
-                    SignUpView(viewModel: container.settingsFactory.makeSignUpViewModel())
+                Button {
+                    coordinator.show(.signUp)
                 } label: {
                     SettingsSimpleRow(symbol: "person.crop.circle.badge.plus", title: Localization.string("auth.signUp"))
                 }
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("settings.account.signUp")
             }
         } header: {

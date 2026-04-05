@@ -95,9 +95,10 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
     func signUp(email: String, password: String, confirmPassword: String) throws {
         let emailAddress = normalizedEmail(from: email)
-        let passwordText = password.filter { !$0.isWhitespace }
+        let passwordText = password
+        let confirmedPassword = confirmPassword
 
-        guard !emailAddress.isEmpty, !passwordText.isEmpty else {
+        guard !emailAddress.isEmpty, !passwordText.isEmpty, !confirmedPassword.isEmpty else {
             throw AuthError.emptyFields
         }
 
@@ -107,7 +108,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
         try validatePassword(passwordText)
 
-        guard passwordText == confirmPassword.filter({ !$0.isWhitespace }) else {
+        guard passwordText == confirmedPassword else {
             throw AuthError.passwordMismatch
         }
 
@@ -130,7 +131,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
     func signIn(email: String, password: String) throws {
         let emailAddress = normalizedEmail(from: email)
-        let passwordText = password.filter { !$0.isWhitespace }
+        let passwordText = password
 
         guard !emailAddress.isEmpty, !passwordText.isEmpty else {
             throw AuthError.emptyFields
@@ -158,9 +159,9 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             throw AuthError.notSignedIn
         }
 
-        let currentPassword = currentPassword.filter { !$0.isWhitespace }
-        let newPassword = newPassword.filter { !$0.isWhitespace }
-        let confirmedPassword = confirmPassword.filter { !$0.isWhitespace }
+        let currentPassword = currentPassword
+        let newPassword = newPassword
+        let confirmedPassword = confirmPassword
 
         guard !currentPassword.isEmpty, !newPassword.isEmpty, !confirmedPassword.isEmpty else {
             throw AuthError.emptyFields

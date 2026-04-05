@@ -10,8 +10,7 @@ import SwiftUI
 struct SearchHistoryView: View {
     let history: [String]
     let onSelect: (String) -> Void
-    let onClear: () -> Void
-    @State private var isClearConfirmationPresented = false
+    let onRequestClearConfirmation: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -24,7 +23,7 @@ struct SearchHistoryView: View {
                     Spacer()
 
                     Button {
-                        isClearConfirmationPresented = true
+                        onRequestClearConfirmation()
                     } label: {
                         Image(systemName: "xmark.circle")
                             .font(.subheadline.weight(.semibold))
@@ -68,20 +67,5 @@ struct SearchHistoryView: View {
         }
         .padding(.vertical, AppSpacing.xs)
         .animation(.easeInOut(duration: 0.22), value: history)
-        .confirmationDialog(
-            Localization.string("movies.searchHistory.clear.confirmTitle"),
-            isPresented: $isClearConfirmationPresented,
-            titleVisibility: .visible
-        ) {
-            Button(Localization.string("movies.searchHistory.clear.confirmAction"), role: .destructive) {
-                withAnimation(.easeInOut(duration: 0.22)) {
-                    onClear()
-                }
-            }
-
-            Button(Localization.string("common.cancel"), role: .cancel) {}
-        } message: {
-            Text(Localization.string("movies.searchHistory.clear.confirmMessage"))
-        }
     }
 }

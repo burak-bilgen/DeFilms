@@ -5,7 +5,7 @@ import Testing
 @MainActor
 struct FavoritesViewModelTests {
     @Test
-    func createRenameAndDeleteListUpdatesPublishedLists() {
+    func createRenameAndDeleteListUpdatesPublishedLists() async {
         let repository = MockFavoritesRepository()
         let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
         let store = FavoritesStore(
@@ -14,15 +14,15 @@ struct FavoritesViewModelTests {
         )
         let viewModel = FavoritesViewModel(favoritesStore: store)
 
-        let created = viewModel.createList(named: "Weekend")
+        let created = await viewModel.createList(named: "Weekend")
         #expect(created?.name == "Weekend")
         #expect(viewModel.lists.count == 1)
 
-        let renamed = viewModel.renameList(listID: created!.id, name: "Weekend Picks")
+        let renamed = await viewModel.renameList(listID: created!.id, name: "Weekend Picks")
         #expect(renamed)
         #expect(viewModel.lists.first?.name == "Weekend Picks")
 
-        viewModel.deleteList(listID: created!.id)
+        await viewModel.deleteList(listID: created!.id)
         #expect(viewModel.lists.isEmpty)
     }
 
@@ -45,7 +45,7 @@ struct FavoritesViewModelTests {
     }
 
     @Test
-    func storeReturnsExistingListForDuplicateNameAndDoesNotCreateNewOne() {
+    func storeReturnsExistingListForDuplicateNameAndDoesNotCreateNewOne() async {
         let repository = MockFavoritesRepository()
         repository.lists = [FavoriteList(id: UUID(), name: "Weekend", movies: [])]
         let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
@@ -54,14 +54,14 @@ struct FavoritesViewModelTests {
             sessionManager: sessionManager
         )
 
-        let result = store.createList(named: " weekend ")
+        let result = await store.createList(named: " weekend ")
 
         #expect(result?.id == repository.lists.first?.id)
         #expect(repository.lists.count == 1)
     }
 
     @Test
-    func storeRenameDuplicatePublishesDuplicateToast() {
+    func storeRenameDuplicatePublishesDuplicateToast() async {
         let first = FavoriteList(id: UUID(), name: "Weekend", movies: [])
         let second = FavoriteList(id: UUID(), name: "Sci-Fi", movies: [])
         let repository = MockFavoritesRepository()
@@ -72,14 +72,14 @@ struct FavoritesViewModelTests {
             sessionManager: sessionManager
         )
 
-        let didRename = store.renameList(listID: second.id, name: "Weekend")
+        let didRename = await store.renameList(listID: second.id, name: "Weekend")
 
         #expect(didRename == false)
         #expect(store.toastItem?.message == Localization.string("favorites.toast.duplicateList"))
     }
 
     @Test
-    func storeRemoveFailurePublishesGenericToast() {
+    func storeRemoveFailurePublishesGenericToast() async {
         let listID = UUID()
         let repository = MockFavoritesRepository(removeMovieError: FavoritesServiceError.persistenceFailure)
         repository.lists = [
@@ -95,14 +95,14 @@ struct FavoritesViewModelTests {
             sessionManager: sessionManager
         )
 
-        store.remove(movieID: 7, from: listID)
+        await store.remove(movieID: 7, from: listID)
 
         #expect(store.toastItem?.message == Localization.string("favorites.toast.genericError"))
         #expect(store.list(withID: listID)?.movies.count == 1)
     }
 
     @Test
-    func storeDeleteFailurePublishesGenericToastAndKeepsList() {
+    func storeDeleteFailurePublishesGenericToastAndKeepsList() async {
         let list = FavoriteList(id: UUID(), name: "Weekend", movies: [])
         let repository = MockFavoritesRepository(deleteListError: FavoritesServiceError.persistenceFailure)
         repository.lists = [list]
@@ -112,14 +112,14 @@ struct FavoritesViewModelTests {
             sessionManager: sessionManager
         )
 
-        store.deleteList(listID: list.id)
+        await store.deleteList(listID: list.id)
 
         #expect(store.toastItem?.message == Localization.string("favorites.toast.genericError"))
         #expect(store.list(withID: list.id) != nil)
     }
 
     @Test
-    func storeMoveFailurePublishesGenericToast() {
+    func storeMoveFailurePublishesGenericToast() async {
         let sourceListID = UUID()
         let destinationListID = UUID()
         let repository = MockFavoritesRepository(moveMovieError: FavoritesServiceError.persistenceFailure)
@@ -137,7 +137,7 @@ struct FavoritesViewModelTests {
             sessionManager: sessionManager
         )
 
-        store.move(movieID: 7, from: sourceListID, to: destinationListID)
+        await store.move(movieID: 7, from: sourceListID, to: destinationListID)
 
         #expect(store.toastItem?.message == Localization.string("favorites.toast.genericError"))
         #expect(store.list(withID: sourceListID)?.movies.count == 1)

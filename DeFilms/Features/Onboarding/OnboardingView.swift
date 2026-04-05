@@ -10,6 +10,10 @@ struct OnboardingView: View {
     let signIn: () -> Void
     let signUp: () -> Void
 
+    @State private var isHeaderVisible = false
+    @State private var isFeaturesVisible = false
+    @State private var isActionsVisible = false
+
     var body: some View {
         ZStack {
             backgroundLayer
@@ -24,6 +28,21 @@ struct OnboardingView: View {
             }
         }
         .statusBarHidden()
+        .task {
+            withAnimation(AppAnimation.gentleSpring) {
+                isHeaderVisible = true
+            }
+
+            try? await Task.sleep(nanoseconds: 90_000_000)
+            withAnimation(AppAnimation.gentleSpring) {
+                isFeaturesVisible = true
+            }
+
+            try? await Task.sleep(nanoseconds: 90_000_000)
+            withAnimation(AppAnimation.gentleSpring) {
+                isActionsVisible = true
+            }
+        }
     }
 
     private var backgroundLayer: some View {
@@ -71,6 +90,8 @@ struct OnboardingView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, 8)
+        .opacity(isHeaderVisible ? 1 : 0)
+        .offset(y: isHeaderVisible ? 0 : 18)
     }
 
     private var featureStack: some View {
@@ -91,6 +112,8 @@ struct OnboardingView: View {
                 message: Localization.string("onboarding.feature.account.body")
             )
         }
+        .opacity(isFeaturesVisible ? 1 : 0)
+        .offset(y: isFeaturesVisible ? 0 : 24)
     }
 
     private var actionStack: some View {
@@ -118,6 +141,8 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 4)
+        .opacity(isActionsVisible ? 1 : 0)
+        .offset(y: isActionsVisible ? 0 : 20)
     }
 
     private func featureCard(icon: String, title: String, message: String) -> some View {
@@ -155,7 +180,6 @@ struct OnboardingView: View {
                 .stroke(Color.white.opacity(0.58), lineWidth: 1)
         )
     }
-
 }
 
 private struct OnboardingPrimaryButtonStyle: ButtonStyle {

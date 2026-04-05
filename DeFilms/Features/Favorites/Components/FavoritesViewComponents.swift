@@ -15,7 +15,7 @@ struct FavoriteListRow: View {
         Button(action: openList) {
             FavoriteListCard(list: list)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableScaleButtonStyle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Localization.string("favorites.accessibility.listSummary", list.name, list.movies.count))
         .accessibilityHint(Localization.string("movies.accessibility.openDetails"))
@@ -54,7 +54,7 @@ struct FavoritesEmptyState: View {
             }
             .padding(AppSpacing.xxl)
             .frame(maxWidth: 420)
-            .appCardSurface()
+            .appElevatedSurface()
             .padding(.horizontal, AppSpacing.md)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -98,6 +98,7 @@ struct FavoritesSummaryCard: View {
                 .stroke(AppPalette.border, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
+        .shadow(color: AppPalette.shadow.opacity(0.75), radius: 12, x: 0, y: 8)
         .accessibilityElement(children: .combine)
     }
 
@@ -158,7 +159,7 @@ struct FavoriteListCard: View {
             }
         }
         .padding(AppSpacing.md + 2)
-        .appCardSurface()
+        .appElevatedSurface()
         .accessibilityElement(children: .combine)
     }
 }

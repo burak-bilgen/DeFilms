@@ -9,9 +9,9 @@ import CoreData
 import Foundation
 
 protocol RecentSearchRepositoryProtocol {
-    func fetchRecentSearches(for userIdentifier: String, limit: Int) throws -> [String]
-    func addSearch(_ query: String, for userIdentifier: String, limit: Int) throws
-    func clearRecentSearches(for userIdentifier: String) throws
+    func fetchRecentSearches(for userIdentifier: String, limit: Int) async throws -> [String]
+    func addSearch(_ query: String, for userIdentifier: String, limit: Int) async throws
+    func clearRecentSearches(for userIdentifier: String) async throws
 }
 
 final class RecentSearchRepository: RecentSearchRepositoryProtocol {
@@ -22,74 +22,74 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
 
     init(persistenceController: PersistenceController = .shared) {
         self.persistenceController = persistenceController
-        migrateLegacySearchesIfNeeded()
+        Task {
+            await migrateLegacySearchesIfNeeded()
+        }
         AppLogger.log("Recent search repository initialized", category: .persistence)
     }
 
-    func fetchRecentSearches(for userIdentifier: String, limit: Int) throws -> [String] {
-        let request = RecentSearchEntity.fetchRequest()
-        request.fetchLimit = limit
-        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
-        request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
-
-        let results = try persistenceController.viewContext.fetch(request).map(\.query)
+    func fetchRecentSearches(for userIdentifier: String, limit: Int) async throws -> [String] {
+        let results = try persistenceController.performRead { context in
+            let request = RecentSearchEntity.fetchRequest()
+            request.fetchLimit = limit
+            request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+            request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
+            return try context.fetch(request).map(\.query)
+        }
         AppLogger.log("Fetched recent searches", category: .persistence)
         return results
     }
 
-    func addSearch(_ query: String, for userIdentifier: String, limit: Int) throws {
+    func addSearch(_ query: String, for userIdentifier: String, limit: Int) async throws {
         let searchText = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !searchText.isEmpty else { return }
 
-        let context = persistenceController.viewContext
+        try persistenceController.performWrite { context in
+            let matchingSearchRequest = RecentSearchEntity.fetchRequest()
+            matchingSearchRequest.predicate = NSPredicate(format: "query =[c] %@ AND userIdentifier == %@", searchText, userIdentifier)
+            let existingMatches = try context.fetch(matchingSearchRequest)
+            for item in existingMatches {
+                context.delete(item)
+            }
 
-        let matchingSearchRequest = RecentSearchEntity.fetchRequest()
-        matchingSearchRequest.predicate = NSPredicate(format: "query =[c] %@ AND userIdentifier == %@", searchText, userIdentifier)
-        let existingMatches = try context.fetch(matchingSearchRequest)
-        for item in existingMatches {
-            context.delete(item)
+            let entity = RecentSearchEntity(context: context)
+            entity.id = UUID()
+            entity.query = searchText
+            entity.userIdentifier = userIdentifier
+            entity.createdAt = Date()
+
+            let searchesRequest = RecentSearchEntity.fetchRequest()
+            searchesRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+            searchesRequest.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
+            let allSearches = try context.fetch(searchesRequest)
+
+            for search in allSearches.dropFirst(limit) {
+                context.delete(search)
+            }
         }
-
-        let entity = RecentSearchEntity(context: context)
-        entity.id = UUID()
-        entity.query = searchText
-        entity.userIdentifier = userIdentifier
-        entity.createdAt = Date()
-
-        let searchesRequest = RecentSearchEntity.fetchRequest()
-        searchesRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
-        searchesRequest.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
-        let allSearches = try context.fetch(searchesRequest)
-
-        for search in allSearches.dropFirst(limit) {
-            context.delete(search)
-        }
-
-        try context.save()
         AppLogger.log("Saved recent search", category: .persistence, level: .success)
     }
 
-    func clearRecentSearches(for userIdentifier: String) throws {
-        let context = persistenceController.viewContext
-        let request = RecentSearchEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
+    func clearRecentSearches(for userIdentifier: String) async throws {
+        try persistenceController.performWrite { context in
+            let request = RecentSearchEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
 
-        let searches = try context.fetch(request)
-        for search in searches {
-            context.delete(search)
+            let searches = try context.fetch(request)
+            for search in searches {
+                context.delete(search)
+            }
         }
-
-        try context.save()
         AppLogger.log("Cleared recent searches", category: .persistence, level: .success)
     }
 
-    private func migrateLegacySearchesIfNeeded() {
+    private func migrateLegacySearchesIfNeeded() async {
         let userDefaults = UserDefaults.standard
         let guestIdentifier = "guest"
         AppLogger.log("Starting legacy recent-search migration", category: .persistence, level: .warning)
         guard
             let searches = userDefaults.stringArray(forKey: legacyStorageKey),
-            let existing = try? fetchRecentSearches(for: guestIdentifier, limit: searches.count),
+            let existing = try? await fetchRecentSearches(for: guestIdentifier, limit: searches.count),
             existing.isEmpty
         else {
             userDefaults.removeObject(forKey: legacyStorageKey)
@@ -97,7 +97,7 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
         }
 
         for query in searches.reversed() {
-            try? addSearch(query, for: guestIdentifier, limit: max(searches.count, 10))
+            try? await addSearch(query, for: guestIdentifier, limit: max(searches.count, 10))
         }
 
         userDefaults.removeObject(forKey: legacyStorageKey)

@@ -10,7 +10,7 @@ struct MoviesBrowseSectionView: View {
     let screenState: MoviesScreenState
     let browseSections: [MovieBrowseSection]
     let onSelectRecentSearch: (String) -> Void
-    let onClearSearchHistory: () -> Void
+    let onRequestClearSearchHistory: () -> Void
     let onReloadBrowseContent: () -> Void
     let localizedBrowseTitle: (String) -> String
 
@@ -19,7 +19,7 @@ struct MoviesBrowseSectionView: View {
             SearchHistoryView(
                 history: searchHistory,
                 onSelect: onSelectRecentSearch,
-                onClear: onClearSearchHistory
+                onRequestClearConfirmation: onRequestClearSearchHistory
             )
             .padding(.bottom, 10)
         }

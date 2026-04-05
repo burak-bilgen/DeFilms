@@ -61,6 +61,7 @@ struct FavoritesView: View {
         }
         .navigationTitle(Localization.string("favorites.title"))
         .background(AppPalette.screenBackground)
+        .animation(AppAnimation.standard, value: viewModel.lists.isEmpty)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -91,12 +92,14 @@ struct FavoritesView: View {
             }
             Button(Localization.string("favorites.rename.confirm")) {
                 guard let listPendingRename else { return }
-                if viewModel.renameList(listID: listPendingRename.id, name: renameText) {
-                    self.listPendingRename = nil
+                Task {
+                    if await viewModel.renameList(listID: listPendingRename.id, name: renameText) {
+                        self.listPendingRename = nil
+                    }
                 }
             }
         }
-        .confirmationDialog(
+        .alert(
             Localization.string("favorites.delete.title"),
             isPresented: Binding(
                 get: { listPendingDeletion != nil },
@@ -105,13 +108,14 @@ struct FavoritesView: View {
                         listPendingDeletion = nil
                     }
                 }
-            ),
-            titleVisibility: .visible
+            )
         ) {
             Button(Localization.string("favorites.delete.confirm"), role: .destructive) {
                 if let listPendingDeletion {
-                    viewModel.deleteList(listID: listPendingDeletion.id)
-                    self.listPendingDeletion = nil
+                    Task {
+                        await viewModel.deleteList(listID: listPendingDeletion.id)
+                        self.listPendingDeletion = nil
+                    }
                 }
             }
             Button(Localization.string("common.cancel"), role: .cancel) {

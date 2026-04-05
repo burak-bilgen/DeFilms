@@ -6,19 +6,12 @@
 import SwiftUI
 
 struct AppEntryView: View {
-    enum AuthDestination: Identifiable {
-        case signIn
-        case signUp
-
-        var id: Self { self }
-    }
-
     let container: AppContainer
     let favoritesStore: FavoritesStore
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var sessionManager: AuthSessionManager
     @EnvironmentObject private var toastCenter: ToastCenter
-    @State private var authDestination: AuthDestination?
+    @StateObject private var flowCoordinator = AppFlowCoordinator()
 
     var body: some View {
         MainTabView(
@@ -30,15 +23,15 @@ struct AppEntryView: View {
                     continueAsGuest: dismissOnboarding,
                     signIn: {
                         dismissOnboarding()
-                        authDestination = .signIn
+                        flowCoordinator.presentSignIn()
                     },
                     signUp: {
                         dismissOnboarding()
-                        authDestination = .signUp
+                        flowCoordinator.presentSignUp()
                     }
                 )
             }
-            .fullScreenCover(item: $authDestination) { destination in
+            .fullScreenCover(item: $flowCoordinator.modalRoute) { destination in
                 AuthEntryContainer {
                     switch destination {
                     case .signIn:
@@ -50,6 +43,7 @@ struct AppEntryView: View {
                 .tint(.primary)
                 .toast(item: $toastCenter.item, duration: 1.8)
             }
+            .environmentObject(flowCoordinator)
             .onChange(of: sessionManager.toastItem?.id) { _ in
                 relayToast(from: sessionManager.toastItem) {
                     sessionManager.clearToast()
@@ -86,6 +80,7 @@ struct AppEntryView: View {
 
 private struct AuthEntryContainer<Content: View>: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var flowCoordinator: AppFlowCoordinator
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -94,6 +89,7 @@ private struct AuthEntryContainer<Content: View>: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(Localization.string("common.close")) {
+                            flowCoordinator.dismissModal()
                             dismiss()
                         }
                     }

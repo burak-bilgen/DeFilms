@@ -10,13 +10,17 @@ import Foundation
 import SwiftUI
 
 @MainActor
-final class FavoritesStore: ObservableObject {
+final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     @Published private(set) var lists: [FavoriteList] = []
     @Published private(set) var toastItem: ToastItem?
 
     private let favoritesService: FavoritesServicing
     private let sessionManager: AuthSessionManager
     private var cancellables: Set<AnyCancellable> = []
+
+    var listsPublisher: AnyPublisher<[FavoriteList], Never> {
+        $lists.eraseToAnyPublisher()
+    }
 
     init(
         favoritesService: FavoritesServicing,
@@ -27,17 +31,22 @@ final class FavoritesStore: ObservableObject {
 
         sessionManager.$session
             .sink { [weak self] _ in
-                self?.refreshLists()
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.refreshLists()
+                }
             }
             .store(in: &cancellables)
 
-        refreshLists()
+        Task { @MainActor in
+            await refreshLists()
+        }
     }
 
-    func createList(named name: String) -> FavoriteList? {
+    func createList(named name: String) async -> FavoriteList? {
         do {
-            let list = try favoritesService.createList(named: name, lists: lists)
-            refreshLists()
+            let list = try await favoritesService.createList(named: name, lists: lists)
+            await refreshLists()
             AppLogger.log("Created favorite list", category: .favorites, level: .success)
             toastItem = .success(Localization.string("favorites.toast.listCreated"))
             return list
@@ -56,10 +65,10 @@ final class FavoritesStore: ObservableObject {
         }
     }
 
-    func add(movie: Movie, to listID: UUID) {
+    func add(movie: Movie, to listID: UUID) async {
         do {
-            try favoritesService.add(movie: movie, to: listID)
-            refreshLists()
+            try await favoritesService.add(movie: movie, to: listID)
+            await refreshLists()
             AppLogger.log("Added movie to favorites", category: .favorites, level: .success)
         } catch {
             AppLogger.log("Failed to add movie to favorites", category: .favorites, level: .error)
@@ -68,10 +77,10 @@ final class FavoritesStore: ObservableObject {
         }
     }
 
-    func remove(movieID: Int, from listID: UUID) {
+    func remove(movieID: Int, from listID: UUID) async {
         do {
-            try favoritesService.remove(movieID: movieID, from: listID)
-            refreshLists()
+            try await favoritesService.remove(movieID: movieID, from: listID)
+            await refreshLists()
             AppLogger.log("Removed movie from list", category: .favorites, level: .success)
         } catch {
             AppLogger.log("Failed to remove movie from list", category: .favorites, level: .error)
@@ -80,10 +89,10 @@ final class FavoritesStore: ObservableObject {
         }
     }
 
-    func renameList(listID: UUID, name: String) -> Bool {
+    func renameList(listID: UUID, name: String) async -> Bool {
         do {
-            try favoritesService.renameList(listID: listID, name: name, lists: lists)
-            refreshLists()
+            try await favoritesService.renameList(listID: listID, name: name, lists: lists)
+            await refreshLists()
             toastItem = .success(Localization.string("favorites.toast.listRenamed"))
             return true
         } catch FavoritesServiceError.invalidListName {
@@ -97,24 +106,24 @@ final class FavoritesStore: ObservableObject {
         }
     }
 
-    func deleteList(listID: UUID) {
+    func deleteList(listID: UUID) async {
         do {
-            try favoritesService.deleteList(listID: listID)
-            refreshLists()
+            try await favoritesService.deleteList(listID: listID)
+            await refreshLists()
             toastItem = .success(Localization.string("favorites.toast.listDeleted"))
         } catch {
             toastItem = .error(Localization.string("favorites.toast.genericError"))
         }
     }
 
-    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) {
+    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) async {
         do {
-            try favoritesService.move(
+            try await favoritesService.move(
                 movieID: movieID,
                 from: sourceListID,
                 to: destinationListID
             )
-            refreshLists()
+            await refreshLists()
             toastItem = .success(Localization.string("favorites.toast.movieMoved"))
         } catch {
             toastItem = .error(Localization.string("favorites.toast.genericError"))
@@ -156,8 +165,8 @@ final class FavoritesStore: ObservableObject {
         lists.first(where: { $0.id == listID })
     }
 
-    private func refreshLists() {
-        let latestLists = (try? favoritesService.loadLists()) ?? []
+    private func refreshLists() async {
+        let latestLists = (try? await favoritesService.loadLists()) ?? []
         withAnimation(.easeInOut(duration: 0.24)) {
             lists = latestLists
         }

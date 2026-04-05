@@ -3,21 +3,22 @@ import XCTest
 
 @MainActor
 final class FavoritesServiceTests: XCTestCase {
-    func testCreateListRejectsDuplicateNamesCaseInsensitively() throws {
+    func testCreateListRejectsDuplicateNamesCaseInsensitively() async throws {
         let service = FavoritesService(
             repository: ServiceTestFavoritesRepository(),
             sessionManager: ServiceTestAuthSessionManager()
         )
         let existing = [FavoriteList(id: UUID(), name: "Weekend", movies: [])]
 
-        XCTAssertThrowsError(
-            try service.createList(named: " weekend ", lists: existing)
-        ) { error in
+        do {
+            _ = try await service.createList(named: " weekend ", lists: existing)
+            XCTFail("Expected duplicate list name error")
+        } catch {
             XCTAssertEqual(error as? FavoritesServiceError, .duplicateListName)
         }
     }
 
-    func testLoadListsAdoptsLegacyIdentifiersBeforeFetching() throws {
+    func testLoadListsAdoptsLegacyIdentifiersBeforeFetching() async throws {
         let repository = ServiceTestFavoritesRepository()
         repository.lists = [FavoriteList(id: UUID(), name: "Sci-Fi", movies: [])]
         let sessionManager = ServiceTestAuthSessionManager(
@@ -25,7 +26,7 @@ final class FavoritesServiceTests: XCTestCase {
         )
         let service = FavoritesService(repository: repository, sessionManager: sessionManager)
 
-        let lists = try service.loadLists()
+        let lists = try await service.loadLists()
 
         XCTAssertEqual(lists.count, 1)
         XCTAssertEqual(repository.lastAdoptedUserIdentifier, "user-id")
@@ -194,27 +195,27 @@ private final class ServiceTestFavoritesRepository: FavoritesRepositoryProtocol 
     private(set) var lastAdoptedUserIdentifier: String?
     private(set) var lastLegacyUserIdentifiers: [String] = []
 
-    func fetchLists(for userIdentifier: String) throws -> [FavoriteList] {
+    func fetchLists(for userIdentifier: String) async throws -> [FavoriteList] {
         lists
     }
 
-    func adoptListsIfNeeded(for userIdentifier: String, from legacyUserIdentifiers: [String]) throws {
+    func adoptListsIfNeeded(for userIdentifier: String, from legacyUserIdentifiers: [String]) async throws {
         lastAdoptedUserIdentifier = userIdentifier
         lastLegacyUserIdentifiers = legacyUserIdentifiers
     }
 
-    func createList(named name: String, userIdentifier: String) throws -> FavoriteList {
+    func createList(named name: String, userIdentifier: String) async throws -> FavoriteList {
         let list = FavoriteList(id: UUID(), name: name, movies: [])
         lists.append(list)
         return list
     }
 
-    func renameList(listID: UUID, name: String, userIdentifier: String) throws {}
-    func deleteList(listID: UUID, userIdentifier: String) throws {}
-    func add(movie: Movie, to listID: UUID, userIdentifier: String) throws {}
-    func remove(movieID: Int, from listID: UUID, userIdentifier: String) throws {}
-    func remove(movieID: Int, userIdentifier: String) throws {}
-    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) throws {}
+    func renameList(listID: UUID, name: String, userIdentifier: String) async throws {}
+    func deleteList(listID: UUID, userIdentifier: String) async throws {}
+    func add(movie: Movie, to listID: UUID, userIdentifier: String) async throws {}
+    func remove(movieID: Int, from listID: UUID, userIdentifier: String) async throws {}
+    func remove(movieID: Int, userIdentifier: String) async throws {}
+    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) async throws {}
 }
 
 private final class ServiceTestAuthSessionManager: AuthSessionManaging {

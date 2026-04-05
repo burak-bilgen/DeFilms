@@ -12,6 +12,7 @@ struct MoviesView: View {
     @ObservedObject var viewModel: MovieSearchViewModel
     let openFavorites: () -> Void
     @State private var isFilterSheetPresented = false
+    @State private var isSearchHistoryClearConfirmationPresented = false
     @FocusState private var isSearchFocused: Bool
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var toastCenter: ToastCenter
@@ -119,7 +120,7 @@ struct MoviesView: View {
                             screenState: viewModel.screenState,
                             browseSections: viewModel.browseSections,
                             onSelectRecentSearch: runRecentSearch,
-                            onClearSearchHistory: viewModel.clearSearchHistory,
+                            onRequestClearSearchHistory: { isSearchHistoryClearConfirmationPresented = true },
                             onReloadBrowseContent: refreshBrowseContent,
                             localizedBrowseTitle: localizedBrowseTitle
                         )
@@ -169,6 +170,19 @@ struct MoviesView: View {
                 MovieFilterSheet(viewModel: viewModel)
             }
             .presentationDetents([.medium, .large])
+        }
+        .alert(
+            Localization.string("movies.searchHistory.clear.confirmTitle"),
+            isPresented: $isSearchHistoryClearConfirmationPresented
+        ) {
+            Button(Localization.string("movies.searchHistory.clear.confirmAction"), role: .destructive) {
+                Task {
+                    await viewModel.clearSearchHistory()
+                }
+            }
+            Button(Localization.string("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(Localization.string("movies.searchHistory.clear.confirmMessage"))
         }
         .onChange(of: viewModel.toastItem?.id) { _ in
             relayToast(from: viewModel.toastItem)

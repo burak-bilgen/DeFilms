@@ -15,6 +15,7 @@ struct MainTabView: View {
     @State private var selection: Tab = .movies
     @StateObject private var movieCoordinator = MovieCoordinator()
     @StateObject private var favoritesCoordinator = FavoritesCoordinator()
+    @StateObject private var settingsCoordinator = SettingsCoordinator()
     @StateObject private var moviesViewModel: MovieSearchViewModel
     @StateObject private var favoritesViewModel: FavoritesViewModel
 
@@ -51,6 +52,7 @@ struct MainTabView: View {
         }
         .id(preferences.interfaceLayoutID)
         .tint(.primary)
+        .animation(AppAnimation.gentleSpring, value: selection)
     }
 
     private var moviesTab: some View {
@@ -94,10 +96,23 @@ struct MainTabView: View {
     }
 
     private var settingsTab: some View {
-        SettingsView(
-            container: container,
-            viewModel: container.settingsFactory.makeSettingsViewModel()
-        )
+        NavigationStack(path: $settingsCoordinator.path) {
+            SettingsView(
+                container: container,
+                viewModel: container.settingsFactory.makeSettingsViewModel()
+            )
+            .navigationDestination(for: SettingsRoute.self) { route in
+                switch route {
+                case .signIn:
+                    SignInView(viewModel: container.settingsFactory.makeSignInViewModel())
+                case .signUp:
+                    SignUpView(viewModel: container.settingsFactory.makeSignUpViewModel())
+                case .changePassword:
+                    ChangePasswordView(viewModel: container.settingsFactory.makeChangePasswordViewModel())
+                }
+            }
+        }
+        .environmentObject(settingsCoordinator)
     }
 }
 

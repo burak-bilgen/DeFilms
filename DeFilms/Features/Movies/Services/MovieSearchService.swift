@@ -31,9 +31,9 @@ protocol MovieCatalogServicing {
 }
 
 protocol MovieSearchHistoryServicing {
-    func loadSearchHistory() throws -> [String]
-    func saveSearch(_ query: String) throws
-    func clearSearchHistory() throws
+    func loadSearchHistory() async throws -> [String]
+    func saveSearch(_ query: String) async throws
+    func clearSearchHistory() async throws
 }
 
 protocol MovieImagePrefetching {
@@ -120,22 +120,22 @@ final class UserScopedMovieSearchHistoryService: MovieSearchHistoryServicing {
         self.limit = limit
     }
 
-    func loadSearchHistory() throws -> [String] {
-        try repository.fetchRecentSearches(
+    func loadSearchHistory() async throws -> [String] {
+        try await repository.fetchRecentSearches(
             for: sessionManager.currentUserIdentifier,
             limit: limit
         )
     }
 
-    func saveSearch(_ query: String) throws {
-        try repository.addSearch(
+    func saveSearch(_ query: String) async throws {
+        try await repository.addSearch(
             query,
             for: sessionManager.currentUserIdentifier,
             limit: limit
         )
     }
 
-    func clearSearchHistory() throws {
-        try repository.clearRecentSearches(for: sessionManager.currentUserIdentifier)
+    func clearSearchHistory() async throws {
+        try await repository.clearRecentSearches(for: sessionManager.currentUserIdentifier)
     }
 }

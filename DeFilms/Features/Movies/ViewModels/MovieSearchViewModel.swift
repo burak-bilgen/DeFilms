@@ -66,7 +66,10 @@ final class MovieSearchViewModel: ObservableObject {
 
         sessionManager.$session
             .sink { [weak self] _ in
-                self?.refreshSearchHistory()
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.refreshSearchHistory()
+                }
             }
             .store(in: &cancellables)
 
@@ -81,7 +84,9 @@ final class MovieSearchViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        refreshSearchHistory()
+        Task { @MainActor in
+            await refreshSearchHistory()
+        }
     }
 
     var browseSections: [MovieBrowseSection] {
@@ -180,8 +185,8 @@ final class MovieSearchViewModel: ObservableObject {
             await movieCatalogService.prefetchImages(for: response.results)
             lastExecutedSearchQuery = searchText
             lastLoadedLanguage = AppPreferences.persistedLanguage
-            try searchHistoryService.saveSearch(searchText)
-            refreshSearchHistory()
+            try await searchHistoryService.saveSearch(searchText)
+            await refreshSearchHistory()
             screenState = filteredSearchResults.isEmpty ? .emptyResults : .loadedResults
             AppLogger.log("Search completed with \(response.results.count) results", category: .search, level: .success)
         } catch {
@@ -239,12 +244,12 @@ final class MovieSearchViewModel: ObservableObject {
         sortOption = .relevance
     }
 
-    func clearSearchHistory() {
+    func clearSearchHistory() async {
         do {
-            try searchHistoryService.clearSearchHistory()
+            try await searchHistoryService.clearSearchHistory()
             searchHistory = []
         } catch {
-            toastItem = .error(Localization.string("favorites.toast.genericError"))
+            toastItem = .error(Localization.string("movies.search.error.generic"))
         }
     }
 
@@ -292,8 +297,8 @@ final class MovieSearchViewModel: ObservableObject {
         toastItem = nil
     }
 
-    private func refreshSearchHistory() {
-        searchHistory = (try? searchHistoryService.loadSearchHistory()) ?? []
+    private func refreshSearchHistory() async {
+        searchHistory = (try? await searchHistoryService.loadSearchHistory()) ?? []
     }
 
     private func searchIfNeeded(afterDebounce value: String) async {

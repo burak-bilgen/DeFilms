@@ -77,7 +77,7 @@ struct MovieCardNavigationLink: View {
             )
             .frame(width: cardStyle.width)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableScaleButtonStyle(pressedScale: 0.978))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Localization.string("movies.accessibility.cardSummary", movie.title, movie.releaseYear))
         .accessibilityHint(Localization.string("movies.accessibility.openDetails"))

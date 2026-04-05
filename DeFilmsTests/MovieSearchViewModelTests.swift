@@ -122,7 +122,7 @@ struct MovieSearchViewModelTests {
     }
 
     @Test
-    func clearSearchHistoryEmptiesLocalHistoryAndCallsService() {
+    func clearSearchHistoryEmptiesLocalHistoryAndCallsService() async {
         let historyService = MockMovieSearchHistoryService(history: ["Arrival", "Dune"])
         let viewModel = MovieSearchViewModel(
             movieCatalogService: MockMovieCatalogService(),
@@ -130,7 +130,7 @@ struct MovieSearchViewModelTests {
             sessionManager: AuthSessionManager(keychainService: MockKeychainService())
         )
 
-        viewModel.clearSearchHistory()
+        await viewModel.clearSearchHistory()
 
         #expect(viewModel.searchHistory.isEmpty)
         #expect(historyService.didClearHistory)

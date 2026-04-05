@@ -30,7 +30,7 @@ struct MoviesHeaderBar: View {
                             .stroke(AppPalette.border, lineWidth: 1)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableScaleButtonStyle())
             .accessibilityLabel(Localization.string("favorites.navigate"))
         }
     }
@@ -81,6 +81,7 @@ struct MoviesSearchSummaryCard: View {
                 .stroke(AppPalette.border, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
+        .shadow(color: AppPalette.shadow.opacity(0.7), radius: 12, x: 0, y: 8)
     }
 }
 

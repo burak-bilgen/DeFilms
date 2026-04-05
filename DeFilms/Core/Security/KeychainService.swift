@@ -77,7 +77,10 @@ final class KeychainService: KeychainServicing {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account
+            kSecAttrAccount as String: account,
+            // Keep credentials available after the first unlock, but never migrate
+            // them to another device through backups.
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
     }
 }

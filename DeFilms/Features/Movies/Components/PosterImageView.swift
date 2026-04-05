@@ -15,7 +15,7 @@ struct PosterImageView: View {
 
     @State private var image: UIImage?
     @State private var isLoading: Bool
-    @State private var loadingTask: Task<Void, Never>?
+    @State private var loadedURL: URL?
 
     init(url: URL?, cornerRadius: CGFloat, placeholderSystemImage: String) {
         self.url = url
@@ -30,7 +30,7 @@ struct PosterImageView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .transition(.opacity.combined(with: .scale(scale: 0.985)))
+                    .transition(.opacity)
             } else if isLoading {
                 loadingPlaceholder
             } else {
@@ -40,9 +40,6 @@ struct PosterImageView: View {
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .task(id: url) {
             await loadImage()
-        }
-        .onDisappear {
-            loadingTask?.cancel()
         }
     }
 
@@ -61,45 +58,35 @@ struct PosterImageView: View {
 
     private func loadImage() async {
         guard let url else {
-            loadingTask?.cancel()
             image = nil
+            loadedURL = nil
             isLoading = false
             return
         }
 
+        if loadedURL == url, image != nil {
+            return
+        }
+
         if let cachedImage = await PosterImagePipeline.shared.cachedImage(for: url) {
-            loadingTask?.cancel()
-            withAnimation(.easeOut(duration: 0.2)) {
-                image = cachedImage
-            }
+            loadedURL = url
+            image = cachedImage
             isLoading = false
             return
         }
 
         image = nil
-        isLoading = false
-        loadingTask?.cancel()
-        loadingTask = Task {
-            try? await Task.sleep(nanoseconds: 140_000_000)
-            guard !Task.isCancelled else { return }
-            await MainActor.run {
-                if image == nil {
-                    isLoading = true
-                }
-            }
-        }
+        loadedURL = nil
+        isLoading = true
 
         guard let loadedImage = await PosterImagePipeline.shared.image(for: url) else {
-            loadingTask?.cancel()
             isLoading = false
             image = nil
             return
         }
 
-        guard !Task.isCancelled else { return }
-
-        loadingTask?.cancel()
         withAnimation(.easeOut(duration: 0.24)) {
+            loadedURL = url
             image = loadedImage
         }
 

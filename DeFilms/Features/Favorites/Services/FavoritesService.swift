@@ -23,13 +23,13 @@ enum FavoritesServiceError: LocalizedError, Equatable {
 }
 
 protocol FavoritesServicing {
-    func loadLists() throws -> [FavoriteList]
-    func createList(named name: String, lists: [FavoriteList]) throws -> FavoriteList
-    func renameList(listID: UUID, name: String, lists: [FavoriteList]) throws
-    func deleteList(listID: UUID) throws
-    func add(movie: Movie, to listID: UUID) throws
-    func remove(movieID: Int, from listID: UUID) throws
-    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) throws
+    func loadLists() async throws -> [FavoriteList]
+    func createList(named name: String, lists: [FavoriteList]) async throws -> FavoriteList
+    func renameList(listID: UUID, name: String, lists: [FavoriteList]) async throws
+    func deleteList(listID: UUID) async throws
+    func add(movie: Movie, to listID: UUID) async throws
+    func remove(movieID: Int, from listID: UUID) async throws
+    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) async throws
 }
 
 final class FavoritesService: FavoritesServicing {
@@ -44,23 +44,23 @@ final class FavoritesService: FavoritesServicing {
         self.sessionManager = sessionManager
     }
 
-    func loadLists() throws -> [FavoriteList] {
+    func loadLists() async throws -> [FavoriteList] {
         do {
-            try repository.adoptListsIfNeeded(
+            try await repository.adoptListsIfNeeded(
                 for: currentUserIdentifier,
                 from: sessionManager.legacyUserIdentifiers
             )
-            return try repository.fetchLists(for: currentUserIdentifier)
+            return try await repository.fetchLists(for: currentUserIdentifier)
         } catch {
             throw FavoritesServiceError.persistenceFailure
         }
     }
 
-    func createList(named name: String, lists: [FavoriteList]) throws -> FavoriteList {
+    func createList(named name: String, lists: [FavoriteList]) async throws -> FavoriteList {
         let listName = try validateListName(name, in: lists)
 
         do {
-            return try repository.createList(
+            return try await repository.createList(
                 named: listName,
                 userIdentifier: currentUserIdentifier
             )
@@ -69,7 +69,7 @@ final class FavoritesService: FavoritesServicing {
         }
     }
 
-    func renameList(listID: UUID, name: String, lists: [FavoriteList]) throws {
+    func renameList(listID: UUID, name: String, lists: [FavoriteList]) async throws {
         let listName = try validateListName(
             name,
             in: lists,
@@ -77,7 +77,7 @@ final class FavoritesService: FavoritesServicing {
         )
 
         do {
-            try repository.renameList(
+            try await repository.renameList(
                 listID: listID,
                 name: listName,
                 userIdentifier: currentUserIdentifier
@@ -87,9 +87,9 @@ final class FavoritesService: FavoritesServicing {
         }
     }
 
-    func deleteList(listID: UUID) throws {
+    func deleteList(listID: UUID) async throws {
         do {
-            try repository.deleteList(
+            try await repository.deleteList(
                 listID: listID,
                 userIdentifier: currentUserIdentifier
             )
@@ -98,9 +98,9 @@ final class FavoritesService: FavoritesServicing {
         }
     }
 
-    func add(movie: Movie, to listID: UUID) throws {
+    func add(movie: Movie, to listID: UUID) async throws {
         do {
-            try repository.add(
+            try await repository.add(
                 movie: movie,
                 to: listID,
                 userIdentifier: currentUserIdentifier
@@ -110,9 +110,9 @@ final class FavoritesService: FavoritesServicing {
         }
     }
 
-    func remove(movieID: Int, from listID: UUID) throws {
+    func remove(movieID: Int, from listID: UUID) async throws {
         do {
-            try repository.remove(
+            try await repository.remove(
                 movieID: movieID,
                 from: listID,
                 userIdentifier: currentUserIdentifier
@@ -122,9 +122,9 @@ final class FavoritesService: FavoritesServicing {
         }
     }
 
-    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) throws {
+    func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) async throws {
         do {
-            try repository.move(
+            try await repository.move(
                 movieID: movieID,
                 from: sourceListID,
                 to: destinationListID,
