@@ -9,7 +9,7 @@ import SwiftUI
 
 struct FavoritesView: View {
     @EnvironmentObject private var sessionManager: AuthSessionManager
-    @EnvironmentObject private var coordinator: NavigationCoordinator<FavoritesRoute>
+    @EnvironmentObject private var coordinator: FavoritesCoordinator
 
     @ObservedObject var viewModel: FavoritesViewModel
     @State private var isCreateListPresented = false
@@ -39,7 +39,7 @@ struct FavoritesView: View {
                             ForEach(viewModel.lists) { list in
                                 FavoriteListRow(
                                     list: list,
-                                    openList: { coordinator.push(.list(list.id)) },
+                                    openList: { coordinator.show(.list(list.id)) },
                                     renameList: {
                                         listPendingRename = list
                                         renameText = list.name

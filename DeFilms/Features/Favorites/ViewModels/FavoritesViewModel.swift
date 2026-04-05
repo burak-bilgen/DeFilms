@@ -10,11 +10,11 @@ import Foundation
 final class FavoritesViewModel: ObservableObject {
     @Published private(set) var lists: [FavoriteList] = []
 
-    private let favoritesStore: FavoritesStore
+    private let store: FavoritesStore
     private var cancellables: Set<AnyCancellable> = []
 
     init(favoritesStore: FavoritesStore) {
-        self.favoritesStore = favoritesStore
+        self.store = favoritesStore
         self.lists = favoritesStore.lists
 
         favoritesStore.$lists
@@ -29,14 +29,14 @@ final class FavoritesViewModel: ObservableObject {
     }
 
     func createList(named name: String) -> FavoriteList? {
-        favoritesStore.createList(named: name)
+        store.createList(named: name)
     }
 
     func renameList(listID: UUID, name: String) -> Bool {
-        favoritesStore.renameList(listID: listID, name: name)
+        store.renameList(listID: listID, name: name)
     }
 
     func deleteList(listID: UUID) {
-        favoritesStore.deleteList(listID: listID)
+        store.deleteList(listID: listID)
     }
 }

@@ -18,7 +18,7 @@ struct WrapChipsView: View {
             }
 
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                ForEach(Array(Array(items.prefix(4)).chunked(into: 2).enumerated()), id: \.offset) { entry in
+                ForEach(Array(groupedItems.enumerated()), id: \.offset) { entry in
                     HStack(spacing: AppSpacing.xs) {
                         ForEach(entry.element, id: \.self) { item in
                             chip(item)
@@ -29,6 +29,10 @@ struct WrapChipsView: View {
         }
     }
 
+    private var groupedItems: [[String]] {
+        Array(items.prefix(4)).pairedForCompactWrap
+    }
+
     private func chip(_ item: String) -> some View {
         Text(item)
             .font(.caption.weight(.medium))
@@ -37,5 +41,14 @@ struct WrapChipsView: View {
             .frame(height: 28)
             .background(inverted ? Color.white.opacity(0.16) : AppPalette.cardBackground)
             .clipShape(Capsule())
+    }
+}
+
+private extension Array {
+    var pairedForCompactWrap: [[Element]] {
+        stride(from: 0, to: count, by: 2).map { start in
+            let end = Swift.min(start + 2, count)
+            return Array(self[start..<end])
+        }
     }
 }

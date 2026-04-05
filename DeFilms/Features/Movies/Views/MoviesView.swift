@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MoviesView: View {
-    @EnvironmentObject private var coordinator: NavigationCoordinator<MovieRoute>
+    @EnvironmentObject private var coordinator: MovieCoordinator
     @ObservedObject var viewModel: MovieSearchViewModel
     let openFavorites: () -> Void
     @State private var isFilterSheetPresented = false
@@ -212,7 +212,7 @@ struct MoviesView: View {
     }
 
     private func showMovieDetail(_ movie: Movie) {
-        coordinator.push(.detail(movie))
+        coordinator.show(.detail(movie))
     }
 
     private func loadNextSearchPage(after movie: Movie, in displayedMovies: [Movie]) {

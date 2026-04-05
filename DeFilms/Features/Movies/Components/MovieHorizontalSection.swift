@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct MovieHorizontalSection: View {
-    @EnvironmentObject private var coordinator: NavigationCoordinator<MovieRoute>
+    @EnvironmentObject private var coordinator: MovieCoordinator
     let title: String
     let movies: [Movie]
 
@@ -21,7 +21,7 @@ struct MovieHorizontalSection: View {
                 HStack(alignment: .top, spacing: AppSpacing.lg + 2) {
                     ForEach(movies) { movie in
                         MovieCardNavigationLink(movie: movie, cardStyle: .rail) {
-                            coordinator.push(.detail(movie))
+                            coordinator.show(.detail(movie))
                         }
                     }
                 }

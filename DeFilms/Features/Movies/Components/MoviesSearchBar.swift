@@ -11,10 +11,6 @@ struct MoviesSearchBar: View {
     let onSubmit: () -> Void
     let onClear: () -> Void
 
-    private var searchQuery: String {
-        text.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
     var body: some View {
         HStack(spacing: 6) {
             HStack(spacing: AppSpacing.sm) {
@@ -56,8 +52,6 @@ struct MoviesSearchBar: View {
                 onSubmit()
             }
             .buttonStyle(PrimaryProminentButtonStyle())
-            .disabled(searchQuery.isEmpty)
-            .opacity(searchQuery.isEmpty ? 0.5 : 1)
             .accessibilityIdentifier("movies.search.submitButton")
         }
         .padding(AppSpacing.xxs + 2)

@@ -26,18 +26,9 @@ struct MoviesBrowseSectionView: View {
 
         switch screenState {
         case .loadingBrowse:
-            ForEach(0..<4, id: \.self) { _ in
-                MovieSectionSkeletonView()
-                    .padding(.horizontal, 16)
-            }
+            browseLoadingState
         case let .error(message) where browseSections.isEmpty:
-            MoviesMessageView(
-                title: Localization.string("movies.message.contentUnavailable.title"),
-                message: message,
-                buttonTitle: Localization.string("common.tryAgain"),
-                action: onReloadBrowseContent
-            )
-            .padding(.horizontal, 16)
+            browseErrorState(message: message)
         default:
             ForEach(browseSections) { section in
                 MovieHorizontalSection(
@@ -46,6 +37,24 @@ struct MoviesBrowseSectionView: View {
                 )
             }
         }
+    }
+
+    @ViewBuilder
+    private var browseLoadingState: some View {
+        ForEach(0..<4, id: \.self) { _ in
+            MovieSectionSkeletonView()
+                .padding(.horizontal, 16)
+        }
+    }
+
+    private func browseErrorState(message: String) -> some View {
+        MoviesMessageView(
+            title: Localization.string("movies.message.contentUnavailable.title"),
+            message: message,
+            buttonTitle: Localization.string("common.tryAgain"),
+            action: onReloadBrowseContent
+        )
+        .padding(.horizontal, 16)
     }
 }
 

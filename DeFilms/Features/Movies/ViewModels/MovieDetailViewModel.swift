@@ -24,12 +24,12 @@ final class MovieDetailViewModel: ObservableObject {
 
     let movie: Movie
 
-    private let detailService: MovieDetailServicing
-    private var hasLoaded = false
+    private let service: MovieDetailServicing
+    private var didLoadOnce = false
 
     init(movie: Movie, detailService: MovieDetailServicing) {
         self.movie = movie
-        self.detailService = detailService
+        self.service = detailService
     }
 
     var title: String {
@@ -104,13 +104,13 @@ final class MovieDetailViewModel: ObservableObject {
     }
 
     func loadIfNeeded() async {
-        guard !hasLoaded else { return }
-        hasLoaded = true
+        guard !didLoadOnce else { return }
+        didLoadOnce = true
         await load()
     }
 
     func reloadForLanguageChange() async {
-        hasLoaded = true
+        didLoadOnce = true
         await load()
     }
 
@@ -125,8 +125,8 @@ final class MovieDetailViewModel: ObservableObject {
         similarMovies = []
 
         do {
-            AppLogger.log("Loading movie detail", category: .movie)
-            let payload = try await detailService.loadPayload(for: movie)
+            AppLogger.log("Opening movie details", category: .movie)
+            let payload = try await service.loadPayload(for: movie)
             detail = payload.detail
             trailer = payload.trailer
             gallery = payload.gallery
@@ -134,12 +134,12 @@ final class MovieDetailViewModel: ObservableObject {
             cast = payload.cast
             streamingPlatforms = payload.streamingPlatforms
             similarMovies = payload.similarMovies
-            AppLogger.log("Loaded movie detail", category: .movie, level: .success)
+            AppLogger.log("Movie details ready", category: .movie, level: .success)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.detail.error")
             errorMessage = message
             toastItem = .error(message)
-            AppLogger.log("Movie detail load failed", category: .movie, level: .error)
+            AppLogger.log("Couldn't load movie details", category: .movie, level: .error)
         }
 
         isLoading = false

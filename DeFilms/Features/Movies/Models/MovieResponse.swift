@@ -105,8 +105,11 @@ struct MovieCastMember: Codable, Equatable, Identifiable {
     }
 
     var imdbURL: URL? {
-        guard let imdbID, imdbID.isEmpty == false else { return nil }
-        return URL(string: "https://www.imdb.com/name/\(imdbID)")
+        if let imdbID, imdbID.isEmpty == false {
+            return URL(string: "https://www.imdb.com/name/\(imdbID)")
+        }
+
+        return URL(string: "https://www.themoviedb.org/person/\(id)")
     }
 }
 
@@ -128,8 +131,11 @@ struct MovieCrewMember: Codable, Equatable, Identifiable {
     }
 
     var imdbURL: URL? {
-        guard let imdbID, imdbID.isEmpty == false else { return nil }
-        return URL(string: "https://www.imdb.com/name/\(imdbID)")
+        if let imdbID, imdbID.isEmpty == false {
+            return URL(string: "https://www.imdb.com/name/\(imdbID)")
+        }
+
+        return URL(string: "https://www.themoviedb.org/person/\(id)")
     }
 }
 

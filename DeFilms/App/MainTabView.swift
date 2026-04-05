@@ -13,8 +13,8 @@ struct MainTabView: View {
 
     @EnvironmentObject private var preferences: AppPreferences
     @State private var selection: Tab = .movies
-    @StateObject private var movieCoordinator = NavigationCoordinator<MovieRoute>()
-    @StateObject private var favoritesCoordinator = NavigationCoordinator<FavoritesRoute>()
+    @StateObject private var movieCoordinator = MovieCoordinator()
+    @StateObject private var favoritesCoordinator = FavoritesCoordinator()
     @StateObject private var moviesViewModel: MovieSearchViewModel
     @StateObject private var favoritesViewModel: FavoritesViewModel
 

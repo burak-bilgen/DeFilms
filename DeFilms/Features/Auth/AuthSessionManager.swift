@@ -68,7 +68,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
     init(keychainService: KeychainServicing) {
         self.keychainService = keychainService
         restoreSession()
-        AppLogger.log("Auth session manager initialized", category: .auth)
+        AppLogger.log("Auth session ready", category: .auth)
     }
 
     var isSignedIn: Bool {
@@ -80,7 +80,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
     }
 
     var guestUserIdentifier: String {
-        (try? loadGuestUserIdentifier()) ?? "guest.device.default"
+        (try? storedGuestUserIdentifier()) ?? "guest.device.default"
     }
 
     var legacyUserIdentifiers: [String] {
@@ -94,7 +94,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
     }
 
     func signUp(email: String, password: String, confirmPassword: String) throws {
-        let emailAddress = normalize(email: email)
+        let emailAddress = normalizedEmail(from: email)
         let passwordText = password.filter { !$0.isWhitespace }
 
         guard !emailAddress.isEmpty, !passwordText.isEmpty else {
@@ -120,16 +120,16 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             StoredAccount(
                 id: UUID().uuidString,
                 email: emailAddress,
-                passwordHash: hash(password: passwordText)
+                passwordHash: makePasswordHash(from: passwordText)
             )
         )
         try saveAccounts(accounts)
         try startSession(for: emailAddress)
-        AppLogger.log("User signed up", category: .auth, level: .success)
+        AppLogger.log("Account created", category: .auth, level: .success)
     }
 
     func signIn(email: String, password: String) throws {
-        let emailAddress = normalize(email: email)
+        let emailAddress = normalizedEmail(from: email)
         let passwordText = password.filter { !$0.isWhitespace }
 
         guard !emailAddress.isEmpty, !passwordText.isEmpty else {
@@ -145,12 +145,12 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             throw AuthError.accountNotFound
         }
 
-        guard account.passwordHash == hash(password: passwordText) else {
+        guard account.passwordHash == makePasswordHash(from: passwordText) else {
             throw AuthError.invalidCredentials
         }
 
         try startSession(for: emailAddress)
-        AppLogger.log("User signed in", category: .auth, level: .success)
+        AppLogger.log("Signed in", category: .auth, level: .success)
     }
 
     func changePassword(currentPassword: String, newPassword: String, confirmPassword: String) throws {
@@ -171,7 +171,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             throw AuthError.accountNotFound
         }
 
-        guard accounts[index].passwordHash == hash(password: currentPassword) else {
+        guard accounts[index].passwordHash == makePasswordHash(from: currentPassword) else {
             throw AuthError.currentPasswordIncorrect
         }
 
@@ -185,9 +185,9 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             throw AuthError.passwordMismatch
         }
 
-        accounts[index].passwordHash = hash(password: newPassword)
+        accounts[index].passwordHash = makePasswordHash(from: newPassword)
         try saveAccounts(accounts)
-        AppLogger.log("Password changed", category: .auth, level: .success)
+        AppLogger.log("Password updated", category: .auth, level: .success)
     }
 
     func signOut() {
@@ -196,10 +196,10 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             try keychainService.delete(account: sessionTokenKey)
             try keychainService.delete(account: sessionUserIdentifierKey)
         } catch {
-            AppLogger.log("Failed to clear keychain session", category: .auth, level: .error)
+            AppLogger.log("Couldn't clear the saved session", category: .auth, level: .error)
         }
         session = nil
-        AppLogger.log("User signed out", category: .auth, level: .success)
+        AppLogger.log("Signed out", category: .auth, level: .success)
         toastItem = .success(Localization.string("auth.toast.signedOut"))
     }
 
@@ -215,11 +215,11 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             let token = String(data: tokenData, encoding: .utf8)
         else {
             session = nil
-            AppLogger.log("No active session restored", category: .auth, level: .info)
+            AppLogger.log("No saved session found", category: .auth, level: .info)
             return
         }
 
-        let userIdentifier = restoreUserIdentifier(for: email)
+        let userIdentifier = recoverUserIdentifier(for: email)
         session = AuthSession(email: email, token: token, userIdentifier: userIdentifier)
         AppLogger.log("Session restored", category: .auth, level: .success)
     }
@@ -250,7 +250,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         try keychainService.save(data, for: accountsKey)
     }
 
-    private func loadGuestUserIdentifier() throws -> String {
+    private func storedGuestUserIdentifier() throws -> String {
         if
             let data = try keychainService.data(for: guestIdentifierKey),
             let identifier = String(data: data, encoding: .utf8),
@@ -264,14 +264,16 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         return identifier
     }
 
-    private func restoreUserIdentifier(for email: String) -> String {
+    private func recoverUserIdentifier(for email: String) -> String {
         if let identifierData = try? keychainService.data(for: sessionUserIdentifierKey),
            let identifier = String(data: identifierData, encoding: .utf8),
            identifier.isEmpty == false {
             return identifier
         }
 
-        let emailAddress = normalize(email: email)
+        // Older builds keyed favorites by email. If we can still resolve that
+        // account, persist the canonical identifier once and reuse it from then on.
+        let emailAddress = normalizedEmail(from: email)
         let accountIdentifier = (try? loadAccounts().first(where: { $0.email == emailAddress })?.id)
 
         if let accountIdentifier, accountIdentifier.isEmpty == false {
@@ -282,7 +284,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         return emailAddress
     }
 
-    private func normalize(email: String) -> String {
+    private func normalizedEmail(from email: String) -> String {
         email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
@@ -291,7 +293,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: email)
     }
 
-    private func hash(password: String) -> String {
+    private func makePasswordHash(from password: String) -> String {
         let data = Data(password.utf8)
         return SHA256.hash(data: data).compactMap { String(format: "%02x", $0) }.joined()
     }
@@ -308,8 +310,6 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         }
     }
 }
-
-
 enum AuthError: Error, LocalizedError, Equatable {
     case emptyFields
     case invalidEmail

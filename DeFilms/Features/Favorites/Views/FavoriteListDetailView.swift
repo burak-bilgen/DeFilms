@@ -7,7 +7,7 @@ import SwiftUI
 
 struct FavoriteListDetailView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var coordinator: NavigationCoordinator<FavoritesRoute>
+    @EnvironmentObject private var coordinator: FavoritesCoordinator
 
     @ObservedObject var viewModel: FavoriteListDetailViewModel
     private let columns = [
@@ -37,7 +37,7 @@ struct FavoriteListDetailView: View {
                                 ForEach(list.movies) { movie in
                                     FavoriteMovieGridItem(
                                         movie: movie,
-                                        openMovie: { coordinator.push(.movie(movie.asMovie)) },
+                                        openMovie: { coordinator.show(.movie(movie.asMovie)) },
                                         moveMovie: { moviePendingMove = movie },
                                         removeMovie: { moviePendingRemoval = movie }
                                     )

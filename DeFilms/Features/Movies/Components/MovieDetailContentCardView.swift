@@ -79,21 +79,9 @@ private struct MovieGenreBubbleWrapView: View {
     let items: [String]
 
     var body: some View {
-        ViewThatFits(in: .vertical) {
-            HStack(spacing: 10) {
-                ForEach(items.prefix(3), id: \.self) { item in
-                    chip(item)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(Array(Array(items.prefix(6)).chunked(into: 2).enumerated()), id: \.offset) { entry in
-                    HStack(spacing: 10) {
-                        ForEach(entry.element, id: \.self) { item in
-                            chip(item)
-                        }
-                    }
-                }
+        GenreFlowLayout(horizontalSpacing: 10, verticalSpacing: 10) {
+            ForEach(items, id: \.self) { item in
+                chip(item)
             }
         }
     }
@@ -103,13 +91,14 @@ private struct MovieGenreBubbleWrapView: View {
             .font(.subheadline.weight(.semibold))
             .foregroundStyle(.primary.opacity(0.86))
             .padding(.horizontal, 14)
-            .frame(height: 34)
+            .padding(.vertical, 10)
+            .fixedSize(horizontal: false, vertical: true)
             .background(Color(.secondarySystemBackground))
             .overlay(
-                Capsule()
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .stroke(Color.primary.opacity(0.08), lineWidth: 1)
             )
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
 
@@ -132,7 +121,12 @@ struct MoviePeopleCarouselSection: View {
     }
 
     var body: some View {
-        MovieDetailCarouselCard(title: title) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Text(title)
+                .font(.title3.weight(.semibold))
+                .padding(.horizontal, AppSpacing.md)
+                .accessibilityAddTraits(.isHeader)
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 14) {
                     ForEach(people) { person in
@@ -145,10 +139,11 @@ struct MoviePeopleCarouselSection: View {
                         }
                     }
                 }
-                .padding(.horizontal, 18)
+                .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, 2)
             }
         }
+        .movieDetailSectionSurface()
     }
 }
 
@@ -159,7 +154,12 @@ struct MoviePlatformCarouselSection: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        MovieDetailCarouselCard(title: title) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Text(title)
+                .font(.title3.weight(.semibold))
+                .padding(.horizontal, AppSpacing.md)
+                .accessibilityAddTraits(.isHeader)
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 14) {
                     ForEach(platforms) { platform in
@@ -168,77 +168,40 @@ struct MoviePlatformCarouselSection: View {
                         }
                     }
                 }
-                .padding(.horizontal, 18)
+                .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, 2)
             }
         }
+        .movieDetailSectionSurface()
     }
 }
 
 struct MovieDetailCarouselSection: View {
-    @EnvironmentObject private var coordinator: NavigationCoordinator<MovieRoute>
+    @EnvironmentObject private var coordinator: MovieCoordinator
 
     let title: String
     let movies: [Movie]
 
     var body: some View {
-        MovieDetailCarouselCard(title: title) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Text(title)
+                .font(.title3.weight(.semibold))
+                .padding(.horizontal, AppSpacing.md)
+                .accessibilityAddTraits(.isHeader)
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: AppSpacing.lg + 2) {
                     ForEach(movies) { movie in
                         MovieCardNavigationLink(movie: movie, cardStyle: .rail) {
-                            coordinator.push(.detail(movie))
+                            coordinator.show(.detail(movie))
                         }
                     }
                 }
-                .padding(.horizontal, 18)
+                .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.xxs - 2)
             }
         }
-    }
-}
-
-private struct MovieDetailCarouselCard<Content: View>: View {
-    @Environment(\.colorScheme) private var colorScheme
-
-    let title: String
-    @ViewBuilder let content: Content
-
-    init(title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(title)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .tracking(0.8)
-                .foregroundStyle(sectionTitleColor)
-                .padding(.horizontal, 4)
-
-            content
-        }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.lg)
-        .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous)
-                .stroke(Color.primary.opacity(colorScheme == .dark ? 0.12 : 0.05), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.08), radius: 20, y: 10)
-        .padding(.horizontal, 18)
-    }
-
-    private var cardBackground: Color {
-        colorScheme == .dark
-            ? Color(red: 0.10, green: 0.11, blue: 0.14)
-            : Color(.systemBackground)
-    }
-
-    private var sectionTitleColor: Color {
-        colorScheme == .dark ? .white.opacity(0.46) : .black.opacity(0.46)
+        .movieDetailSectionSurface()
     }
 }
 
@@ -263,18 +226,6 @@ extension MoviePeopleCarouselSection {
             imdbURL = member.imdbURL
         }
     }
-}
-
-private func sectionTitle(_ title: String) -> some View {
-    Text(title)
-        .font(.system(size: 14, weight: .bold, design: .rounded))
-        .tracking(0.8)
-        .foregroundStyle(.primary.opacity(0.78))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(Capsule())
-        .padding(.horizontal, 18)
 }
 
 private struct CastBubbleView: View {
@@ -308,6 +259,11 @@ private struct CastBubbleView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 12)
             .frame(width: 102, height: 136, alignment: .top)
+            .background(Color(.secondarySystemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -348,11 +304,107 @@ private struct StreamingPlatformBubbleView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 12)
             .frame(width: 104, height: 132, alignment: .top)
+            .background(Color(.secondarySystemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
         .buttonStyle(.plain)
         .disabled(platform.linkURL == nil)
         .opacity(platform.linkURL == nil ? 0.88 : 1)
+    }
+}
+
+private struct GenreFlowLayout: Layout {
+    let horizontalSpacing: CGFloat
+    let verticalSpacing: CGFloat
+
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) -> CGSize {
+        let maxWidth = proposal.width ?? .greatestFiniteMagnitude
+        var currentRowWidth: CGFloat = 0
+        var currentRowHeight: CGFloat = 0
+        var totalWidth: CGFloat = 0
+        var totalHeight: CGFloat = 0
+
+        // Measure chips row by row so long genres can wrap naturally instead of
+        // being forced into a fixed-width grid.
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            let spacing = currentRowWidth == 0 ? 0 : horizontalSpacing
+
+            if currentRowWidth + spacing + size.width > maxWidth {
+                totalWidth = max(totalWidth, currentRowWidth)
+                totalHeight += currentRowHeight + verticalSpacing
+                currentRowWidth = size.width
+                currentRowHeight = size.height
+            } else {
+                currentRowWidth += spacing + size.width
+                currentRowHeight = max(currentRowHeight, size.height)
+            }
+        }
+
+        totalWidth = max(totalWidth, currentRowWidth)
+        totalHeight += currentRowHeight
+
+        return CGSize(width: totalWidth, height: totalHeight)
+    }
+
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {
+        var currentX = bounds.minX
+        var currentY = bounds.minY
+        var rowHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            let spacing = currentX == bounds.minX ? 0 : horizontalSpacing
+
+            if currentX + spacing + size.width > bounds.maxX {
+                currentX = bounds.minX
+                currentY += rowHeight + verticalSpacing
+                rowHeight = 0
+            } else {
+                currentX += spacing
+            }
+
+            subview.place(
+                at: CGPoint(x: currentX, y: currentY),
+                proposal: ProposedViewSize(width: size.width, height: size.height)
+            )
+
+            currentX += size.width
+            rowHeight = max(rowHeight, size.height)
+        }
+    }
+}
+
+private struct MovieDetailSectionSurfaceModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(.vertical, AppSpacing.sm)
+            .background(Color(.systemBackground).opacity(0.82))
+            .overlay(
+                RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
+            .padding(.horizontal, AppSpacing.md)
+    }
+}
+
+private extension View {
+    func movieDetailSectionSurface() -> some View {
+        modifier(MovieDetailSectionSurfaceModifier())
     }
 }
 
