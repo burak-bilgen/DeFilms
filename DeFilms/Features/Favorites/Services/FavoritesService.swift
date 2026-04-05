@@ -144,14 +144,14 @@ final class FavoritesService: FavoritesServicing {
         in lists: [FavoriteList],
         excluding listID: UUID? = nil
     ) throws -> String {
-        let listName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let listName = name.trimmed
         guard !listName.isEmpty else {
             throw FavoritesServiceError.invalidListName
         }
 
         let matchingList = lists.first {
             $0.id != listID &&
-            $0.name.localizedCaseInsensitiveCompare(listName) == .orderedSame
+            normalizedListName($0.name) == normalizedListName(listName)
         }
 
         guard matchingList == nil else {
@@ -159,5 +159,9 @@ final class FavoritesService: FavoritesServicing {
         }
 
         return listName
+    }
+
+    private func normalizedListName(_ name: String) -> String {
+        name.normalizedForLookup
     }
 }

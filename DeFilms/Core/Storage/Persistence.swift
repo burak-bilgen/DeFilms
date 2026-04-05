@@ -20,7 +20,12 @@ struct PersistenceController {
         }
 
         if loadPersistentStoresWithRecovery() == false {
-            fatalError("Failed to recover Core Data store.")
+            AppLogger.log(
+                "Persistent store recovery failed, falling back to in-memory store",
+                category: .persistence,
+                level: .error
+            )
+            configureInMemoryFallbackStore()
         }
 
         container.viewContext.automaticallyMergesChangesFromParent = true
@@ -110,7 +115,16 @@ struct PersistenceController {
             semaphore.signal()
         }
 
-        semaphore.wait()
+        let didFinish = semaphore.wait(timeout: .now() + 5) == .success
+        if !didFinish {
+            AppLogger.log(
+                "Persistent store load timed out",
+                category: .persistence,
+                level: .error
+            )
+            return false
+        }
+
         return loadError == nil
     }
 
@@ -143,6 +157,39 @@ struct PersistenceController {
 
         return true
     }
+
+    private func configureInMemoryFallbackStore() {
+        let description = NSPersistentStoreDescription()
+        description.url = URL(fileURLWithPath: "/dev/null")
+        description.type = NSInMemoryStoreType
+        container.persistentStoreDescriptions = [description]
+
+        var loadError: NSError?
+        let semaphore = DispatchSemaphore(value: 0)
+
+        container.loadPersistentStores { _, error in
+            loadError = error as NSError?
+            semaphore.signal()
+        }
+
+        let didFinish = semaphore.wait(timeout: .now() + 5) == .success
+        if !didFinish {
+            AppLogger.log(
+                "In-memory fallback store load timed out",
+                category: .persistence,
+                level: .error
+            )
+            return
+        }
+
+        if loadError != nil {
+            AppLogger.log(
+                "In-memory fallback store could not be loaded",
+                category: .persistence,
+                level: .error
+            )
+        }
+    }
 }
 
 private extension NSManagedObjectContext {
@@ -155,6 +202,14 @@ private extension NSManagedObjectContext {
             }
         }
 
-        return try result!.get()
+        guard let result else {
+            throw NSError(
+                domain: "DeFilms.Persistence",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Managed object context work did not produce a result."]
+            )
+        }
+
+        return try result.get()
     }
 }

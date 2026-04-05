@@ -23,30 +23,27 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                accountOverviewSection
-                appearanceSection
-                languageSection
-                accountSection
-                aboutSection
-            }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
-            .background(AppPalette.screenBackground)
-            .navigationTitle(Localization.string("settings.title"))
-            .animation(AppAnimation.standard, value: sessionManager.isSignedIn)
-            .alert(Localization.string("settings.account.logout"), isPresented: $showLogoutConfirmation) {
-                Button(Localization.string("settings.account.logout"), role: .destructive) {
-                    viewModel.signOut()
-                }
-
-                Button(Localization.string("common.cancel"), role: .cancel) {}
-            } message: {
-                Text(Localization.string("settings.account.logout.message"))
-            }
+        List {
+            accountOverviewSection
+            appearanceSection
+            languageSection
+            accountSection
+            aboutSection
         }
-        .id(preferences.interfaceLayoutID)
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(AppPalette.screenBackground)
+        .navigationTitle(Localization.string("settings.title"))
+        .animation(AppAnimation.standard, value: sessionManager.isSignedIn)
+        .alert(Localization.string("settings.account.logout"), isPresented: $showLogoutConfirmation) {
+            Button(Localization.string("settings.account.logout"), role: .destructive) {
+                viewModel.signOut()
+            }
+
+            Button(Localization.string("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(Localization.string("settings.account.logout.message"))
+        }
         .environment(\.layoutDirection, preferences.layoutDirection)
     }
 

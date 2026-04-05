@@ -28,7 +28,7 @@ struct MovieDetailHeroHeaderView: View {
             heroContent
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.bottom, AppSpacing.xxl)
-                .offset(y: -collapseProgress * 26)
+                .offset(y: -38 - (collapseProgress * 10))
                 .scaleEffect(1 - (collapseProgress * 0.06), anchor: .bottomLeading)
                 .opacity(contentOpacity)
         }
@@ -46,17 +46,20 @@ struct MovieDetailHeroHeaderView: View {
             VStack(spacing: 10) {
                 FavoriteMovieButton(movie: movie, style: .hero)
 
-                if let imdbURL = viewModel.imdbURL {
-                    imdbShareButton(url: imdbURL)
+                if let tmdbURL = viewModel.tmdbURL {
+                    shareButton(url: tmdbURL)
                 }
             }
         }
     }
 
     private var heroContent: some View {
-        ViewThatFits(in: .vertical) {
-            compactHeroContent
-            regularHeroContent
+        Group {
+            if shouldUseCompactLayout {
+                compactHeroContent
+            } else {
+                regularHeroContent
+            }
         }
     }
 
@@ -102,13 +105,17 @@ struct MovieDetailHeroHeaderView: View {
                     .padding(.leading, -6)
             }
         }
-        .padding(.bottom, AppSpacing.sm - 2)
     }
 
     private var regularHeroContent: some View {
-        HStack(alignment: .bottom, spacing: AppSpacing.lg - 2) {
-            posterView
-            titleBlock
+        HStack(alignment: .bottom, spacing: AppSpacing.xl) {
+            VStack(alignment: .leading, spacing: 0) {
+                posterView
+            }
+
+            VStack(alignment: .leading, spacing: 0) {
+                titleBlock
+            }
             Spacer(minLength: 0)
         }
     }
@@ -118,6 +125,10 @@ struct MovieDetailHeroHeaderView: View {
             posterView
             titleBlock
         }
+    }
+
+    private var shouldUseCompactLayout: Bool {
+        dynamicTypeSize.isAccessibilitySize
     }
 
     private var heroFacts: some View {
@@ -142,7 +153,7 @@ struct MovieDetailHeroHeaderView: View {
         .buttonStyle(.plain)
     }
 
-    private func imdbShareButton(url: URL) -> some View {
+    private func shareButton(url: URL) -> some View {
         ShareLink(item: url) {
             topBarIconButtonLabel(systemImage: "square.and.arrow.up")
         }

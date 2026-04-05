@@ -11,7 +11,6 @@ struct MainTabView: View {
     let container: AppContainer
     let favoritesStore: FavoritesStore
 
-    @EnvironmentObject private var preferences: AppPreferences
     @State private var selection: Tab = .movies
     @StateObject private var movieCoordinator = MovieCoordinator()
     @StateObject private var favoritesCoordinator = FavoritesCoordinator()
@@ -50,7 +49,6 @@ struct MainTabView: View {
                     Label(Localization.string("tab.settings"), systemImage: selection == .settings ? "gearshape.fill" : "gearshape")
                 }
         }
-        .id(preferences.interfaceLayoutID)
         .tint(.primary)
         .animation(AppAnimation.gentleSpring, value: selection)
     }

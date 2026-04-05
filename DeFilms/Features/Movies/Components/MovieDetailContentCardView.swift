@@ -133,7 +133,7 @@ struct MoviePeopleCarouselSection: View {
                         CastBubbleView(
                             name: person.name,
                             imageURL: person.imageURL,
-                            imdbURL: person.imdbURL
+                            destinationURL: person.destinationURL
                         ) { url in
                             openURL(url)
                         }
@@ -143,7 +143,6 @@ struct MoviePeopleCarouselSection: View {
                 .padding(.vertical, 2)
             }
         }
-        .movieDetailSectionSurface()
     }
 }
 
@@ -172,7 +171,6 @@ struct MoviePlatformCarouselSection: View {
                 .padding(.vertical, 2)
             }
         }
-        .movieDetailSectionSurface()
     }
 }
 
@@ -190,7 +188,7 @@ struct MovieDetailCarouselSection: View {
                 .accessibilityAddTraits(.isHeader)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: AppSpacing.lg + 2) {
+                HStack(alignment: .top, spacing: AppSpacing.xl + 6) {
                     ForEach(movies) { movie in
                         MovieCardNavigationLink(movie: movie, cardStyle: .rail) {
                             coordinator.show(.detail(movie))
@@ -199,6 +197,45 @@ struct MovieDetailCarouselSection: View {
                 }
                 .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.xxs - 2)
+            }
+        }
+    }
+}
+
+struct MovieDetailSupplementarySectionsView: View {
+    let directors: [MovieCrewMember]
+    let cast: [MovieCastMember]
+    let streamingPlatforms: [MovieStreamingPlatform]
+    let similarMovies: [Movie]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.lg) {
+            if !directors.isEmpty {
+                MoviePeopleCarouselSection(
+                    title: Localization.string("movies.detail.director"),
+                    members: directors
+                )
+            }
+
+            if !cast.isEmpty {
+                MoviePeopleCarouselSection(
+                    title: Localization.string("movies.detail.cast"),
+                    members: cast
+                )
+            }
+
+            if !streamingPlatforms.isEmpty {
+                MoviePlatformCarouselSection(
+                    title: Localization.string("movies.detail.availableOn"),
+                    platforms: streamingPlatforms
+                )
+            }
+
+            if !similarMovies.isEmpty {
+                MovieDetailCarouselSection(
+                    title: Localization.string("movies.detail.similar"),
+                    movies: similarMovies
+                )
             }
         }
         .movieDetailSectionSurface()
@@ -210,20 +247,20 @@ extension MoviePeopleCarouselSection {
         let id: Int
         let name: String
         let imageURL: URL?
-        let imdbURL: URL?
+        let destinationURL: URL?
 
         init(member: MovieCrewMember) {
             id = member.id
             name = member.name
             imageURL = member.imageURL
-            imdbURL = member.imdbURL
+            destinationURL = member.tmdbURL
         }
 
         init(member: MovieCastMember) {
             id = member.id
             name = member.name
             imageURL = member.imageURL
-            imdbURL = member.imdbURL
+            destinationURL = member.tmdbURL
         }
     }
 }
@@ -231,13 +268,13 @@ extension MoviePeopleCarouselSection {
 private struct CastBubbleView: View {
     let name: String
     let imageURL: URL?
-    let imdbURL: URL?
-    let openIMDb: (URL) -> Void
+    let destinationURL: URL?
+    let openDestination: (URL) -> Void
 
     var body: some View {
         Button {
-            guard let imdbURL else { return }
-            openIMDb(imdbURL)
+            guard let destinationURL else { return }
+            openDestination(destinationURL)
         } label: {
             VStack(spacing: 8) {
                 PosterImageView(
@@ -267,8 +304,8 @@ private struct CastBubbleView: View {
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
         .buttonStyle(.plain)
-        .disabled(imdbURL == nil)
-        .opacity(imdbURL == nil ? 0.88 : 1)
+        .disabled(destinationURL == nil)
+        .opacity(destinationURL == nil ? 0.88 : 1)
     }
 }
 
@@ -392,7 +429,7 @@ private struct MovieDetailSectionSurfaceModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(.vertical, AppSpacing.sm)
-            .background(Color(.systemBackground).opacity(0.82))
+            .background(Color(.systemBackground))
             .overlay(
                 RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous)
                     .stroke(Color.primary.opacity(0.08), lineWidth: 1)

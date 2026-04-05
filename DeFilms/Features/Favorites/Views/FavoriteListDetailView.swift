@@ -17,9 +17,7 @@ struct FavoriteListDetailView: View {
     @State private var renameText: String = ""
     @State private var isRenamePresented = false
     @State private var isDeletePresented = false
-    @State private var moviePendingRemoval: FavoriteMovie?
-    @State private var moviePendingMove: FavoriteMovie?
-    @State private var isCreateListForMovePresented = false
+    @State private var moviePendingManagement: FavoriteMovie?
 
     var body: some View {
         Group {
@@ -38,8 +36,7 @@ struct FavoriteListDetailView: View {
                                     FavoriteMovieGridItem(
                                         movie: movie,
                                         openMovie: { coordinator.show(.movie(movie.asMovie)) },
-                                        moveMovie: { moviePendingMove = movie },
-                                        removeMovie: { moviePendingRemoval = movie }
+                                        manageMovie: { moviePendingManagement = movie }
                                     )
                                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                                 }
@@ -112,81 +109,26 @@ struct FavoriteListDetailView: View {
         } message: {
             Text(Localization.string("favorites.delete.message", viewModel.list?.name ?? ""))
         }
-        .alert(
-            Localization.string("favorites.remove.movie.title"),
-            isPresented: Binding(
-                get: { moviePendingRemoval != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        moviePendingRemoval = nil
-                    }
-                }
-            )
-        ) {
-            Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
-                if let moviePendingRemoval {
+        .fullScreenCover(item: $moviePendingManagement, onDismiss: {
+            moviePendingManagement = nil
+        }) { movie in
+            FavoriteMovieManagementModalView(
+                movie: movie,
+                destinationLists: viewModel.destinationLists,
+                moveMovie: { destinationID in
                     Task {
-                        await viewModel.remove(movieID: moviePendingRemoval.id)
-                        self.moviePendingRemoval = nil
+                        await viewModel.move(movieID: movie.id, to: destinationID)
+                    }
+                },
+                createListAndMove: { listName in
+                    await viewModel.createDestinationListAndMove(movieID: movie.id, listName: listName)
+                },
+                removeMovie: {
+                    Task {
+                        await viewModel.remove(movieID: movie.id)
                     }
                 }
-            }
-            Button(Localization.string("common.cancel"), role: .cancel) {
-                moviePendingRemoval = nil
-            }
-        } message: {
-            Text(Localization.string("favorites.remove.movie.message", moviePendingRemoval?.title ?? ""))
-        }
-        .confirmationDialog(
-            Localization.string("favorites.move.title"),
-            isPresented: Binding(
-                get: { moviePendingMove != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        moviePendingMove = nil
-                    }
-                }
-            ),
-            titleVisibility: .visible
-        ) {
-            if viewModel.destinationLists.isEmpty {
-                Button(Localization.string("favorites.create.title")) {
-                    isCreateListForMovePresented = true
-                }
-            } else {
-                ForEach(viewModel.destinationLists) { destination in
-                    Button(destination.name) {
-                        if let moviePendingMove {
-                            Task {
-                                await viewModel.move(movieID: moviePendingMove.id, to: destination.id)
-                                self.moviePendingMove = nil
-                            }
-                        }
-                    }
-                }
-            }
-            Button(Localization.string("common.cancel"), role: .cancel) {
-                moviePendingMove = nil
-            }
-        } message: {
-            Text(
-                viewModel.destinationLists.isEmpty
-                    ? Localization.string("favorites.create.subtitle.movie")
-                    : Localization.string("favorites.move.message", moviePendingMove?.title ?? "")
             )
-        }
-        .sheet(isPresented: $isCreateListForMovePresented, onDismiss: {
-            moviePendingMove = nil
-        }) {
-            if let moviePendingMove {
-                NavigationStack {
-                    NewFavoriteListView(movie: moviePendingMove.asMovie) { _ in
-                        Task {
-                            await viewModel.remove(movieID: moviePendingMove.id)
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -194,33 +136,37 @@ struct FavoriteListDetailView: View {
 private struct FavoriteMovieGridItem: View {
     let movie: FavoriteMovie
     let openMovie: () -> Void
-    let moveMovie: () -> Void
-    let removeMovie: () -> Void
+    let manageMovie: () -> Void
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 10) {
-            Button(action: openMovie) {
-                MovieCardView(
-                    movie: movie.asMovie,
-                    titleFont: .footnote,
-                    contentSpacing: AppSpacing.xs,
-                    metadataSpacing: 2,
-                    posterCornerRadius: 14
-                )
-                .padding(.horizontal, 3)
+        Button(action: openMovie) {
+            MovieCardView(
+                movie: movie.asMovie,
+                titleFont: .footnote,
+                contentSpacing: AppSpacing.xs,
+                metadataSpacing: 2,
+                posterCornerRadius: 14,
+                showsFavoriteButton: false
+            )
+            .padding(.horizontal, 3)
+            .overlay(alignment: .topTrailing) {
+                Button(action: manageMovie) {
+                    Image(systemName: "ellipsis")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(.black)
+                        .frame(width: 32, height: 32)
+                        .background(Color.white.opacity(0.96))
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.black.opacity(0.08), lineWidth: 1))
+                        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
+                        .padding(.top, 10)
+                        .padding(.trailing, 12)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Localization.string("favorites.manage.movie"))
             }
-            .buttonStyle(.plain)
-
-            Menu {
-                Button(Localization.string("favorites.move.title"), action: moveMovie)
-                Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive, action: removeMovie)
-            } label: {
-                Label(Localization.string("favorites.manage.movie"), systemImage: "ellipsis.circle")
-                    .font(.caption.weight(.semibold))
-            }
-            .tint(.primary)
-            .accessibilityLabel(Localization.string("favorites.manage.movie"))
         }
+        .buttonStyle(.plain)
     }
 }
 

@@ -17,7 +17,6 @@ struct FavoriteMovieButton: View {
     @EnvironmentObject private var favoritesStore: FavoritesStore
 
     @State private var isPickerPresented = false
-    @State private var isCreateListPresented = false
 
     var body: some View {
         Button(action: handleTap) {
@@ -25,15 +24,9 @@ struct FavoriteMovieButton: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
-        .popover(isPresented: $isPickerPresented, attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
-            FavoriteListPickerView(movie: movie)
+        .fullScreenCover(isPresented: $isPickerPresented) {
+            FavoriteListPickerModalView(movie: movie)
                 .environmentObject(favoritesStore)
-                .presentationCompactAdaptation(.popover)
-        }
-        .sheet(isPresented: $isCreateListPresented) {
-            NavigationStack {
-                NewFavoriteListView(movie: movie)
-            }
         }
     }
 
@@ -87,10 +80,7 @@ struct FavoriteMovieButton: View {
     }
 
     private func handleTap() {
-        if favoritesStore.lists.isEmpty {
-            isCreateListPresented = true
-        } else {
-            isPickerPresented = true
-        }
+        guard !isPickerPresented else { return }
+        isPickerPresented = true
     }
 }

@@ -117,7 +117,6 @@ private final class UITestMovieDetailService: MovieDetailServicing {
             releaseDate: movie.releaseDate,
             voteAverage: movie.voteAverage,
             runtime: 155,
-            imdbID: "tt1160419",
             genres: [MovieGenre(id: 878, name: "Science Fiction")]
         )
 

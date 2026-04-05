@@ -46,13 +46,12 @@ final class MovieDetailViewModelTests: XCTestCase {
                 releaseDate: "2021-10-22",
                 voteAverage: 8.1,
                 runtime: 155,
-                imdbID: "tt1160419",
                 genres: [MovieGenre(id: 878, name: "Science Fiction")]
             ),
             trailer: MovieVideo(key: "abc123", name: "Trailer", site: "YouTube", type: "Trailer", official: true),
             gallery: [MovieImageAsset(filePath: "/gallery.jpg")],
-            directors: [MovieCrewMember(id: 1, name: "Denis Villeneuve", job: "Director", profilePath: nil, imdbID: nil)],
-            cast: [MovieCastMember(id: 2, name: "Timothee Chalamet", character: "Paul", profilePath: nil, imdbID: nil)],
+            directors: [MovieCrewMember(id: 1, name: "Denis Villeneuve", job: "Director", profilePath: nil)],
+            cast: [MovieCastMember(id: 2, name: "Timothee Chalamet", character: "Paul", profilePath: nil)],
             streamingPlatforms: [MovieStreamingPlatform(id: 3, name: "Max", logoURL: nil, linkURL: nil)],
             similarMovies: [Movie(id: 99, title: "Arrival", overview: nil, posterPath: nil, backdropPath: nil, releaseDate: "2016-11-11", voteAverage: 8.2, genreIDs: nil)]
         )
@@ -136,7 +135,6 @@ final class MovieDetailViewModelTests: XCTestCase {
                 releaseDate: "2021-10-22",
                 voteAverage: 8.0,
                 runtime: 155,
-                imdbID: nil,
                 genres: []
             ),
             trailer: MovieVideo(key: "abc123", name: "Trailer", site: "YouTube", type: "Trailer", official: true),
@@ -175,7 +173,6 @@ final class MovieDetailViewModelTests: XCTestCase {
                 releaseDate: "2024-01-01",
                 voteAverage: 7.0,
                 runtime: nil,
-                imdbID: nil,
                 genres: []
             ),
             trailer: nil,
@@ -215,7 +212,6 @@ final class MovieDetailViewModelTests: XCTestCase {
                 releaseDate: "2024-01-01",
                 voteAverage: 7.4,
                 runtime: 120,
-                imdbID: nil,
                 genres: []
             ),
             trailer: nil,

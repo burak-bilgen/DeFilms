@@ -156,6 +156,14 @@ struct FavoriteListCard: View {
                         .frame(maxWidth: .infinity)
                         .aspectRatio(2.0 / 3.0, contentMode: .fit)
                     }
+
+                    ForEach(0..<max(0, 3 - min(list.movies.count, 3)), id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color.clear)
+                            .frame(maxWidth: .infinity)
+                            .aspectRatio(2.0 / 3.0, contentMode: .fit)
+                            .hidden()
+                    }
                 }
             }
         }

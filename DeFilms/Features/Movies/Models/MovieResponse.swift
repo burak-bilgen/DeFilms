@@ -92,7 +92,6 @@ struct MovieCastMember: Codable, Equatable, Identifiable {
     let name: String
     let character: String?
     let profilePath: String?
-    var imdbID: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case id, name, character
@@ -104,11 +103,7 @@ struct MovieCastMember: Codable, Equatable, Identifiable {
         return URL(string: APIConfig.imageBaseURL + profilePath)
     }
 
-    var imdbURL: URL? {
-        if let imdbID, imdbID.isEmpty == false {
-            return URL(string: "https://www.imdb.com/name/\(imdbID)")
-        }
-
+    var tmdbURL: URL? {
         return URL(string: "https://www.themoviedb.org/person/\(id)")
     }
 }
@@ -118,7 +113,6 @@ struct MovieCrewMember: Codable, Equatable, Identifiable {
     let name: String
     let job: String
     let profilePath: String?
-    var imdbID: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case id, name, job
@@ -130,11 +124,7 @@ struct MovieCrewMember: Codable, Equatable, Identifiable {
         return URL(string: APIConfig.imageBaseURL + profilePath)
     }
 
-    var imdbURL: URL? {
-        if let imdbID, imdbID.isEmpty == false {
-            return URL(string: "https://www.imdb.com/name/\(imdbID)")
-        }
-
+    var tmdbURL: URL? {
         return URL(string: "https://www.themoviedb.org/person/\(id)")
     }
 }
@@ -160,12 +150,10 @@ struct MovieDetail: Codable, Equatable {
     let releaseDate: String?
     let voteAverage: Double?
     let runtime: Int?
-    let imdbID: String?
     let genres: [MovieGenre]
 
     enum CodingKeys: String, CodingKey {
         case id, title, overview, runtime, genres
-        case imdbID = "imdb_id"
         case posterPath = "poster_path"
         case backdropPath = "backdrop_path"
         case releaseDate = "release_date"
@@ -199,9 +187,8 @@ struct MovieDetail: Codable, Equatable {
         return Localization.string("movies.runtime.minutes", minutes)
     }
 
-    var imdbURL: URL? {
-        guard let imdbID, imdbID.isEmpty == false else { return nil }
-        return URL(string: "https://www.imdb.com/title/\(imdbID)")
+    var tmdbURL: URL? {
+        URL(string: "https://www.themoviedb.org/movie/\(id)")
     }
 }
 

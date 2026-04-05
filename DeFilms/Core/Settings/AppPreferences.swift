@@ -62,6 +62,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 @MainActor
 final class AppPreferences: ObservableObject {
     private let defaults: UserDefaults
+    private var languageChangeTask: Task<Void, Never>?
 
     @Published var selectedTheme: AppTheme {
         didSet {
@@ -82,6 +83,8 @@ final class AppPreferences: ObservableObject {
             defaults.set(hasCompletedOnboarding, forKey: Self.onboardingKey)
         }
     }
+
+    @Published private(set) var isApplyingLanguageChange = false
 
     nonisolated static let themeKey = "app.theme"
     nonisolated static let languageKey = "app.language"
@@ -115,7 +118,25 @@ final class AppPreferences: ObservableObject {
         selectedLanguage.layoutDirection
     }
 
-    var interfaceLayoutID: String {
-        "\(selectedLanguage.rawValue)-\(layoutDirection == .rightToLeft ? "rtl" : "ltr")"
+    func applyLanguage(_ language: AppLanguage) async {
+        guard selectedLanguage != language else { return }
+        guard !isApplyingLanguageChange else { return }
+
+        languageChangeTask?.cancel()
+
+        isApplyingLanguageChange = true
+        selectedLanguage = language
+
+        let task = Task { @MainActor [weak self] in
+            // Give SwiftUI a short blocking window while locale/layout direction
+            // dependent screens are rebuilt to avoid the app appearing frozen.
+            try? await Task.sleep(for: .milliseconds(800))
+            guard !Task.isCancelled else { return }
+            self?.isApplyingLanguageChange = false
+            self?.languageChangeTask = nil
+        }
+
+        languageChangeTask = task
+        await task.value
     }
 }

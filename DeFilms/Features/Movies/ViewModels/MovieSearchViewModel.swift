@@ -54,6 +54,10 @@ final class MovieSearchViewModel: ObservableObject {
     private var currentSearchPage = 0
     private var totalSearchPages = 1
     private var cancellables: Set<AnyCancellable> = []
+    private var activeSearchRequestID = UUID()
+    private var activeBrowseRequestID = UUID()
+    private var activeGenreRequestID = UUID()
+    private var activeSearchHistoryRequestID = UUID()
 
     init(
         movieCatalogService: MovieCatalogServicing,
@@ -158,6 +162,9 @@ final class MovieSearchViewModel: ObservableObject {
     }
 
     func search(force: Bool = false) async {
+        let requestID = UUID()
+        activeSearchRequestID = requestID
+
         let searchText = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !searchText.isEmpty else {
             let message = Localization.string("movies.search.validation.empty")
@@ -181,10 +188,12 @@ final class MovieSearchViewModel: ObservableObject {
         do {
             AppLogger.log("Search started", category: .search)
             let response = try await movieCatalogService.searchMovies(query: searchText, page: 1)
+            guard activeSearchRequestID == requestID else { return }
             updateSearchResults(with: response, appendingResults: false)
             lastExecutedSearchQuery = searchText
             lastLoadedLanguage = AppPreferences.persistedLanguage
             try await searchHistoryService.saveSearch(searchText)
+            guard activeSearchRequestID == requestID else { return }
             await refreshSearchHistory()
             screenState = filteredSearchResults.isEmpty ? .emptyResults : .loadedResults
             Task {
@@ -192,6 +201,7 @@ final class MovieSearchViewModel: ObservableObject {
             }
             AppLogger.log("Search completed with \(response.results.count) results", category: .search, level: .success)
         } catch {
+            guard activeSearchRequestID == requestID else { return }
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.search.error.generic")
             errorMessage = message
             searchResults = []
@@ -203,6 +213,7 @@ final class MovieSearchViewModel: ObservableObject {
     }
 
     func clearSearch() {
+        activeSearchRequestID = UUID()
         query = ""
         searchResults = []
         lastExecutedSearchQuery = nil
@@ -257,11 +268,16 @@ final class MovieSearchViewModel: ObservableObject {
 
     func loadGenresIfNeeded() async {
         guard genres.isEmpty else { return }
+        let requestID = UUID()
+        activeGenreRequestID = requestID
 
         do {
-            genres = try await movieCatalogService.loadGenres()
+            let loadedGenres = try await movieCatalogService.loadGenres()
+            guard activeGenreRequestID == requestID else { return }
+            genres = loadedGenres
             AppLogger.log("Genres loaded", category: .movie, level: .success)
         } catch {
+            guard activeGenreRequestID == requestID else { return }
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.filter.error")
             errorMessage = message
             toastItem = .error(message)
@@ -270,11 +286,14 @@ final class MovieSearchViewModel: ObservableObject {
     }
 
     private func loadBrowseContent() async {
+        let requestID = UUID()
+        activeBrowseRequestID = requestID
         screenState = .loadingBrowse
 
         do {
             AppLogger.log("Browse loading started", category: .movie)
             let browseContent = try await movieCatalogService.loadBrowseContent()
+            guard activeBrowseRequestID == requestID else { return }
             trendingTodayMovies = browseContent.trendingTodayMovies
             trendingThisWeekMovies = browseContent.trendingThisWeekMovies
             popularMovies = browseContent.popularMovies
@@ -289,6 +308,7 @@ final class MovieSearchViewModel: ObservableObject {
             }
             AppLogger.log("Browse loading completed", category: .movie, level: .success)
         } catch {
+            guard activeBrowseRequestID == requestID else { return }
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.browse.error")
             errorMessage = message
             screenState = .error(message: message)
@@ -302,7 +322,12 @@ final class MovieSearchViewModel: ObservableObject {
     }
 
     private func refreshSearchHistory() async {
-        searchHistory = (try? await searchHistoryService.loadSearchHistory()) ?? []
+        let requestID = UUID()
+        activeSearchHistoryRequestID = requestID
+
+        let history = (try? await searchHistoryService.loadSearchHistory()) ?? []
+        guard activeSearchHistoryRequestID == requestID else { return }
+        searchHistory = history
     }
 
     private func searchIfNeeded(afterDebounce value: String) async {
@@ -329,6 +354,8 @@ final class MovieSearchViewModel: ObservableObject {
         let searchText = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !searchText.isEmpty, currentSearchPage < totalSearchPages else { return }
 
+        let requestID = activeSearchRequestID
+
         isLoadingNextSearchPage = true
         defer { isLoadingNextSearchPage = false }
 
@@ -338,6 +365,8 @@ final class MovieSearchViewModel: ObservableObject {
                 query: searchText,
                 page: nextPage
             )
+            guard activeSearchRequestID == requestID else { return }
+            guard query.trimmingCharacters(in: .whitespacesAndNewlines) == searchText else { return }
 
             updateSearchResults(with: response, appendingResults: true)
             Task {

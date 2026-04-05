@@ -14,16 +14,32 @@ struct AppEntryView: View {
     @EnvironmentObject private var connectivityMonitor: ConnectivityMonitor
     @StateObject private var flowCoordinator = AppFlowCoordinator()
 
+    private var shouldBlockForConnectivity: Bool {
+        connectivityMonitor.hasResolvedInitialStatus && !connectivityMonitor.isConnected
+    }
+
+    private var shouldBlockForLanguageChange: Bool {
+        preferences.isApplyingLanguageChange
+    }
+
+    private var isInteractionBlocked: Bool {
+        shouldBlockForConnectivity || shouldBlockForLanguageChange
+    }
+
+    private var shouldSuspendModalPresentations: Bool {
+        isInteractionBlocked
+    }
+
     var body: some View {
         ZStack {
             MainTabView(
                 container: container,
                 favoritesStore: favoritesStore
             )
-            .blur(radius: connectivityMonitor.isConnected ? 0 : 6)
-            .allowsHitTesting(connectivityMonitor.isConnected)
+            .blur(radius: isInteractionBlocked ? 6 : 0)
+            .allowsHitTesting(!isInteractionBlocked)
 
-            if !connectivityMonitor.isConnected {
+            if shouldBlockForConnectivity {
                 ConnectionBlockingView(
                     isChecking: connectivityMonitor.isChecking,
                     retryAction: connectivityMonitor.retryConnectionCheck
@@ -31,8 +47,18 @@ struct AppEntryView: View {
                 .transition(.opacity)
                 .zIndex(1)
             }
+
+            if shouldBlockForLanguageChange {
+                LanguageChangeLoadingView()
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.96).combined(with: .opacity),
+                        removal: .scale(scale: 0.985).combined(with: .opacity)
+                    ))
+                    .zIndex(2)
+            }
         }
-            .animation(AppAnimation.standard, value: connectivityMonitor.isConnected)
+            .animation(AppAnimation.standard, value: shouldBlockForConnectivity)
+            .animation(AppAnimation.emphasizedSpring, value: shouldBlockForLanguageChange)
             .fullScreenCover(isPresented: onboardingBinding) {
                 OnboardingView(
                     continueAsGuest: dismissOnboarding,
@@ -46,7 +72,10 @@ struct AppEntryView: View {
                     }
                 )
             }
-            .fullScreenCover(item: $flowCoordinator.modalRoute) { destination in
+            .fullScreenCover(
+                item: authModalBinding,
+                onDismiss: { flowCoordinator.dismissModal() }
+            ) { destination in
                 AuthEntryContainer {
                     switch destination {
                     case .signIn:
@@ -73,10 +102,25 @@ struct AppEntryView: View {
 
     private var onboardingBinding: Binding<Bool> {
         Binding(
-            get: { !preferences.hasCompletedOnboarding && connectivityMonitor.isConnected },
+            get: {
+                !preferences.hasCompletedOnboarding &&
+                !shouldSuspendModalPresentations &&
+                flowCoordinator.modalRoute == nil
+            },
             set: { isPresented in
                 if isPresented == false {
                     preferences.hasCompletedOnboarding = true
+                }
+            }
+        )
+    }
+
+    private var authModalBinding: Binding<AppModalRoute?> {
+        Binding(
+            get: { shouldSuspendModalPresentations ? nil : flowCoordinator.modalRoute },
+            set: { newValue in
+                if newValue == nil {
+                    flowCoordinator.dismissModal()
                 }
             }
         )
@@ -90,6 +134,32 @@ struct AppEntryView: View {
         guard let item else { return }
         toastCenter.show(message: item.message, style: item.style)
         onConsumed()
+    }
+}
+
+private struct LanguageChangeLoadingView: View {
+    @State private var isVisible = false
+
+    var body: some View {
+        VStack(spacing: AppSpacing.md) {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .scaleEffect(1.15)
+
+            Text(Localization.string("settings.language.appLanguage"))
+                .font(.headline.weight(.semibold))
+        }
+        .padding(.horizontal, AppSpacing.xl)
+        .padding(.vertical, AppSpacing.lg)
+        .appElevatedSurface(cornerRadius: AppCornerRadius.lg, background: AppPalette.screenBackground)
+        .padding(.horizontal, AppSpacing.lg)
+        .scaleEffect(isVisible ? 1 : 0.965)
+        .opacity(isVisible ? 1 : 0)
+        .onAppear {
+            withAnimation(AppAnimation.emphasizedSpring) {
+                isVisible = true
+            }
+        }
     }
 }
 

@@ -24,7 +24,6 @@ final class MovieDetailServiceTests: XCTestCase {
             releaseDate: "2016-11-11",
             voteAverage: 8.4,
             runtime: 116,
-            imdbID: "tt2543164",
             genres: [MovieGenre(id: 18, name: "Drama")]
         )
         network.images = MovieImageResponse(

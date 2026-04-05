@@ -64,6 +64,15 @@ final class FavoriteListDetailViewModel: ObservableObject {
         await favoritesStore.move(movieID: movieID, from: listID, to: destinationListID)
     }
 
+    func createDestinationListAndMove(movieID: Int, listName: String) async -> Bool {
+        guard let list = await favoritesStore.createList(named: listName) else {
+            return false
+        }
+
+        await favoritesStore.move(movieID: movieID, from: listID, to: list.id)
+        return true
+    }
+
     private func refreshCurrentList() {
         list = favoritesStore.list(withID: listID)
     }

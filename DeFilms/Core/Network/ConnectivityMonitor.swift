@@ -5,11 +5,13 @@
 
 import Foundation
 import Network
+import Combine
 
 @MainActor
 final class ConnectivityMonitor: ObservableObject {
     @Published private(set) var isConnected = false
     @Published private(set) var isChecking = true
+    @Published private(set) var hasResolvedInitialStatus = false
     @Published private(set) var connectionDescription = ""
 
     private let queue = DispatchQueue(label: "defilms.connectivity.monitor")
@@ -30,6 +32,7 @@ final class ConnectivityMonitor: ObservableObject {
     private func startMonitoring() {
         monitor?.cancel()
         isChecking = true
+        hasResolvedInitialStatus = false
 
         let monitor = NWPathMonitor()
         monitor.pathUpdateHandler = { [weak self] path in
@@ -43,6 +46,7 @@ final class ConnectivityMonitor: ObservableObject {
 
     private func apply(path: NWPath) {
         isChecking = false
+        hasResolvedInitialStatus = true
         isConnected = path.status == .satisfied
 
         if path.usesInterfaceType(.wifi) {

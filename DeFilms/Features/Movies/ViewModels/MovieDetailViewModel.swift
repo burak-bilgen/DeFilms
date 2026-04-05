@@ -26,6 +26,7 @@ final class MovieDetailViewModel: ObservableObject {
 
     private let service: MovieDetailServicing
     private var didLoadOnce = false
+    private var activeLoadRequestID = UUID()
 
     init(movie: Movie, detailService: MovieDetailServicing) {
         self.movie = movie
@@ -95,8 +96,8 @@ final class MovieDetailViewModel: ObservableObject {
         trailer?.watchURL
     }
 
-    var imdbURL: URL? {
-        detail?.imdbURL
+    var tmdbURL: URL? {
+        detail?.tmdbURL
     }
 
     var hasTrailer: Bool {
@@ -115,8 +116,11 @@ final class MovieDetailViewModel: ObservableObject {
     }
 
     func load() async {
+        let requestID = UUID()
+        activeLoadRequestID = requestID
         isLoading = true
         errorMessage = nil
+        detail = nil
         trailer = nil
         gallery = []
         directors = []
@@ -127,6 +131,7 @@ final class MovieDetailViewModel: ObservableObject {
         do {
             AppLogger.log("Opening movie details", category: .movie)
             let payload = try await service.loadPayload(for: movie)
+            guard activeLoadRequestID == requestID else { return }
             detail = payload.detail
             trailer = payload.trailer
             gallery = payload.gallery
@@ -136,12 +141,14 @@ final class MovieDetailViewModel: ObservableObject {
             similarMovies = payload.similarMovies
             AppLogger.log("Movie details ready", category: .movie, level: .success)
         } catch {
+            guard activeLoadRequestID == requestID else { return }
             let message = (error as? LocalizedError)?.errorDescription ?? Localization.string("movies.detail.error")
             errorMessage = message
             toastItem = .error(message)
             AppLogger.log("Couldn't load movie details", category: .movie, level: .error)
         }
 
+        guard activeLoadRequestID == requestID else { return }
         isLoading = false
     }
 

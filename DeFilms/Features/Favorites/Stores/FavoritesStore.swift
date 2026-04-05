@@ -17,6 +17,7 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     private let favoritesService: FavoritesServicing
     private let sessionManager: AuthSessionManager
     private var cancellables: Set<AnyCancellable> = []
+    private var activeRefreshRequestID = UUID()
 
     var listsPublisher: AnyPublisher<[FavoriteList], Never> {
         $lists.eraseToAnyPublisher()
@@ -44,6 +45,10 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func createList(named name: String) async -> FavoriteList? {
+        if let matchingList = list(named: name) {
+            return matchingList
+        }
+
         do {
             let list = try await favoritesService.createList(named: name, lists: lists)
             await refreshLists()
@@ -66,6 +71,8 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func add(movie: Movie, to listID: UUID) async {
+        guard isMovieInList(movieID: movie.id, listID: listID) == false else { return }
+
         do {
             try await favoritesService.add(movie: movie, to: listID)
             await refreshLists()
@@ -78,6 +85,8 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func remove(movieID: Int, from listID: UUID) async {
+        guard isMovieInList(movieID: movieID, listID: listID) else { return }
+
         do {
             try await favoritesService.remove(movieID: movieID, from: listID)
             await refreshLists()
@@ -90,6 +99,11 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func renameList(listID: UUID, name: String) async -> Bool {
+        if let existingList = list(withID: listID),
+           normalizedListName(existingList.name) == normalizedListName(name) {
+            return true
+        }
+
         do {
             try await favoritesService.renameList(listID: listID, name: name, lists: lists)
             await refreshLists()
@@ -107,6 +121,8 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func deleteList(listID: UUID) async {
+        guard list(withID: listID) != nil else { return }
+
         do {
             try await favoritesService.deleteList(listID: listID)
             await refreshLists()
@@ -117,6 +133,9 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) async {
+        guard sourceListID != destinationListID else { return }
+        guard isMovieInList(movieID: movieID, listID: sourceListID) else { return }
+
         do {
             try await favoritesService.move(
                 movieID: movieID,
@@ -154,7 +173,8 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func list(named name: String) -> FavoriteList? {
-        lists.first { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }
+        let normalizedName = normalizedListName(name)
+        return lists.first { normalizedListName($0.name) == normalizedName }
     }
 
     var totalMovieCount: Int {
@@ -166,15 +186,24 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     private func refreshLists() async {
+        let requestID = UUID()
+        activeRefreshRequestID = requestID
+
         do {
             let latestLists = try await favoritesService.loadLists()
+            guard activeRefreshRequestID == requestID else { return }
             withAnimation(.easeInOut(duration: 0.24)) {
                 lists = latestLists
             }
             AppLogger.log("Favorites refreshed", category: .favorites)
         } catch {
+            guard activeRefreshRequestID == requestID else { return }
             AppLogger.log("Failed to refresh favorites", category: .favorites, level: .error)
             toastItem = .error(Localization.string("favorites.toast.genericError"))
         }
+    }
+
+    private func normalizedListName(_ name: String) -> String {
+        name.normalizedForLookup
     }
 }

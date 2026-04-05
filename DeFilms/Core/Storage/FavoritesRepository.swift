@@ -26,10 +26,12 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
     private let persistenceController: PersistenceController
     private let legacyStorageKey = "FavoriteListsStorage"
     private let legacyGuestIdentifier = "guest"
+    private var legacyMigrationTask: Task<Void, Never>?
 
     init(persistenceController: PersistenceController = .shared) {
         self.persistenceController = persistenceController
-        Task {
+        legacyMigrationTask = Task { [weak self] in
+            guard let self else { return }
             await migrateLegacyFavoritesIfNeeded()
         }
         AppLogger.log("Favorites repository initialized", category: .persistence)
@@ -100,6 +102,7 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
     func renameList(listID: UUID, name: String, userIdentifier: String) async throws {
         try persistenceController.performWrite { context in
             guard let list = try fetchListEntity(listID: listID, userIdentifier: userIdentifier, context: context) else { return }
+            guard normalizedListName(list.name) != normalizedListName(name) else { return }
             list.name = name
         }
         AppLogger.log("Renamed favorite list", category: .persistence, level: .success)
@@ -159,6 +162,8 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
     }
 
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) async throws {
+        guard sourceListID != destinationListID else { return }
+
         try persistenceController.performWrite { context in
             guard
                 let sourceList = try fetchListEntity(listID: sourceListID, userIdentifier: userIdentifier, context: context),
@@ -205,7 +210,13 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         }
     }
 
+    private func normalizedListName(_ name: String) -> String {
+        name.normalizedForLookup
+    }
+
     private func migrateLegacyFavoritesIfNeeded() async {
+        defer { legacyMigrationTask = nil }
+
         let userDefaults = UserDefaults.standard
         guard
             let data = userDefaults.data(forKey: legacyStorageKey),
@@ -241,6 +252,10 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
 
     private func importLegacyFavorites(_ lists: [FavoriteList]) throws {
         try persistenceController.performWrite { context in
+            let request = FavoriteListEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "userIdentifier == %@", legacyGuestIdentifier)
+            try context.fetch(request).forEach(context.delete)
+
             for list in lists {
                 let entity = FavoriteListEntity(context: context)
                 entity.id = list.id

@@ -76,7 +76,8 @@ struct SettingsValueRow: View {
             Text(value)
                 .foregroundStyle(.secondary)
         }
-        .frame(minHeight: 28)
+        .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 }
@@ -101,7 +102,8 @@ struct SettingsSimpleRow: View {
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.tertiary)
         }
-        .frame(minHeight: 28)
+        .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 }
@@ -132,6 +134,8 @@ struct ThemeSelectionView: View {
                         .foregroundStyle(.primary)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(PressableScaleButtonStyle())
         .accessibilityValue(preferences.selectedTheme == theme ? Localization.string("common.selected") : "")
@@ -153,7 +157,9 @@ struct LanguageSelectionView: View {
 
     private func languageRow(_ language: AppLanguage) -> some View {
         Button {
-            preferences.selectedLanguage = language
+            Task {
+                await preferences.applyLanguage(language)
+            }
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -169,6 +175,8 @@ struct LanguageSelectionView: View {
                         .foregroundStyle(.primary)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(PressableScaleButtonStyle())
         .accessibilityValue(preferences.selectedLanguage == language ? Localization.string("common.selected") : "")

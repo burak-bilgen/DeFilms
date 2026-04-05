@@ -40,7 +40,7 @@ final class TMDBMovieDetailService: MovieDetailServicing {
         async let galleryTask = loadGallery(movieID: movie.id)
         async let peopleTask = loadPeople(movieID: movie.id)
         async let trailerTask = loadTrailer(movieID: movie.id)
-        async let platformsTask = loadStreamingPlatforms(movieID: movie.id)
+        async let platformsTask = loadStreamingPlatforms(for: movie)
         async let similarMoviesTask = loadSimilarMovies(for: movie)
 
         let payload = await MovieDetailPayload(
@@ -118,12 +118,12 @@ final class TMDBMovieDetailService: MovieDetailServicing {
         }
     }
 
-    private func loadStreamingPlatforms(movieID: Int) async -> [MovieStreamingPlatform] {
+    private func loadStreamingPlatforms(for movie: Movie) async -> [MovieStreamingPlatform] {
         do {
             let response: MovieWatchProvidersResponse = try await networkService.request(
-                endpoint: TMDBEndpoint.movieWatchProviders(movieID: movieID)
+                endpoint: TMDBEndpoint.movieWatchProviders(movieID: movie.id)
             )
-            return preferredPlatforms(from: response.results)
+            return preferredPlatforms(from: response.results, movieTitle: movie.title)
         } catch {
             AppLogger.log("Watch providers load failed", category: .movie, level: .error)
             return []
@@ -151,7 +151,7 @@ final class TMDBMovieDetailService: MovieDetailServicing {
             youtubeVideos.first
     }
 
-    private func preferredPlatforms(from results: [String: MovieWatchProviderRegion]) -> [MovieStreamingPlatform] {
+    private func preferredPlatforms(from results: [String: MovieWatchProviderRegion], movieTitle: String) -> [MovieStreamingPlatform] {
         let preferredRegions = [preferredRegionCode, "TR", "US"]
         let region = preferredRegions
             .compactMap { code in results[code] }
@@ -169,9 +169,17 @@ final class TMDBMovieDetailService: MovieDetailServicing {
                 id: provider.providerID,
                 name: provider.providerName,
                 logoURL: provider.logoURL,
-                linkURL: region.link
+                linkURL: googleSearchURL(movieTitle: movieTitle, platformName: provider.providerName)
             )
         }
+    }
+
+    private func googleSearchURL(movieTitle: String, platformName: String) -> URL? {
+        var components = URLComponents(string: "https://www.google.com/search")
+        components?.queryItems = [
+            URLQueryItem(name: "q", value: "\(movieTitle) \(platformName)")
+        ]
+        return components?.url
     }
 
     private var preferredRegionCode: String {

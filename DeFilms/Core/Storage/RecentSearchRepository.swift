@@ -20,16 +20,20 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
     private let persistenceController: PersistenceController
     private let legacyStorageKey = "MovieSearchHistory"
     private let legacyGuestIdentifier = "guest"
+    private var legacyMigrationTask: Task<Void, Never>?
 
     init(persistenceController: PersistenceController = .shared) {
         self.persistenceController = persistenceController
-        Task {
+        legacyMigrationTask = Task { [weak self] in
+            guard let self else { return }
             await migrateLegacySearchesIfNeeded()
         }
         AppLogger.log("Recent search repository initialized", category: .persistence)
     }
 
     func fetchRecentSearches(for userIdentifier: String, limit: Int) async throws -> [String] {
+        guard limit > 0 else { return [] }
+
         let results = try persistenceController.performRead { context in
             let request = RecentSearchEntity.fetchRequest()
             request.fetchLimit = limit
@@ -42,8 +46,9 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
     }
 
     func addSearch(_ query: String, for userIdentifier: String, limit: Int) async throws {
-        let searchText = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let searchText = query.trimmed
         guard !searchText.isEmpty else { return }
+        guard limit > 0 else { return }
 
         try persistenceController.performWrite { context in
             let matchingSearchRequest = RecentSearchEntity.fetchRequest()
@@ -85,6 +90,8 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
     }
 
     private func migrateLegacySearchesIfNeeded() async {
+        defer { legacyMigrationTask = nil }
+
         let userDefaults = UserDefaults.standard
         AppLogger.log("Starting legacy recent-search migration", category: .persistence, level: .warning)
         guard
@@ -126,6 +133,10 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
         let normalizedSearches = normalizedLegacySearches(searches)
 
         try persistenceController.performWrite { context in
+            let request = RecentSearchEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "userIdentifier == %@", legacyGuestIdentifier)
+            try context.fetch(request).forEach(context.delete)
+
             for (index, query) in normalizedSearches.enumerated() {
                 let entity = RecentSearchEntity(context: context)
                 entity.id = UUID()
@@ -144,7 +155,7 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
         var deduplicated: [String] = []
 
         for query in searches.reversed() {
-            let searchText = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            let searchText = query.trimmed
             guard !searchText.isEmpty else { continue }
             guard !deduplicated.contains(where: { $0.compare(searchText, options: .caseInsensitive) == .orderedSame }) else { continue }
             deduplicated.append(searchText)

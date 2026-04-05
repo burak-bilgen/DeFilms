@@ -14,6 +14,7 @@ struct MovieCardView: View {
     var contentSpacing: CGFloat = AppSpacing.sm
     var metadataSpacing: CGFloat = AppSpacing.xxs
     var posterCornerRadius: CGFloat = AppCornerRadius.sm
+    var showsFavoriteButton: Bool = true
 
     @EnvironmentObject private var favoritesStore: FavoritesStore
 
@@ -60,8 +61,10 @@ struct MovieCardView: View {
                     .clipShape(RoundedRectangle(cornerRadius: posterCornerRadius, style: .continuous))
                 )
 
-                favoriteButton
-                    .padding(AppSpacing.xs)
+                if showsFavoriteButton {
+                    favoriteButton
+                        .padding(AppSpacing.xs)
+                }
             }
             .padding(.bottom, AppSpacing.xs - 2)
 

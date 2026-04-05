@@ -47,40 +47,15 @@ struct MovieDetailView: View {
                                 .opacity(isContentVisible ? 1 : 0)
                                 .offset(y: isContentVisible ? 0 : 24)
 
-                            if !viewModel.directors.isEmpty {
-                                MoviePeopleCarouselSection(
-                                    title: Localization.string("movies.detail.director"),
-                                    members: viewModel.directors
-                                )
-                                .opacity(isContentVisible ? 1 : 0)
-                                .offset(y: isContentVisible ? 0 : 28)
-                            }
-
-                            if !viewModel.cast.isEmpty {
-                                MoviePeopleCarouselSection(
-                                    title: Localization.string("movies.detail.cast"),
-                                    members: viewModel.cast
+                            if hasSupplementarySections {
+                                MovieDetailSupplementarySectionsView(
+                                    directors: viewModel.directors,
+                                    cast: viewModel.cast,
+                                    streamingPlatforms: viewModel.streamingPlatforms,
+                                    similarMovies: viewModel.similarMovies
                                 )
                                 .opacity(isContentVisible ? 1 : 0)
                                 .offset(y: isContentVisible ? 0 : 32)
-                            }
-
-                            if !viewModel.streamingPlatforms.isEmpty {
-                                MoviePlatformCarouselSection(
-                                    title: Localization.string("movies.detail.availableOn"),
-                                    platforms: viewModel.streamingPlatforms
-                                )
-                                .opacity(isContentVisible ? 1 : 0)
-                                .offset(y: isContentVisible ? 0 : 36)
-                            }
-
-                            if !viewModel.similarMovies.isEmpty {
-                                MovieDetailCarouselSection(
-                                    title: Localization.string("movies.detail.similar"),
-                                    movies: viewModel.similarMovies
-                                )
-                                .opacity(isContentVisible ? 1 : 0)
-                                .offset(y: isContentVisible ? 0 : 40)
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -167,6 +142,13 @@ struct MovieDetailView: View {
         guard let item else { return }
         toastCenter.show(message: item.message, style: item.style)
         viewModel.clearToast()
+    }
+
+    private var hasSupplementarySections: Bool {
+        !viewModel.directors.isEmpty ||
+        !viewModel.cast.isEmpty ||
+        !viewModel.streamingPlatforms.isEmpty ||
+        !viewModel.similarMovies.isEmpty
     }
 }
 
