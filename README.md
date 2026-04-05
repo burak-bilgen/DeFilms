@@ -205,3 +205,33 @@ The output above is representative of the intended suite shape and reporting sty
 
 ## Conclusion
 DeFilms is intentionally scoped, but it was built with production constraints in mind. The codebase is organized to be reviewable, testable, and extendable, and the implementation reflects engineering choices aimed at long-term maintainability rather than short-term demo value.
+
+## Screenshots
+<p align="center">
+  <!-- ONBOARDING -->
+  <img src="./Screenshots/Onboarding.png" width="150"/>
+
+  <!-- HOME / MOVIES -->
+  <img src="./Screenshots/Movies-Light.png" width="150"/>
+  <img src="./Screenshots/Movies-Dark.png" width="150"/>
+  <img src="./Screenshots/Movies-RTLSupport.png" width="150"/>
+</p>
+
+<p align="center">
+  <!-- DETAIL -->
+  <img src="./Screenshots/MovieDetail-Light.png" width="150"/>
+  <img src="./Screenshots/MovieDetail-Light-2.png" width="150"/>
+  <img src="./Screenshots/MovieDetail-Dark.png" width="150"/>
+  <img src="./Screenshots/MovieDetail-Dark-2.png" width="150"/>
+</p>
+
+<p align="center">
+  <!-- SEARCH -->
+  <img src="./Screenshots/MovieSearch-Light.png" width="150"/>
+
+  <!-- FAVORITES -->
+  <img src="./Screenshots/Favorites-Dark.png" width="150"/>
+
+  <!-- SETTINGS -->
+  <img src="./Screenshots/Settings-Light.png" width="150"/>
+</p>
