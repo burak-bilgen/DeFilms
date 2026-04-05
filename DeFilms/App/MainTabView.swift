@@ -31,54 +31,19 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            NavigationStack(path: $movieCoordinator.path) {
-                MoviesView(
-                    viewModel: moviesViewModel,
-                    openFavorites: {
-                        selection = .favorites
-                    }
-                )
-                .navigationDestination(for: MovieRoute.self) { route in
-                    switch route {
-                    case let .detail(movie):
-                        MovieDetailView(viewModel: container.moviesFactory.makeDetailViewModel(movie: movie))
-                    }
-                }
-            }
-            .environmentObject(movieCoordinator)
+            moviesTab
                 .tag(Tab.movies)
                 .tabItem {
                     Label(Localization.string("tab.movies"), systemImage: selection == .movies ? "movieclapper.fill" : "movieclapper")
                 }
 
-            NavigationStack(path: $favoritesCoordinator.path) {
-                FavoritesView(
-                    viewModel: favoritesViewModel
-                )
-                    .navigationDestination(for: FavoritesRoute.self) { route in
-                        switch route {
-                        case let .list(listID):
-                            FavoriteListDetailView(
-                                viewModel: container.favoritesFactory.makeListDetailViewModel(
-                                    listID: listID,
-                                    favoritesStore: favoritesStore
-                                )
-                            )
-                        case let .movie(movie):
-                            MovieDetailView(viewModel: container.moviesFactory.makeDetailViewModel(movie: movie))
-                        }
-                    }
-            }
-            .environmentObject(favoritesCoordinator)
+            favoritesTab
                 .tag(Tab.favorites)
                 .tabItem {
                     Label(Localization.string("tab.favorites"), systemImage: selection == .favorites ? "rectangle.stack.badge.play.fill" : "rectangle.stack.badge.play")
                 }
 
-            SettingsView(
-                container: container,
-                viewModel: container.settingsFactory.makeSettingsViewModel()
-            )
+            settingsTab
                 .tag(Tab.settings)
                 .tabItem {
                     Label(Localization.string("tab.settings"), systemImage: selection == .settings ? "gearshape.fill" : "gearshape")
@@ -86,6 +51,53 @@ struct MainTabView: View {
         }
         .id(preferences.interfaceLayoutID)
         .tint(.primary)
+    }
+
+    private var moviesTab: some View {
+        NavigationStack(path: $movieCoordinator.path) {
+            MoviesView(
+                viewModel: moviesViewModel,
+                openFavorites: {
+                    selection = .favorites
+                }
+            )
+            .navigationDestination(for: MovieRoute.self) { route in
+                switch route {
+                case let .detail(movie):
+                    MovieDetailView(viewModel: container.moviesFactory.makeDetailViewModel(movie: movie))
+                }
+            }
+        }
+        .environmentObject(movieCoordinator)
+    }
+
+    private var favoritesTab: some View {
+        NavigationStack(path: $favoritesCoordinator.path) {
+            FavoritesView(
+                viewModel: favoritesViewModel
+            )
+            .navigationDestination(for: FavoritesRoute.self) { route in
+                switch route {
+                case let .list(listID):
+                    FavoriteListDetailView(
+                        viewModel: container.favoritesFactory.makeListDetailViewModel(
+                            listID: listID,
+                            favoritesStore: favoritesStore
+                        )
+                    )
+                case let .movie(movie):
+                    MovieDetailView(viewModel: container.moviesFactory.makeDetailViewModel(movie: movie))
+                }
+            }
+        }
+        .environmentObject(favoritesCoordinator)
+    }
+
+    private var settingsTab: some View {
+        SettingsView(
+            container: container,
+            viewModel: container.settingsFactory.makeSettingsViewModel()
+        )
     }
 }
 
