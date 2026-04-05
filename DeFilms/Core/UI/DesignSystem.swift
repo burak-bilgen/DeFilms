@@ -87,6 +87,7 @@ struct PrimaryProminentButtonStyle: ButtonStyle {
             .padding(.horizontal, AppSpacing.lg)
             .background(Color.primary.opacity(configuration.isPressed ? 0.86 : 1))
             .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
+            .scaleEffect(configuration.isPressed ? 0.985 : 1)
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }

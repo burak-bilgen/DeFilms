@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SkeletonBlock: View {
     var cornerRadius: CGFloat = AppCornerRadius.sm
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shimmerOffset: CGFloat = -1.2
 
     var body: some View {
@@ -50,6 +51,7 @@ struct SkeletonBlock: View {
                 }
                 .clipShape(shape)
                 .onAppear {
+                    guard !reduceMotion else { return }
                     shimmerOffset = -1.2
                     withAnimation(.linear(duration: 1.15).repeatForever(autoreverses: false)) {
                         shimmerOffset = 1.2
@@ -59,6 +61,7 @@ struct SkeletonBlock: View {
                     shimmerOffset = -1.2
                 }
         }
+        .accessibilityHidden(true)
     }
 }
 
@@ -77,6 +80,7 @@ struct MovieCardSkeletonView: View {
             }
             .padding(.horizontal, 2)
         }
+        .accessibilityHidden(true)
     }
 }
 
@@ -95,6 +99,7 @@ struct MovieSectionSkeletonView: View {
                 }
             }
         }
+        .accessibilityHidden(true)
     }
 }
 
@@ -107,6 +112,7 @@ struct MovieGridSkeletonView: View {
                 MovieCardSkeletonView()
             }
         }
+        .accessibilityHidden(true)
     }
 }
 
@@ -153,5 +159,6 @@ struct MovieDetailSkeletonView: View {
             }
         }
         .ignoresSafeArea(edges: .top)
+        .accessibilityHidden(true)
     }
 }

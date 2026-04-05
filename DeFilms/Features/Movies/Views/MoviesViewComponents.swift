@@ -104,7 +104,7 @@ struct MoviesSearchControlsRow: View {
                         systemImage: "line.3.horizontal.decrease.circle"
                     )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressableScaleButtonStyle())
             }
 
             if shouldShowSortControl {
@@ -136,7 +136,7 @@ struct MoviesSearchControlsRow: View {
                 Button(action: resetFiltersAndSort) {
                     SearchControlIconBubble(systemImage: "arrow.counterclockwise")
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressableScaleButtonStyle())
                 .accessibilityLabel(Localization.string("movies.filter.reset"))
                 .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.92)))
             }

@@ -12,6 +12,7 @@ struct FavoriteListPickerView: View {
 
     @EnvironmentObject private var favoritesStore: FavoritesStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @State private var isCreateListPresented = false
     @State private var listPendingRemoval: FavoriteList?
@@ -99,7 +100,7 @@ struct FavoriteListPickerView: View {
             .buttonStyle(.plain)
         }
         .padding(16)
-        .frame(width: 300)
+        .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : 320)
         .background(Color(.systemBackground))
         .accessibilityElement(children: .contain)
         .alert(

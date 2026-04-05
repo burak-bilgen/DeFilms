@@ -12,7 +12,7 @@ struct SettingsAccountOverviewCard: View {
     var body: some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             ZStack {
-                Circle()
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(Color.primary.opacity(0.08))
                     .frame(width: 52, height: 52)
 
@@ -62,11 +62,14 @@ struct SettingsValueRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: symbol)
-                .foregroundStyle(.secondary)
-                .frame(width: 24)
+                .foregroundStyle(.primary)
+                .frame(width: 28, height: 28)
+                .background(Color.primary.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .accessibilityHidden(true)
 
             Text(title)
+                .foregroundStyle(.primary)
 
             Spacer()
 
@@ -81,14 +84,22 @@ struct SettingsValueRow: View {
 struct SettingsSimpleRow: View {
     let symbol: String
     let title: String
+    @Environment(\.layoutDirection) private var layoutDirection
 
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: symbol)
-                .foregroundStyle(.secondary)
-                .frame(width: 24)
+                .foregroundStyle(.primary)
+                .frame(width: 28, height: 28)
+                .background(Color.primary.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .accessibilityHidden(true)
             Text(title)
+                .foregroundStyle(.primary)
+            Spacer()
+            Image(systemName: layoutDirection == .rightToLeft ? "chevron.left" : "chevron.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.tertiary)
         }
         .frame(minHeight: 28)
         .accessibilityElement(children: .combine)
@@ -122,6 +133,7 @@ struct ThemeSelectionView: View {
                 }
             }
         }
+        .buttonStyle(PressableScaleButtonStyle())
         .accessibilityValue(preferences.selectedTheme == theme ? Localization.string("common.selected") : "")
     }
 }
@@ -158,6 +170,7 @@ struct LanguageSelectionView: View {
                 }
             }
         }
+        .buttonStyle(PressableScaleButtonStyle())
         .accessibilityValue(preferences.selectedLanguage == language ? Localization.string("common.selected") : "")
     }
 }

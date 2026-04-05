@@ -12,6 +12,7 @@ struct MovieDetailHeroHeaderView: View {
     let scrollOffset: CGFloat
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     var body: some View {
         let collapseProgress = min(max(-scrollOffset / (heroHeight * 0.55), 0), 1)
         let contentOpacity = Double(1 - (collapseProgress * 0.22))
@@ -53,38 +54,69 @@ struct MovieDetailHeroHeaderView: View {
     }
 
     private var heroContent: some View {
-        HStack(alignment: .bottom, spacing: AppSpacing.lg - 2) {
-            PosterImageView(
-                url: viewModel.posterURL,
-                cornerRadius: AppCornerRadius.md + 4,
-                placeholderSystemImage: "film"
-            )
-            .frame(width: AppDimension.posterHeroWidth, height: AppDimension.posterHeroHeight)
-            .shadow(color: .black.opacity(0.25), radius: 18, y: 12)
+        ViewThatFits(in: .vertical) {
+            compactHeroContent
+            regularHeroContent
+        }
+    }
 
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                Text(viewModel.title)
-                    .font(.system(size: 30, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white)
-                    .fixedSize(horizontal: false, vertical: true)
+    private var posterView: some View {
+        PosterImageView(
+            url: viewModel.posterURL,
+            cornerRadius: AppCornerRadius.md + 4,
+            placeholderSystemImage: "film"
+        )
+        .frame(width: AppDimension.posterHeroWidth, height: AppDimension.posterHeroHeight)
+        .shadow(color: .black.opacity(0.25), radius: 18, y: 12)
+        .accessibilityHidden(true)
+    }
 
-                HStack {
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Text(viewModel.title)
+                .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 26 : 30, weight: .heavy, design: .rounded))
+                .foregroundStyle(.white)
+                .fixedSize(horizontal: false, vertical: true)
+
+            ViewThatFits(in: .vertical) {
+                HStack(alignment: .top) {
                     if !viewModel.heroFacts.isEmpty {
                         heroFacts
                     }
-                    
+
                     MovieDetailRatingBadge(ratingText: viewModel.ratingText, style: .hero)
                         .padding(.leading, AppSpacing.md)
                 }
 
-                if viewModel.hasTrailer {
-                    trailerButton
-                        .padding(.leading, -6)
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    if !viewModel.heroFacts.isEmpty {
+                        heroFacts
+                    }
+
+                    MovieDetailRatingBadge(ratingText: viewModel.ratingText, style: .hero)
                 }
             }
-            .padding(.bottom, AppSpacing.sm - 2)
 
+            if viewModel.hasTrailer {
+                trailerButton
+                    .padding(.leading, -6)
+            }
+        }
+        .padding(.bottom, AppSpacing.sm - 2)
+    }
+
+    private var regularHeroContent: some View {
+        HStack(alignment: .bottom, spacing: AppSpacing.lg - 2) {
+            posterView
+            titleBlock
             Spacer(minLength: 0)
+        }
+    }
+
+    private var compactHeroContent: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            posterView
+            titleBlock
         }
     }
 
@@ -127,11 +159,12 @@ struct MovieDetailHeroHeaderView: View {
 
             Text(title)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
         }
         .foregroundStyle(.white)
         .padding(.horizontal, AppSpacing.md + 2)
-        .frame(height: AppDimension.controlHeight)
+        .frame(minHeight: AppDimension.controlHeight)
         .background(Color.black.opacity(0.28))
         .clipShape(Capsule())
         .overlay(

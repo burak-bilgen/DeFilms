@@ -15,6 +15,8 @@ struct AuthFormContainer<Content: View>: View {
             content
         }
         .tint(.primary)
+        .scrollContentBackground(.hidden)
+        .background(AppPalette.screenBackground)
         .navigationTitle(title ?? "")
         .navigationBarTitleDisplayMode(.inline)
     }

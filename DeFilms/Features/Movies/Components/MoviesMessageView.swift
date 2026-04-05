@@ -30,11 +30,11 @@ struct MoviesMessageView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
 
             if let buttonTitle, let action {
                 Button(buttonTitle, action: action)
-                    .buttonStyle(.borderedProminent)
-                    .tint(.primary)
+                    .buttonStyle(PrimaryProminentButtonStyle())
             }
         }
         .padding(AppSpacing.xl)

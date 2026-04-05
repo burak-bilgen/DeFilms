@@ -115,6 +115,7 @@ struct FavoritesSummaryCard: View {
 
 struct FavoriteListCard: View {
     let list: FavoriteList
+    @Environment(\.layoutDirection) private var layoutDirection
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -132,7 +133,7 @@ struct FavoriteListCard: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
+                Image(systemName: layoutDirection == .rightToLeft ? "chevron.left" : "chevron.right")
                     .font(.footnote.weight(.bold))
                     .foregroundStyle(.secondary)
                     .padding(.top, 6)
