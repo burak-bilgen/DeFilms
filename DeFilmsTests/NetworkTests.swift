@@ -22,6 +22,17 @@ final class NetworkRequestBuilderTests: XCTestCase {
         XCTAssertEqual(queryItems["language"], AppLanguage.turkish.tmdbLanguageCode)
     }
 
+    func testRequestBuilderUsesEndpointCachePolicy() throws {
+        let builder = NetworkRequestBuilder(
+            apiKeyProvider: { "test-key" },
+            languageProvider: { .english }
+        )
+
+        let request = try builder.makeRequest(endpoint: TMDBEndpoint.genreList)
+
+        XCTAssertEqual(request.cachePolicy, .returnCacheDataElseLoad)
+    }
+
     func testRequestBuilderUsesEndpointProvidedLanguageWhenPresent() throws {
         let builder = NetworkRequestBuilder(
             apiKeyProvider: { "test-key" },
@@ -140,6 +151,64 @@ final class NetworkManagerTests: XCTestCase {
         } catch {
             XCTAssertEqual(error as? NetworkError, .decodingError)
         }
+    }
+
+    func testRequestMapsServerMessageFromPayload() async {
+        let session = makeSession()
+        let manager = NetworkManager(
+            session: session,
+            requestBuilder: NetworkRequestBuilder(
+                apiKeyProvider: { "test-key" },
+                languageProvider: { .english }
+            )
+        )
+
+        MockURLProtocol.handler = { request in
+            let data = #"{"status_message":"The resource you requested could not be found."}"#.data(using: .utf8) ?? Data()
+            let response = try XCTUnwrap(
+                HTTPURLResponse(url: try XCTUnwrap(request.url), statusCode: 404, httpVersion: nil, headerFields: nil)
+            )
+            return (response, data)
+        }
+
+        do {
+            let _: MovieResponse = try await manager.request(endpoint: TMDBEndpoint.popularMovies(page: 1))
+            XCTFail("Expected server error")
+        } catch {
+            XCTAssertEqual(
+                error as? NetworkError,
+                .serverError(statusCode: 404, message: "The resource you requested could not be found.")
+            )
+        }
+    }
+
+    func testRequestRetriesTransientTransportFailureOnce() async throws {
+        let session = makeSession()
+        let manager = NetworkManager(
+            session: session,
+            requestBuilder: NetworkRequestBuilder(
+                apiKeyProvider: { "test-key" },
+                languageProvider: { .english }
+            )
+        )
+        var attempts = 0
+
+        MockURLProtocol.handler = { request in
+            attempts += 1
+            if attempts == 1 {
+                throw URLError(.timedOut)
+            }
+            let data = #"{"page":1,"results":[],"total_pages":1}"#.data(using: .utf8) ?? Data()
+            let response = try XCTUnwrap(
+                HTTPURLResponse(url: try XCTUnwrap(request.url), statusCode: 200, httpVersion: nil, headerFields: nil)
+            )
+            return (response, data)
+        }
+
+        let response: MovieResponse = try await manager.request(endpoint: TMDBEndpoint.popularMovies(page: 1))
+
+        XCTAssertEqual(attempts, 2)
+        XCTAssertEqual(response.page, 1)
     }
 
     private func makeSession() -> URLSession {

@@ -1,176 +1,12 @@
 //
-//  SettingsAccountViews.swift
+//  AuthFormComponents.swift
 //  DeFilms
-//
-//  Created by Burak on 2.04.2026.
 //
 
 import SwiftUI
 import UIKit
 
-struct SignInView: View {
-    @EnvironmentObject private var toastCenter: ToastCenter
-    @Environment(\.dismiss) private var dismiss
-
-    @StateObject private var viewModel: SignInViewModel
-
-    init(viewModel: SignInViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
-    }
-
-    private var isSubmitEnabled: Bool {
-        !viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !viewModel.password.isEmpty
-    }
-
-    var body: some View {
-        AuthFormContainer(title: Localization.string("auth.signIn")) {
-            Section {
-                AuthInputField(
-                    title: Localization.string("auth.email"),
-                    text: $viewModel.email,
-                    systemImage: "envelope.fill",
-                    kind: .email
-                )
-
-                AuthInputField(
-                    title: Localization.string("auth.password"),
-                    text: $viewModel.password,
-                    systemImage: "lock.fill",
-                    kind: .password
-                )
-            }
-
-            Section {
-                Button(Localization.string("auth.signIn")) {
-                    if viewModel.submit() {
-                        dismiss()
-                    }
-                }
-                .disabled(!isSubmitEnabled)
-            }
-        }
-        .onChange(of: viewModel.toastItem?.id) { _ in
-            guard let item = viewModel.toastItem else { return }
-            toastCenter.show(message: item.message, style: item.style)
-            viewModel.clearToast()
-        }
-    }
-}
-
-struct SignUpView: View {
-    @EnvironmentObject private var toastCenter: ToastCenter
-    @Environment(\.dismiss) private var dismiss
-
-    @StateObject private var viewModel: SignUpViewModel
-
-    init(viewModel: SignUpViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
-    }
-
-    private var isSubmitEnabled: Bool {
-        !viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !viewModel.password.isEmpty &&
-        !viewModel.confirmPassword.isEmpty
-    }
-
-    var body: some View {
-        AuthFormContainer(title: Localization.string("auth.signUp")) {
-            Section {
-                AuthInputField(
-                    title: Localization.string("auth.email"),
-                    text: $viewModel.email,
-                    systemImage: "envelope.fill",
-                    kind: .email
-                )
-                AuthInputField(
-                    title: Localization.string("auth.password"),
-                    text: $viewModel.password,
-                    systemImage: "lock.fill",
-                    kind: .password
-                )
-                AuthInputField(
-                    title: Localization.string("auth.confirmPassword"),
-                    text: $viewModel.confirmPassword,
-                    systemImage: "checkmark.shield.fill",
-                    kind: .password
-                )
-            }
-
-            Section {
-                Button(Localization.string("auth.createAccount")) {
-                    if viewModel.submit() {
-                        dismiss()
-                    }
-                }
-                .disabled(!isSubmitEnabled)
-            }
-        }
-        .onChange(of: viewModel.toastItem?.id) { _ in
-            guard let item = viewModel.toastItem else { return }
-            toastCenter.show(message: item.message, style: item.style)
-            viewModel.clearToast()
-        }
-    }
-}
-
-struct ChangePasswordView: View {
-    @EnvironmentObject private var toastCenter: ToastCenter
-    @Environment(\.dismiss) private var dismiss
-
-    @StateObject private var viewModel: ChangePasswordViewModel
-
-    init(viewModel: ChangePasswordViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
-    }
-
-    private var isSubmitEnabled: Bool {
-        !viewModel.currentPassword.isEmpty &&
-        !viewModel.newPassword.isEmpty &&
-        !viewModel.confirmPassword.isEmpty
-    }
-
-    var body: some View {
-        AuthFormContainer(title: Localization.string("auth.changePassword")) {
-            Section {
-                AuthInputField(
-                    title: Localization.string("auth.currentPassword"),
-                    text: $viewModel.currentPassword,
-                    systemImage: "lock.rotation",
-                    kind: .password
-                )
-                AuthInputField(
-                    title: Localization.string("auth.newPassword"),
-                    text: $viewModel.newPassword,
-                    systemImage: "lock.open.fill",
-                    kind: .newPassword
-                )
-                AuthInputField(
-                    title: Localization.string("auth.confirmPassword"),
-                    text: $viewModel.confirmPassword,
-                    systemImage: "checkmark.shield.fill",
-                    kind: .newPassword
-                )
-            }
-
-            Section {
-                Button(Localization.string("auth.changePassword")) {
-                    if viewModel.submit() {
-                        dismiss()
-                    }
-                }
-                .disabled(!isSubmitEnabled)
-            }
-        }
-        .onChange(of: viewModel.toastItem?.id) { _ in
-            guard let item = viewModel.toastItem else { return }
-            toastCenter.show(message: item.message, style: item.style)
-            viewModel.clearToast()
-        }
-    }
-}
-
-private struct AuthFormContainer<Content: View>: View {
+struct AuthFormContainer<Content: View>: View {
     var title: String? = nil
     @ViewBuilder let content: Content
 
@@ -184,7 +20,7 @@ private struct AuthFormContainer<Content: View>: View {
     }
 }
 
-private struct AuthInputField: View {
+struct AuthInputField: View {
     enum Kind {
         case email
         case password
@@ -317,7 +153,7 @@ private struct AuthInputField: View {
     }
 }
 
-private struct NeutralSecureField: UIViewRepresentable {
+struct NeutralSecureField: UIViewRepresentable {
     let placeholder: String
     @Binding var text: String
     let isSecureEntry: Bool
@@ -370,7 +206,6 @@ private struct NeutralSecureField: UIViewRepresentable {
                 uiView.text = existingText
             }
         }
-
     }
 
     final class Coordinator: NSObject, UITextFieldDelegate {

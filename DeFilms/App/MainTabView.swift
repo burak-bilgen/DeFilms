@@ -21,9 +21,9 @@ struct MainTabView: View {
     init(container: AppContainer, favoritesStore: FavoritesStore) {
         self.container = container
         self.favoritesStore = favoritesStore
-        _moviesViewModel = StateObject(wrappedValue: container.makeMovieSearchViewModel())
+        _moviesViewModel = StateObject(wrappedValue: container.moviesFactory.makeSearchViewModel())
         _favoritesViewModel = StateObject(
-            wrappedValue: container.makeFavoritesViewModel(
+            wrappedValue: container.favoritesFactory.makeFavoritesViewModel(
                 favoritesStore: favoritesStore
             )
         )
@@ -41,7 +41,7 @@ struct MainTabView: View {
                 .navigationDestination(for: MovieRoute.self) { route in
                     switch route {
                     case let .detail(movie):
-                        MovieDetailView(viewModel: container.makeMovieDetailViewModel(movie: movie))
+                        MovieDetailView(viewModel: container.moviesFactory.makeDetailViewModel(movie: movie))
                     }
                 }
             }
@@ -59,13 +59,13 @@ struct MainTabView: View {
                         switch route {
                         case let .list(listID):
                             FavoriteListDetailView(
-                                viewModel: container.makeFavoriteListDetailViewModel(
+                                viewModel: container.favoritesFactory.makeListDetailViewModel(
                                     listID: listID,
                                     favoritesStore: favoritesStore
                                 )
                             )
                         case let .movie(movie):
-                            MovieDetailView(viewModel: container.makeMovieDetailViewModel(movie: movie))
+                            MovieDetailView(viewModel: container.moviesFactory.makeDetailViewModel(movie: movie))
                         }
                     }
             }
@@ -77,7 +77,7 @@ struct MainTabView: View {
 
             SettingsView(
                 container: container,
-                viewModel: container.makeSettingsViewModel()
+                viewModel: container.settingsFactory.makeSettingsViewModel()
             )
                 .tag(Tab.settings)
                 .tabItem {

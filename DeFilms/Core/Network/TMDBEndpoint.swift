@@ -65,6 +65,24 @@ enum TMDBEndpoint: Endpoint {
         .get
     }
 
+    var cachePolicy: URLRequest.CachePolicy {
+        switch self {
+        case .genreList, .movieWatchProviders:
+            return .returnCacheDataElseLoad
+        default:
+            return .reloadRevalidatingCacheData
+        }
+    }
+
+    var retryPolicy: NetworkRetryPolicy {
+        switch self {
+        case .personExternalIDs:
+            return .none
+        default:
+            return .transient(maxRetryCount: 1)
+        }
+    }
+
     func queryItems(for language: AppLanguage) -> [URLQueryItem] {
         switch self {
         case let .searchMovie(query, page):

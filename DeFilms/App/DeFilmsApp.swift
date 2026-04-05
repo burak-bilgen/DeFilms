@@ -26,7 +26,7 @@ struct DeFilmsApp: App {
         _preferences = StateObject(wrappedValue: preferences)
         _sessionManager = StateObject(wrappedValue: authManager)
         _toastCenter = StateObject(wrappedValue: toastCenter)
-        _favoritesStore = StateObject(wrappedValue: container.makeFavoritesStore())
+        _favoritesStore = StateObject(wrappedValue: container.favoritesFactory.makeStore())
         AppLogger.log("Application configured", category: .app, level: .success)
     }
 

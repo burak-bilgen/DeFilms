@@ -48,7 +48,7 @@ struct NetworkRequestBuilder: NetworkRequestBuilding {
             throw NetworkError.invalidURL
         }
 
-        var request = URLRequest(url: url, cachePolicy: .reloadRevalidatingCacheData)
+        var request = URLRequest(url: url, cachePolicy: endpoint.cachePolicy)
         request.httpMethod = endpoint.method.rawValue
         request.timeoutInterval = timeoutInterval
         return request

@@ -10,6 +10,14 @@ import Foundation
 final class NetworkManager: NetworkServiceProtocol {
     static let shared = NetworkManager()
 
+    private struct APIErrorPayload: Decodable {
+        let statusMessage: String?
+
+        private enum CodingKeys: String, CodingKey {
+            case statusMessage = "status_message"
+        }
+    }
+
     private let session: URLSession
     private let decoder: JSONDecoder
     private let requestBuilder: NetworkRequestBuilding
@@ -38,25 +46,18 @@ final class NetworkManager: NetworkServiceProtocol {
 
         AppLogger.log("Request started: \(endpointDescription)", category: .network)
 
-        let data: Data
-        let response: URLResponse
+        let result: (Data, URLResponse)
 
         do {
-            (data, response) = try await session.data(for: request)
-        } catch is CancellationError {
-            AppLogger.log("Request cancelled: \(endpointDescription)", category: .network, level: .warning)
-            throw NetworkError.cancelled
-        } catch let error as URLError {
-            AppLogger.log(
-                "Request failed: \(endpointDescription) [transport=\(error.code.rawValue)]",
-                category: .network,
-                level: .error
-            )
-            throw mapTransportError(error)
+            result = try await performRequest(request, endpoint: endpoint, endpointDescription: endpointDescription)
+        } catch let error as NetworkError {
+            throw error
         } catch {
             AppLogger.log("Request failed: \(endpointDescription) [unknown]", category: .network, level: .error)
             throw NetworkError.requestFailed
         }
+
+        let (data, response) = result
 
         guard let httpResponse = response as? HTTPURLResponse else {
             AppLogger.log("Request failed: \(endpointDescription) [invalid-response]", category: .network, level: .error)
@@ -69,7 +70,10 @@ final class NetworkManager: NetworkServiceProtocol {
                 category: .network,
                 level: .error
             )
-            throw NetworkError.serverError(statusCode: httpResponse.statusCode)
+            throw NetworkError.serverError(
+                statusCode: httpResponse.statusCode,
+                message: decodeServerErrorMessage(from: data)
+            )
         }
 
         do {
@@ -86,6 +90,40 @@ final class NetworkManager: NetworkServiceProtocol {
         }
     }
 
+    private func performRequest(
+        _ request: URLRequest,
+        endpoint: Endpoint,
+        endpointDescription: String
+    ) async throws -> (Data, URLResponse) {
+        var attempt = 0
+
+        while true {
+            do {
+                return try await session.data(for: request)
+            } catch is CancellationError {
+                AppLogger.log("Request cancelled: \(endpointDescription)", category: .network, level: .warning)
+                throw NetworkError.cancelled
+            } catch let error as URLError {
+                let mappedError = mapTransportError(error)
+                if shouldRetry(after: error, policy: endpoint.retryPolicy, attempt: attempt) {
+                    attempt += 1
+                    AppLogger.log(
+                        "Request retrying: \(endpointDescription) [attempt=\(attempt)]",
+                        category: .network,
+                        level: .warning
+                    )
+                    continue
+                }
+                AppLogger.log(
+                    "Request failed: \(endpointDescription) [transport=\(error.code.rawValue)]",
+                    category: .network,
+                    level: .error
+                )
+                throw mappedError
+            }
+        }
+    }
+
     private func mapTransportError(_ error: URLError) -> NetworkError {
         switch error.code {
         case .timedOut:
@@ -95,5 +133,26 @@ final class NetworkManager: NetworkServiceProtocol {
         default:
             return .requestFailed
         }
+    }
+
+    private func shouldRetry(
+        after error: URLError,
+        policy: NetworkRetryPolicy,
+        attempt: Int
+    ) -> Bool {
+        guard case let .transient(maxRetryCount) = policy, attempt < maxRetryCount else {
+            return false
+        }
+
+        switch error.code {
+        case .timedOut, .networkConnectionLost, .cannotConnectToHost:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func decodeServerErrorMessage(from data: Data) -> String? {
+        try? decoder.decode(APIErrorPayload.self, from: data).statusMessage
     }
 }

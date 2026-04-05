@@ -1,5 +1,5 @@
 //
-//  AppCoordinator.swift
+//  NavigationCoordinator.swift
 //  DeFilms
 //
 
@@ -17,13 +17,4 @@ final class NavigationCoordinator<Route: Hashable>: ObservableObject {
     func popToRoot() {
         path.removeAll()
     }
-}
-
-enum MovieRoute: Hashable {
-    case detail(Movie)
-}
-
-enum FavoritesRoute: Hashable {
-    case list(UUID)
-    case movie(Movie)
 }
