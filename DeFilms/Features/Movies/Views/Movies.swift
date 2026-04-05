@@ -54,15 +54,38 @@ struct MoviesView: View {
         !viewModel.shouldShowBrowseContent && (searchResultCount > 0 || hasActiveFilters || hasActiveSorting)
     }
 
+    private var searchSummaryTitle: String {
+        Localization.string("movies.results.count", searchResultCount)
+    }
+
+    private var searchSummaryBadgeText: String {
+        hasActiveFilters || hasActiveSorting
+            ? Localization.string("movies.filter.title")
+            : Localization.string("movies.sort.relevance")
+    }
+
+    private var searchSummaryBadgeSystemImage: String {
+        hasActiveFilters || hasActiveSorting ? "slider.horizontal.3" : "sparkles"
+    }
+
+    private var displayedSearchMovies: [Movie] {
+        viewModel.filteredSearchResults
+    }
+
     var body: some View {
         VStack(spacing: AppSpacing.sm) {
-            headerBar
+            MoviesHeaderBar(openFavorites: openFavorites)
                 .padding(.horizontal)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
                     if shouldShowSearchSummary {
-                        searchSummaryCard
+                        MoviesSearchSummaryCard(
+                            title: searchSummaryTitle,
+                            subtitle: summarySubtitle,
+                            badgeText: searchSummaryBadgeText,
+                            badgeSystemImage: searchSummaryBadgeSystemImage
+                        )
                             .padding(.horizontal)
                             .transition(.move(edge: .top).combined(with: .opacity))
                     }
@@ -72,16 +95,47 @@ struct MoviesView: View {
                         .animation(.easeInOut(duration: 0.2), value: viewModel.shouldShowBrowseContent)
 
                     if !viewModel.shouldShowBrowseContent {
-                        searchControlsRow
+                        MoviesSearchControlsRow(
+                            shouldShowFilterControl: shouldShowFilterControl,
+                            shouldShowSortControl: shouldShowSortControl,
+                            shouldShowResetControls: shouldShowResetControls,
+                            selectedSortOption: viewModel.sortOption,
+                            openFilters: openFilters,
+                            selectSortOption: { option in
+                                viewModel.sortOption = option
+                            },
+                            resetSort: {
+                                viewModel.sortOption = .relevance
+                            },
+                            resetFiltersAndSort: viewModel.resetFiltersAndSort
+                        )
                             .padding(.horizontal)
                             .transition(.opacity)
                     }
 
                     if viewModel.shouldShowBrowseContent {
-                        browseContent
+                        MoviesBrowseContentSection(
+                            searchHistory: viewModel.searchHistory,
+                            screenState: viewModel.screenState,
+                            browseSections: viewModel.browseSections,
+                            onSelectRecentSearch: selectRecentSearch,
+                            onClearSearchHistory: viewModel.clearSearchHistory,
+                            onReloadBrowseContent: reloadBrowseContent,
+                            localizedBrowseTitle: localizedBrowseTitle
+                        )
                             .transition(.opacity)
                     } else {
-                        searchContent
+                        MoviesSearchContentSection(
+                            screenState: viewModel.screenState,
+                            query: viewModel.query,
+                            displayedMovies: displayedSearchMovies,
+                            searchColumns: searchColumns,
+                            isLoadingNextSearchPage: viewModel.isLoadingNextSearchPage,
+                            onOpenMovie: openMovieDetail,
+                            onLoadNextPage: loadNextSearchPage,
+                            onResetFiltersAndSort: viewModel.resetFiltersAndSort,
+                            onPerformSearch: performSearch
+                        )
                             .transition(.opacity)
                     }
                 }
@@ -121,81 +175,6 @@ struct MoviesView: View {
         }
     }
 
-    private var headerBar: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Image("AppLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 72)
-                    .accessibilityLabel(Localization.string("app.logo"))
-            }
-
-            Spacer()
-
-            Button(action: openFavorites) {
-                Image(systemName: "rectangle.stack.badge.play")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 42, height: 42)
-                    .background(AppPalette.cardBackground)
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle()
-                            .stroke(AppPalette.border, lineWidth: 1)
-                    )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Localization.string("favorites.navigate"))
-        }
-    }
-
-    private var searchSummaryCard: some View {
-        HStack(alignment: .center, spacing: AppSpacing.md) {
-            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text(
-                    viewModel.shouldShowBrowseContent
-                    ? Localization.string("movies.search.placeholder")
-                    : Localization.string("movies.results.count", searchResultCount)
-                )
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
-
-                Text(summarySubtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-
-            Spacer(minLength: AppSpacing.md)
-
-            summaryBadge(
-                text: hasActiveFilters || hasActiveSorting
-                ? Localization.string("movies.filter.title")
-                : Localization.string("movies.sort.relevance"),
-                systemImage: hasActiveFilters || hasActiveSorting
-                ? "slider.horizontal.3"
-                : "sparkles"
-            )
-        }
-        .padding(AppSpacing.md)
-        .background(
-            LinearGradient(
-                colors: [
-                    AppPalette.cardBackground,
-                    AppPalette.cardAccentBackground
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous)
-                .stroke(AppPalette.border, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
-    }
-
     private var searchSection: some View {
         MoviesSearchBar(
             text: $viewModel.query,
@@ -203,193 +182,6 @@ struct MoviesView: View {
             onSubmit: performSearch,
             onClear: viewModel.clearSearch
         )
-    }
-
-    private var searchControlsRow: some View {
-        HStack(spacing: 10) {
-            if shouldShowFilterControl {
-                Button {
-                    Task {
-                        await viewModel.loadGenresIfNeeded()
-                        isFilterSheetPresented = true
-                    }
-                } label: {
-                    SearchControlBubble(
-                        title: Localization.string("movies.filter.title"),
-                        systemImage: "line.3.horizontal.decrease.circle"
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-
-            if shouldShowSortControl {
-                Menu {
-                    ForEach(MovieSortOption.allCases) { option in
-                        Button {
-                            viewModel.sortOption = option
-                        } label: {
-                            if viewModel.sortOption == option {
-                                Label(option.title, systemImage: "checkmark")
-                            } else {
-                                Text(option.title)
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    Button(Localization.string("movies.sort.reset")) {
-                        viewModel.sortOption = .relevance
-                    }
-                } label: {
-                    SearchControlBubble(
-                        title: Localization.string("movies.sort.title"),
-                        systemImage: "arrow.up.arrow.down.circle"
-                    )
-                }
-            }
-
-            if shouldShowResetControls {
-                Button(action: viewModel.resetFiltersAndSort) {
-                    SearchControlIconBubble(systemImage: "arrow.counterclockwise")
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Localization.string("movies.filter.reset"))
-                .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.92)))
-            }
-        }
-        .padding(.horizontal, AppSpacing.sm)
-        .padding(.vertical, AppSpacing.xs)
-        .background(AppPalette.cardBackground.opacity(0.8))
-        .overlay(
-            Capsule()
-                .stroke(AppPalette.border, lineWidth: 1)
-        )
-        .clipShape(Capsule())
-    }
-
-    @ViewBuilder
-    private var browseContent: some View {
-        if !viewModel.searchHistory.isEmpty {
-            SearchHistoryView(
-                history: viewModel.searchHistory,
-                onSelect: { selected in
-                    Task {
-                        await viewModel.selectRecentSearch(selected)
-                    }
-                },
-                onClear: viewModel.clearSearchHistory
-            )
-            .padding(.bottom, 10)
-        }
-
-        switch viewModel.screenState {
-        case .loadingBrowse:
-            ForEach(0..<4, id: \.self) { _ in
-                MovieSectionSkeletonView()
-                    .padding(.horizontal, 16)
-            }
-        case let .error(message) where viewModel.browseSections.isEmpty:
-            MoviesMessageView(
-                title: Localization.string("movies.message.contentUnavailable.title"),
-                message: message,
-                buttonTitle: Localization.string("common.tryAgain"),
-                action: reloadBrowseContent
-            )
-            .padding(.horizontal, 16)
-        default:
-            ForEach(viewModel.browseSections) { section in
-                MovieHorizontalSection(
-                    title: localizedBrowseTitle(for: section.id),
-                    movies: section.movies
-                )
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var searchContent: some View {
-        let displayedMovies = viewModel.filteredSearchResults
-
-        switch viewModel.screenState {
-        case .searching:
-            MovieGridSkeletonView(columns: searchColumns)
-                .padding(.horizontal, 16)
-                .padding(.top, 6)
-        case .loadedResults:
-            if displayedMovies.isEmpty {
-                searchEmptyStateContainer(
-                    title: Localization.string("movies.message.filteredEmpty.title"),
-                    message: Localization.string("movies.message.filteredEmpty.body"),
-                    buttonTitle: Localization.string("movies.filter.reset"),
-                    action: viewModel.resetFiltersAndSort
-                )
-            } else {
-                VStack(spacing: AppSpacing.lg) {
-                    LazyVGrid(columns: searchColumns, alignment: .center, spacing: AppSpacing.xl) {
-                        ForEach(displayedMovies) { movie in
-                            MovieCardNavigationLink(movie: movie, cardStyle: .rail) {
-                                coordinator.push(.detail(movie))
-                            }
-                            .onAppear {
-                                Task {
-                                    await viewModel.loadNextSearchPageIfNeeded(currentMovie: movie, displayedMovies: displayedMovies)
-                                }
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
-                    .animation(.easeInOut(duration: 0.22), value: displayedMovies.map(\.id))
-
-                    paginationFooter
-                }
-            }
-        case .emptyResults:
-            searchEmptyStateContainer(
-                title: Localization.string("movies.message.noResults.title"),
-                message: Localization.string("movies.message.noResults.body", viewModel.query),
-                buttonTitle: nil,
-                action: nil,
-                animationName: "404"
-            )
-        case let .error(message):
-            MoviesMessageView(
-                title: Localization.string("movies.message.searchFailed.title"),
-                message: message,
-                buttonTitle: Localization.string("movies.action.searchAgain"),
-                action: performSearch
-            )
-            .padding(.horizontal, 16)
-        case .browse, .loadingBrowse:
-            EmptyView()
-        }
-    }
-
-    @ViewBuilder
-    private func searchEmptyStateContainer(
-        title: String,
-        message: String,
-        buttonTitle: String?,
-        action: (() -> Void)?,
-        animationName: String? = nil
-    ) -> some View {
-        VStack {
-            Spacer(minLength: AppSpacing.xxl)
-
-            MovieSearchEmptyStateView(
-                title: title,
-                message: message,
-                buttonTitle: buttonTitle,
-                action: action,
-                animationName: animationName
-            )
-            .frame(maxWidth: 380)
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, minHeight: AppDimension.emptyStateMinHeight)
-        .padding(.horizontal, 16)
     }
 
     private func performSearch() {
@@ -406,19 +198,30 @@ struct MoviesView: View {
         }
     }
 
-    @ViewBuilder
-    private var paginationFooter: some View {
-        ZStack {
-            if viewModel.isLoadingNextSearchPage {
-                ProgressView()
-                    .transition(.opacity)
-            }
+    private func openFilters() {
+        Task {
+            await viewModel.loadGenresIfNeeded()
+            isFilterSheetPresented = true
         }
-        .frame(height: 28)
-        .animation(.easeInOut(duration: 0.2), value: viewModel.isLoadingNextSearchPage)
     }
 
-    private func localizedBrowseTitle(for sectionID: String) -> String {
+    private func selectRecentSearch(_ selected: String) {
+        Task {
+            await viewModel.selectRecentSearch(selected)
+        }
+    }
+
+    private func openMovieDetail(_ movie: Movie) {
+        coordinator.push(.detail(movie))
+    }
+
+    private func loadNextSearchPage(for movie: Movie, displayedMovies: [Movie]) {
+        Task {
+            await viewModel.loadNextSearchPageIfNeeded(currentMovie: movie, displayedMovies: displayedMovies)
+        }
+    }
+
+    private func localizedBrowseTitle(_ sectionID: String) -> String {
         switch sectionID {
         case "trending-today":
             return Localization.string("movies.section.trendingToday")
@@ -449,87 +252,5 @@ struct MoviesView: View {
         }
 
         return viewModel.query
-    }
-
-    private func summaryBadge(text: String, systemImage: String) -> some View {
-        Label(text, systemImage: systemImage)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.primary)
-            .padding(.horizontal, 12)
-            .frame(height: 32)
-            .background(Color.primary.opacity(0.06))
-            .clipShape(Capsule())
-    }
-}
-
-private struct SearchControlBubble: View {
-    let title: String
-    let systemImage: String
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.caption.weight(.bold))
-                .frame(width: 18, height: 18)
-                .padding(8)
-                .foregroundStyle(.primary)
-                .background(
-                    Circle()
-                        .fill(Color.primary.opacity(0.06))
-                )
-
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .lineLimit(1)
-        }
-        .foregroundStyle(.primary)
-        .frame(height: AppDimension.controlHeight)
-        .padding(.horizontal, 10)
-        .background(
-            Capsule()
-                .fill(AppPalette.cardBackground)
-        )
-        .overlay(
-            Capsule()
-                .stroke(AppPalette.border, lineWidth: 1)
-        )
-    }
-}
-
-private struct SearchControlIconBubble: View {
-    let systemImage: String
-
-    var body: some View {
-        Image(systemName: systemImage)
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.primary)
-            .frame(width: AppDimension.controlHeight, height: AppDimension.controlHeight)
-            .background(
-                Circle()
-                    .fill(AppPalette.cardBackground)
-            )
-            .overlay(
-                Circle()
-                    .stroke(AppPalette.border, lineWidth: 1)
-            )
-    }
-}
-
-private struct MovieSearchEmptyStateView: View {
-    let title: String
-    let message: String
-    let buttonTitle: String?
-    let action: (() -> Void)?
-    let animationName: String?
-
-    var body: some View {
-        MoviesMessageView(
-            title: title,
-            message: message,
-            buttonTitle: buttonTitle,
-            action: action,
-            animationName: animationName
-        )
-        .frame(maxWidth: .infinity)
     }
 }
