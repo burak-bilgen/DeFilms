@@ -34,6 +34,7 @@ struct SearchHistoryView: View {
                     .buttonStyle(.plain)
                     .foregroundStyle(.secondary)
                     .accessibilityLabel(Localization.string("movies.searchHistory.clear"))
+                    .accessibilityIdentifier("movies.searchHistory.clearButton")
                 }
                 .padding(.horizontal, 16)
 

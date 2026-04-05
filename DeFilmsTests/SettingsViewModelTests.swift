@@ -3,13 +3,26 @@ import XCTest
 
 @MainActor
 final class SettingsViewModelTests: XCTestCase {
-    func testSignsOutThroughBoundSession() {
+    func test_SettingsViewModel_signsOutThroughBoundSession() {
         let sessionManager = MockBoundAuthSessionManager()
         let viewModel = SettingsViewModel(sessionManager: sessionManager)
 
         viewModel.signOut()
 
         XCTAssertTrue(sessionManager.didSignOut)
+    }
+
+    func test_SettingsViewModel_exposesSignedInEmailFromSession() {
+        let sessionManager = MockBoundAuthSessionManager()
+        let viewModel = SettingsViewModel(sessionManager: sessionManager)
+
+        XCTAssertEqual(viewModel.signedInEmail, "bound@example.com")
+    }
+
+    func test_SettingsViewModel_appVersionText_usesFallbackWhenBundleValuesAreMissing() {
+        let viewModel = SettingsViewModel(bundle: Bundle(), sessionManager: MockBoundAuthSessionManager())
+
+        XCTAssertEqual(viewModel.appVersionText, "1.0 (1)")
     }
 }
 

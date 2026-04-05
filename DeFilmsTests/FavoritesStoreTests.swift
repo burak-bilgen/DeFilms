@@ -1,11 +1,38 @@
-import Foundation
-import Testing
+import XCTest
 @testable import DeFilms
 
 @MainActor
-struct FavoritesViewModelTests {
-    @Test
-    func createRenameAndDeleteListUpdatesPublishedLists() async {
+final class FavoritesStoreTests: XCTestCase {
+    func test_FavoritesViewModel_initialState_usesStoreListsAndDerivedCount() {
+        let store = SpyFavoritesStore(
+            lists: [
+                FavoriteList(id: UUID(), name: "Weekend", movies: [FavoriteMovie(id: 1, title: "Dune", posterPath: nil, releaseDate: nil, voteAverage: nil)]),
+                FavoriteList(id: UUID(), name: "Sci-Fi", movies: [])
+            ]
+        )
+        let viewModel = FavoritesViewModel(favoritesStore: store)
+
+        XCTAssertEqual(viewModel.lists.count, 2)
+        XCTAssertEqual(viewModel.totalMovieCount, 1)
+    }
+
+    func test_FavoritesViewModel_publishesUpdatedLists_whenStoreChanges() async {
+        let firstList = FavoriteList(id: UUID(), name: "Weekend", movies: [])
+        let secondList = FavoriteList(id: UUID(), name: "Sci-Fi", movies: [])
+        let store = SpyFavoritesStore(lists: [firstList])
+        let viewModel = FavoritesViewModel(favoritesStore: store)
+
+        store.publish(lists: [firstList, secondList])
+
+        let didUpdate = await waitUntil {
+            viewModel.lists.count == 2
+        }
+
+        XCTAssertTrue(didUpdate)
+        XCTAssertEqual(viewModel.lists.map(\.name), ["Weekend", "Sci-Fi"])
+    }
+
+    func test_FavoritesViewModel_createRenameAndDeleteList_updatesPublishedLists() async {
         let repository = MockFavoritesRepository()
         let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
         let store = FavoritesStore(
@@ -15,19 +42,22 @@ struct FavoritesViewModelTests {
         let viewModel = FavoritesViewModel(favoritesStore: store)
 
         let created = await viewModel.createList(named: "Weekend")
-        #expect(created?.name == "Weekend")
-        #expect(viewModel.lists.count == 1)
 
-        let renamed = await viewModel.renameList(listID: created!.id, name: "Weekend Picks")
-        #expect(renamed)
-        #expect(viewModel.lists.first?.name == "Weekend Picks")
+        XCTAssertEqual(created?.name, "Weekend")
+        XCTAssertEqual(viewModel.lists.count, 1)
 
-        await viewModel.deleteList(listID: created!.id)
-        #expect(viewModel.lists.isEmpty)
+        let createdID = try XCTUnwrap(created?.id)
+        let renamed = await viewModel.renameList(listID: createdID, name: "Weekend Picks")
+
+        XCTAssertTrue(renamed)
+        XCTAssertEqual(viewModel.lists.first?.name, "Weekend Picks")
+
+        await viewModel.deleteList(listID: createdID)
+
+        XCTAssertTrue(viewModel.lists.isEmpty)
     }
 
-    @Test
-    func storeAdoptsLegacyGuestListsIntoSignedInAccountScope() throws {
+    func test_FavoritesStore_adoptsLegacyGuestListsIntoSignedInAccountScope() async throws {
         let repository = MockFavoritesRepository()
         let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
         let store = FavoritesStore(
@@ -37,15 +67,18 @@ struct FavoritesViewModelTests {
 
         try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
 
-        #expect(repository.lastAdoptedUserIdentifier == sessionManager.currentUserIdentifier)
-        #expect(repository.lastLegacyUserIdentifiers.contains("guest"))
-        #expect(repository.lastLegacyUserIdentifiers.contains(sessionManager.guestUserIdentifier))
-        #expect(repository.lastLegacyUserIdentifiers.contains("user@example.com"))
+        let didAdopt = await waitUntil {
+            repository.lastAdoptedUserIdentifier == sessionManager.currentUserIdentifier
+        }
+
+        XCTAssertTrue(didAdopt)
+        XCTAssertTrue(repository.lastLegacyUserIdentifiers.contains("guest"))
+        XCTAssertTrue(repository.lastLegacyUserIdentifiers.contains(sessionManager.guestUserIdentifier))
+        XCTAssertTrue(repository.lastLegacyUserIdentifiers.contains("user@example.com"))
         _ = store
     }
 
-    @Test
-    func storeReturnsExistingListForDuplicateNameAndDoesNotCreateNewOne() async {
+    func test_FavoritesStore_duplicateCreate_returnsExistingListWithoutCreatingNewOne() async {
         let repository = MockFavoritesRepository()
         repository.lists = [FavoriteList(id: UUID(), name: "Weekend", movies: [])]
         let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
@@ -56,12 +89,11 @@ struct FavoritesViewModelTests {
 
         let result = await store.createList(named: " weekend ")
 
-        #expect(result?.id == repository.lists.first?.id)
-        #expect(repository.lists.count == 1)
+        XCTAssertEqual(result?.id, repository.lists.first?.id)
+        XCTAssertEqual(repository.lists.count, 1)
     }
 
-    @Test
-    func storeRenameDuplicatePublishesDuplicateToast() async {
+    func test_FavoritesStore_renameDuplicate_publishesDuplicateToast() async {
         let first = FavoriteList(id: UUID(), name: "Weekend", movies: [])
         let second = FavoriteList(id: UUID(), name: "Sci-Fi", movies: [])
         let repository = MockFavoritesRepository()
@@ -74,12 +106,11 @@ struct FavoritesViewModelTests {
 
         let didRename = await store.renameList(listID: second.id, name: "Weekend")
 
-        #expect(didRename == false)
-        #expect(store.toastItem?.message == Localization.string("favorites.toast.duplicateList"))
+        XCTAssertFalse(didRename)
+        XCTAssertEqual(store.toastItem?.message, Localization.string("favorites.toast.duplicateList"))
     }
 
-    @Test
-    func storeRemoveFailurePublishesGenericToast() async {
+    func test_FavoritesStore_removeFailure_publishesGenericToastAndKeepsMovie() async {
         let listID = UUID()
         let repository = MockFavoritesRepository(removeMovieError: FavoritesServiceError.persistenceFailure)
         repository.lists = [
@@ -97,12 +128,11 @@ struct FavoritesViewModelTests {
 
         await store.remove(movieID: 7, from: listID)
 
-        #expect(store.toastItem?.message == Localization.string("favorites.toast.genericError"))
-        #expect(store.list(withID: listID)?.movies.count == 1)
+        XCTAssertEqual(store.toastItem?.message, Localization.string("favorites.toast.genericError"))
+        XCTAssertEqual(store.list(withID: listID)?.movies.count, 1)
     }
 
-    @Test
-    func storeDeleteFailurePublishesGenericToastAndKeepsList() async {
+    func test_FavoritesStore_deleteFailure_publishesGenericToastAndKeepsList() async {
         let list = FavoriteList(id: UUID(), name: "Weekend", movies: [])
         let repository = MockFavoritesRepository(deleteListError: FavoritesServiceError.persistenceFailure)
         repository.lists = [list]
@@ -114,12 +144,11 @@ struct FavoritesViewModelTests {
 
         await store.deleteList(listID: list.id)
 
-        #expect(store.toastItem?.message == Localization.string("favorites.toast.genericError"))
-        #expect(store.list(withID: list.id) != nil)
+        XCTAssertEqual(store.toastItem?.message, Localization.string("favorites.toast.genericError"))
+        XCTAssertNotNil(store.list(withID: list.id))
     }
 
-    @Test
-    func storeMoveFailurePublishesGenericToast() async {
+    func test_FavoritesStore_moveFailure_publishesGenericToast() async {
         let sourceListID = UUID()
         let destinationListID = UUID()
         let repository = MockFavoritesRepository(moveMovieError: FavoritesServiceError.persistenceFailure)
@@ -139,8 +168,58 @@ struct FavoritesViewModelTests {
 
         await store.move(movieID: 7, from: sourceListID, to: destinationListID)
 
-        #expect(store.toastItem?.message == Localization.string("favorites.toast.genericError"))
-        #expect(store.list(withID: sourceListID)?.movies.count == 1)
-        #expect(store.list(withID: destinationListID)?.movies.isEmpty == true)
+        XCTAssertEqual(store.toastItem?.message, Localization.string("favorites.toast.genericError"))
+        XCTAssertEqual(store.list(withID: sourceListID)?.movies.count, 1)
+        XCTAssertTrue(store.list(withID: destinationListID)?.movies.isEmpty == true)
+    }
+
+    func test_FavoriteListDetailViewModel_initialState_exposesListDestinationsAndShareText() {
+        let primaryListID = UUID()
+        let primaryList = FavoriteList(
+            id: primaryListID,
+            name: "Weekend",
+            movies: [FavoriteMovie(id: 1, title: "Dune", posterPath: nil, releaseDate: "2021-10-22", voteAverage: nil)]
+        )
+        let destinationList = FavoriteList(id: UUID(), name: "Sci-Fi", movies: [])
+        let store = SpyFavoritesStore(lists: [primaryList, destinationList])
+        let viewModel = FavoriteListDetailViewModel(listID: primaryListID, favoritesStore: store)
+
+        XCTAssertEqual(viewModel.list?.name, "Weekend")
+        XCTAssertEqual(viewModel.destinationLists.map(\.name), ["Sci-Fi"])
+        XCTAssertTrue(viewModel.shareText?.contains("Dune (2021)") == true)
+    }
+
+    func test_FavoriteListDetailViewModel_updatesPublishedList_whenStorePublishesChange() async {
+        let listID = UUID()
+        let store = SpyFavoritesStore(lists: [FavoriteList(id: listID, name: "Weekend", movies: [])])
+        let viewModel = FavoriteListDetailViewModel(listID: listID, favoritesStore: store)
+
+        store.publish(lists: [FavoriteList(id: listID, name: "Weekend Picks", movies: [])])
+
+        let didUpdate = await waitUntil {
+            viewModel.list?.name == "Weekend Picks"
+        }
+
+        XCTAssertTrue(didUpdate)
+    }
+
+    func test_FavoriteListDetailViewModel_removeAndMove_delegateToStore() async {
+        let listID = UUID()
+        let destinationListID = UUID()
+        let store = SpyFavoritesStore(
+            lists: [
+                FavoriteList(id: listID, name: "Weekend", movies: [FavoriteMovie(id: 1, title: "Dune", posterPath: nil, releaseDate: nil, voteAverage: nil)]),
+                FavoriteList(id: destinationListID, name: "Sci-Fi", movies: [])
+            ]
+        )
+        let viewModel = FavoriteListDetailViewModel(listID: listID, favoritesStore: store)
+
+        await viewModel.remove(movieID: 1)
+        await viewModel.move(movieID: 1, to: destinationListID)
+
+        XCTAssertEqual(store.removedMovies.count, 1)
+        XCTAssertEqual(store.movedMovies.count, 1)
+        XCTAssertEqual(store.removedMovies.first?.0, 1)
+        XCTAssertEqual(store.movedMovies.first?.2, destinationListID)
     }
 }

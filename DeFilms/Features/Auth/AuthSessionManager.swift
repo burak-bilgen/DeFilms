@@ -59,11 +59,13 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
     @Published private(set) var toastItem: ToastItem?
 
     private let keychainService: KeychainServicing
-    private let accountsKey = "auth.accounts"
-    private let sessionEmailKey = "auth.session.email"
-    private let sessionTokenKey = "auth.session.token"
-    private let sessionUserIdentifierKey = "auth.session.userIdentifier"
-    private let guestIdentifierKey = "auth.guest.identifier"
+    private enum StorageKey {
+        static let accounts = "auth.accounts"
+        static let sessionEmail = "auth.session.email"
+        static let sessionToken = "auth.session.token"
+        static let sessionUserIdentifier = "auth.session.userIdentifier"
+        static let guestIdentifier = "auth.guest.identifier"
+    }
 
     init(keychainService: KeychainServicing) {
         self.keychainService = keychainService
@@ -193,9 +195,9 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
     func signOut() {
         do {
-            try keychainService.delete(account: sessionEmailKey)
-            try keychainService.delete(account: sessionTokenKey)
-            try keychainService.delete(account: sessionUserIdentifierKey)
+            try keychainService.delete(account: StorageKey.sessionEmail)
+            try keychainService.delete(account: StorageKey.sessionToken)
+            try keychainService.delete(account: StorageKey.sessionUserIdentifier)
         } catch {
             AppLogger.log("Couldn't clear the saved session", category: .auth, level: .error)
         }
@@ -210,8 +212,8 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
     private func restoreSession() {
         guard
-            let emailData = try? keychainService.data(for: sessionEmailKey),
-            let tokenData = try? keychainService.data(for: sessionTokenKey),
+            let emailData = try? keychainService.data(for: StorageKey.sessionEmail),
+            let tokenData = try? keychainService.data(for: StorageKey.sessionToken),
             let email = String(data: emailData, encoding: .utf8),
             let token = String(data: tokenData, encoding: .utf8)
         else {
@@ -232,14 +234,14 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         }
 
         let token = UUID().uuidString
-        try keychainService.save(Data(email.utf8), for: sessionEmailKey)
-        try keychainService.save(Data(token.utf8), for: sessionTokenKey)
-        try keychainService.save(Data(account.id.utf8), for: sessionUserIdentifierKey)
+        try keychainService.save(Data(email.utf8), for: StorageKey.sessionEmail)
+        try keychainService.save(Data(token.utf8), for: StorageKey.sessionToken)
+        try keychainService.save(Data(account.id.utf8), for: StorageKey.sessionUserIdentifier)
         session = AuthSession(email: email, token: token, userIdentifier: account.id)
     }
 
     private func loadAccounts() throws -> [StoredAccount] {
-        guard let data = try keychainService.data(for: accountsKey) else {
+        guard let data = try keychainService.data(for: StorageKey.accounts) else {
             return []
         }
 
@@ -248,12 +250,12 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
     private func saveAccounts(_ accounts: [StoredAccount]) throws {
         let data = try JSONEncoder().encode(accounts)
-        try keychainService.save(data, for: accountsKey)
+        try keychainService.save(data, for: StorageKey.accounts)
     }
 
     private func storedGuestUserIdentifier() throws -> String {
         if
-            let data = try keychainService.data(for: guestIdentifierKey),
+            let data = try keychainService.data(for: StorageKey.guestIdentifier),
             let identifier = String(data: data, encoding: .utf8),
             identifier.isEmpty == false
         {
@@ -261,12 +263,12 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         }
 
         let identifier = UUID().uuidString
-        try keychainService.save(Data(identifier.utf8), for: guestIdentifierKey)
+        try keychainService.save(Data(identifier.utf8), for: StorageKey.guestIdentifier)
         return identifier
     }
 
     private func recoverUserIdentifier(for email: String) -> String {
-        if let identifierData = try? keychainService.data(for: sessionUserIdentifierKey),
+        if let identifierData = try? keychainService.data(for: StorageKey.sessionUserIdentifier),
            let identifier = String(data: identifierData, encoding: .utf8),
            identifier.isEmpty == false {
             return identifier
@@ -278,7 +280,7 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
         let accountIdentifier = (try? loadAccounts().first(where: { $0.email == emailAddress })?.id)
 
         if let accountIdentifier, accountIdentifier.isEmpty == false {
-            try? keychainService.save(Data(accountIdentifier.utf8), for: sessionUserIdentifierKey)
+            try? keychainService.save(Data(accountIdentifier.utf8), for: StorageKey.sessionUserIdentifier)
             return accountIdentifier
         }
 
@@ -308,6 +310,46 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
         guard hasMinimumLength, hasUppercase, hasLowercase, hasDigit, !hasWhitespace else {
             throw AuthError.invalidPasswordFormat
+        }
+    }
+}
+
+extension AuthSessionManager {
+    func resetForUITesting() {
+        let storageKeys = [
+            StorageKey.accounts,
+            StorageKey.sessionEmail,
+            StorageKey.sessionToken,
+            StorageKey.sessionUserIdentifier,
+            StorageKey.guestIdentifier
+        ]
+
+        storageKeys.forEach { key in
+            try? keychainService.delete(account: key)
+        }
+
+        session = nil
+        toastItem = nil
+    }
+
+    func seedSignedInSessionForUITesting(
+        email: String = "visuals@defilms.app",
+        password: String = "Secret123"
+    ) {
+        resetForUITesting()
+
+        let normalizedAddress = normalizedEmail(from: email)
+        let account = StoredAccount(
+            id: "ui-test-user",
+            email: normalizedAddress,
+            passwordHash: makePasswordHash(from: password)
+        )
+
+        do {
+            try saveAccounts([account])
+            try startSession(for: normalizedAddress)
+        } catch {
+            AppLogger.log("Failed to seed signed-in UI test session", category: .auth, level: .error)
         }
     }
 }

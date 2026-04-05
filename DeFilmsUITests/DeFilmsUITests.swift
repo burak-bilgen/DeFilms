@@ -122,6 +122,93 @@ final class DeFilmsUITests: XCTestCase {
         XCTAssertTrue(app.otherElements["movies.detail.screen"].waitForExistence(timeout: 5))
     }
 
+    @MainActor
+    func testFavoritesSeededStateShowsLists() throws {
+        relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.SeedFavorites"])
+
+        let favoritesButton = app.tabBars.buttons["Favorites"].exists ? app.tabBars.buttons["Favorites"] : app.tabBars.buttons["Favoriler"]
+        favoritesButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Weekend Watchlist"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Rewatch Soon"].exists)
+    }
+
+    @MainActor
+    func testMoviesSearchHistoryCanBeCleared() throws {
+        relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.SeedSearchHistory"])
+
+        XCTAssertTrue(app.staticTexts["Dune"].waitForExistence(timeout: 5))
+        app.buttons[LocalizationProbe.moviesSearchHistoryClearIdentifier].tap()
+        app.buttons[localizedString("movies.searchHistory.clear.confirmAction", fallback: "Clear")].tap()
+
+        XCTAssertFalse(app.staticTexts["Dune"].waitForExistence(timeout: 2))
+    }
+
+    @MainActor
+    func testSettingsCanOpenSignInFromSignedOutState() throws {
+        relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding"])
+
+        let settingsButton = app.tabBars.buttons["Settings"].exists ? app.tabBars.buttons["Settings"] : app.tabBars.buttons["Ayarlar"]
+        settingsButton.tap()
+        app.buttons["settings.account.signIn"].tap()
+
+        XCTAssertTrue(app.textFields["auth.signIn.email"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testVisualReferenceOnboardingLight() throws {
+        relaunchApp(arguments: ["UITest.ResetState", "UITest.Theme.Light", "UITest.Locale.English"])
+        XCTAssertTrue(app.buttons["onboarding.continueAsGuest"].waitForExistence(timeout: 5))
+        assertSnapshot(named: "onboarding-light")
+    }
+
+    @MainActor
+    func testVisualReferenceMoviesBrowseDark() throws {
+        relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.MockMovies", "UITest.Theme.Dark"])
+        XCTAssertTrue(app.textFields["movies.search.textField"].waitForExistence(timeout: 5))
+        assertSnapshot(named: "movies-browse-dark")
+    }
+
+    @MainActor
+    func testVisualReferenceMovieDetailArabicDark() throws {
+        relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.MockMovies", "UITest.Theme.Dark", "UITest.Locale.Arabic"])
+
+        let searchField = app.textFields["movies.search.textField"]
+        XCTAssertTrue(searchField.waitForExistence(timeout: 5))
+        searchField.tap()
+        searchField.typeText("Dune")
+        app.buttons["movies.search.submitButton"].tap()
+
+        let cardButton = app.buttons["movie.card.1001"]
+        XCTAssertTrue(cardButton.waitForExistence(timeout: 5))
+        cardButton.tap()
+
+        XCTAssertTrue(app.otherElements["movies.detail.screen"].waitForExistence(timeout: 5))
+        assertSnapshot(named: "movie-detail-arabic-dark")
+    }
+
+    @MainActor
+    func testVisualReferenceFavoritesFilledDark() throws {
+        relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.SeedFavorites", "UITest.Theme.Dark"])
+
+        let favoritesButton = app.tabBars.buttons["Favorites"].exists ? app.tabBars.buttons["Favorites"] : app.tabBars.buttons["Favoriler"]
+        favoritesButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Weekend Watchlist"].waitForExistence(timeout: 5))
+        assertSnapshot(named: "favorites-filled-dark")
+    }
+
+    @MainActor
+    func testVisualReferenceSettingsSignedInArabic() throws {
+        relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.SeedSignedInSession", "UITest.Theme.Dark", "UITest.Locale.Arabic"])
+
+        let settingsButton = app.tabBars.buttons["Settings"].exists ? app.tabBars.buttons["Settings"] : app.tabBars.buttons["Ayarlar"]
+        settingsButton.tap()
+
+        XCTAssertTrue(app.otherElements["settings.account.logout"].waitForExistence(timeout: 5))
+        assertSnapshot(named: "settings-signed-in-arabic")
+    }
+
     private func relaunchApp(arguments: [String]) {
         app.terminate()
         app = XCUIApplication()
@@ -135,4 +222,12 @@ final class DeFilmsUITests: XCTestCase {
             continueAsGuestButton.tap()
         }
     }
+
+    private func localizedString(_ key: String, fallback: String) -> String {
+        NSLocalizedString(key, tableName: nil, bundle: Bundle(for: Self.self), value: fallback, comment: "")
+    }
+}
+
+private enum LocalizationProbe {
+    static let moviesSearchHistoryClearIdentifier = "movies.searchHistory.clearButton"
 }

@@ -283,6 +283,33 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
 
         return true
     }
+
+    func replaceListsForUITesting(_ lists: [FavoriteList], userIdentifier: String) throws {
+        try persistenceController.performWrite { context in
+            let existingLists = try fetchListEntities(for: userIdentifier, context: context)
+            existingLists.forEach(context.delete)
+
+            for list in lists {
+                let entity = FavoriteListEntity(context: context)
+                entity.id = list.id
+                entity.name = list.name
+                entity.userIdentifier = userIdentifier
+                entity.createdAt = Date()
+
+                for movie in list.movies {
+                    let movieEntity = FavoriteMovieEntity(context: context)
+                    movieEntity.movieID = Int64(movie.id)
+                    movieEntity.title = movie.title
+                    movieEntity.posterPath = movie.posterPath
+                    movieEntity.releaseDate = movie.releaseDate
+                    if let voteAverage = movie.voteAverage {
+                        movieEntity.voteAverage = NSNumber(value: voteAverage)
+                    }
+                    movieEntity.list = entity
+                }
+            }
+        }
+    }
 }
 
 private func mapFavoriteList(_ entity: FavoriteListEntity) -> FavoriteList {

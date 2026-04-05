@@ -56,6 +56,30 @@ struct PersistenceController {
         return value
     }
 
+    func resetAllData() throws {
+        try performWrite { context in
+            let entityNames = [
+                "FavoriteMovieEntity",
+                "FavoriteListEntity",
+                "RecentSearchEntity"
+            ]
+
+            for entityName in entityNames {
+                let request = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+                deleteRequest.resultType = .resultTypeObjectIDs
+
+                let result = try context.execute(deleteRequest) as? NSBatchDeleteResult
+                let objectIDs = result?.result as? [NSManagedObjectID] ?? []
+                let changes: [AnyHashable: Any] = [NSDeletedObjectsKey: objectIDs]
+                NSManagedObjectContext.mergeChanges(
+                    fromRemoteContextSave: changes,
+                    into: [container.viewContext, context]
+                )
+            }
+        }
+    }
+
     private func loadPersistentStoresWithRecovery() -> Bool {
         if loadPersistentStores() {
             return true

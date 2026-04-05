@@ -152,4 +152,22 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
 
         return deduplicated
     }
+
+    func replaceSearchesForUITesting(_ searches: [String], userIdentifier: String) throws {
+        let normalizedSearches = normalizedLegacySearches(searches)
+
+        try persistenceController.performWrite { context in
+            let request = RecentSearchEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
+            try context.fetch(request).forEach(context.delete)
+
+            for (index, query) in normalizedSearches.enumerated() {
+                let entity = RecentSearchEntity(context: context)
+                entity.id = UUID()
+                entity.query = query
+                entity.userIdentifier = userIdentifier
+                entity.createdAt = Date().addingTimeInterval(TimeInterval(-index))
+            }
+        }
+    }
 }

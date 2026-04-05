@@ -1,11 +1,31 @@
-import Foundation
-import Testing
+import XCTest
 @testable import DeFilms
 
 @MainActor
-struct MovieDetailViewModelTests {
-    @Test
-    func loadPopulatesPayloadAndTrailerAvailability() async {
+final class MovieDetailViewModelTests: XCTestCase {
+    func test_MovieDetailViewModel_initialDerivedValues_fallBackToBaseMovie() {
+        let movie = Movie(
+            id: 7,
+            title: "Fallback",
+            overview: nil,
+            posterPath: "/poster.jpg",
+            backdropPath: nil,
+            releaseDate: "2022-03-04",
+            voteAverage: 7.3,
+            genreIDs: nil
+        )
+        let viewModel = MovieDetailViewModel(movie: movie, detailService: MockMovieDetailService())
+
+        XCTAssertEqual(viewModel.title, "Fallback")
+        XCTAssertEqual(viewModel.overview, Localization.string("movies.detail.overview.empty"))
+        XCTAssertEqual(viewModel.releaseYear, "2022")
+        XCTAssertEqual(viewModel.ratingText, "7.3")
+        XCTAssertEqual(viewModel.heroFacts, ["2022"])
+        XCTAssertEqual(viewModel.galleryURLs, [movie.posterURL].compactMap { $0 })
+        XCTAssertFalse(viewModel.hasTrailer)
+    }
+
+    func test_MovieDetailViewModel_load_populatesPayloadAndTrailerAvailability() async {
         let movie = Movie(
             id: 42,
             title: "Dune",
@@ -36,25 +56,21 @@ struct MovieDetailViewModelTests {
             streamingPlatforms: [MovieStreamingPlatform(id: 3, name: "Max", logoURL: nil, linkURL: nil)],
             similarMovies: [Movie(id: 99, title: "Arrival", overview: nil, posterPath: nil, backdropPath: nil, releaseDate: "2016-11-11", voteAverage: 8.2, genreIDs: nil)]
         )
-        let viewModel = MovieDetailViewModel(
-            movie: movie,
-            detailService: MockMovieDetailService(payload: payload)
-        )
+        let viewModel = MovieDetailViewModel(movie: movie, detailService: MockMovieDetailService(payload: payload))
 
         await viewModel.load()
 
-        #expect(viewModel.detail == payload.detail)
-        #expect(viewModel.gallery == payload.gallery)
-        #expect(viewModel.directors == payload.directors)
-        #expect(viewModel.cast == payload.cast)
-        #expect(viewModel.streamingPlatforms == payload.streamingPlatforms)
-        #expect(viewModel.similarMovies == payload.similarMovies)
-        #expect(viewModel.hasTrailer)
-        #expect(viewModel.errorMessage == nil)
+        XCTAssertEqual(viewModel.detail, payload.detail)
+        XCTAssertEqual(viewModel.gallery, payload.gallery)
+        XCTAssertEqual(viewModel.directors, payload.directors)
+        XCTAssertEqual(viewModel.cast, payload.cast)
+        XCTAssertEqual(viewModel.streamingPlatforms, payload.streamingPlatforms)
+        XCTAssertEqual(viewModel.similarMovies, payload.similarMovies)
+        XCTAssertTrue(viewModel.hasTrailer)
+        XCTAssertNil(viewModel.errorMessage)
     }
 
-    @Test
-    func loadFailurePublishesErrorToast() async {
+    func test_MovieDetailViewModel_loadFailure_publishesErrorToastAndClearsCollections() async {
         let movie = Movie(
             id: 17,
             title: "Blade Runner 2049",
@@ -72,14 +88,15 @@ struct MovieDetailViewModelTests {
 
         await viewModel.load()
 
-        #expect(viewModel.detail == nil)
-        #expect(viewModel.errorMessage == "Detail failed")
-        #expect(viewModel.toastItem?.message == "Detail failed")
-        #expect(viewModel.isLoading == false)
+        XCTAssertNil(viewModel.detail)
+        XCTAssertEqual(viewModel.errorMessage, "Detail failed")
+        XCTAssertEqual(viewModel.toastItem?.message, "Detail failed")
+        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertTrue(viewModel.gallery.isEmpty)
+        XCTAssertTrue(viewModel.cast.isEmpty)
     }
 
-    @Test
-    func presentTrailerWithoutTrailerPublishesMissingTrailerToast() {
+    func test_MovieDetailViewModel_presentTrailerWithoutTrailer_publishesMissingTrailerToast() {
         let movie = Movie(
             id: 5,
             title: "No Trailer",
@@ -90,19 +107,94 @@ struct MovieDetailViewModelTests {
             voteAverage: nil,
             genreIDs: nil
         )
-        let viewModel = MovieDetailViewModel(
-            movie: movie,
-            detailService: MockMovieDetailService()
-        )
+        let viewModel = MovieDetailViewModel(movie: movie, detailService: MockMovieDetailService())
 
         viewModel.presentTrailer()
 
-        #expect(viewModel.isTrailerPresented == false)
-        #expect(viewModel.toastItem?.message == Localization.string("movies.detail.trailer.missing"))
+        XCTAssertFalse(viewModel.isTrailerPresented)
+        XCTAssertEqual(viewModel.toastItem?.message, Localization.string("movies.detail.trailer.missing"))
     }
 
-    @Test
-    func reloadForLanguageChangeRequestsPayloadAgain() async {
+    func test_MovieDetailViewModel_presentTrailerWithTrailer_setsPresentedState() async {
+        let movie = Movie(
+            id: 42,
+            title: "Dune",
+            overview: nil,
+            posterPath: nil,
+            backdropPath: nil,
+            releaseDate: "2021-10-22",
+            voteAverage: 8.0,
+            genreIDs: nil
+        )
+        let payload = MovieDetailPayload(
+            detail: MovieDetail(
+                id: 42,
+                title: "Dune",
+                overview: nil,
+                posterPath: nil,
+                backdropPath: nil,
+                releaseDate: "2021-10-22",
+                voteAverage: 8.0,
+                runtime: 155,
+                imdbID: nil,
+                genres: []
+            ),
+            trailer: MovieVideo(key: "abc123", name: "Trailer", site: "YouTube", type: "Trailer", official: true),
+            gallery: [],
+            directors: [],
+            cast: [],
+            streamingPlatforms: [],
+            similarMovies: []
+        )
+        let viewModel = MovieDetailViewModel(movie: movie, detailService: MockMovieDetailService(payload: payload))
+
+        await viewModel.load()
+        viewModel.presentTrailer()
+
+        XCTAssertTrue(viewModel.isTrailerPresented)
+    }
+
+    func test_MovieDetailViewModel_loadIfNeeded_onlyLoadsOnce() async {
+        let movie = Movie(
+            id: 12,
+            title: "Only Once",
+            overview: nil,
+            posterPath: nil,
+            backdropPath: nil,
+            releaseDate: "2024-01-01",
+            voteAverage: 7.0,
+            genreIDs: nil
+        )
+        let payload = MovieDetailPayload(
+            detail: MovieDetail(
+                id: 12,
+                title: "Only Once",
+                overview: nil,
+                posterPath: nil,
+                backdropPath: nil,
+                releaseDate: "2024-01-01",
+                voteAverage: 7.0,
+                runtime: nil,
+                imdbID: nil,
+                genres: []
+            ),
+            trailer: nil,
+            gallery: [],
+            directors: [],
+            cast: [],
+            streamingPlatforms: [],
+            similarMovies: []
+        )
+        let detailService = MockMovieDetailService(payload: payload)
+        let viewModel = MovieDetailViewModel(movie: movie, detailService: detailService)
+
+        await viewModel.loadIfNeeded()
+        await viewModel.loadIfNeeded()
+
+        XCTAssertEqual(detailService.loadCount, 1)
+    }
+
+    func test_MovieDetailViewModel_reloadForLanguageChange_requestsPayloadAgain() async {
         let movie = Movie(
             id: 33,
             title: "Reload Test",
@@ -134,14 +226,28 @@ struct MovieDetailViewModelTests {
             similarMovies: []
         )
         let detailService = MockMovieDetailService(payload: payload)
-        let viewModel = MovieDetailViewModel(
-            movie: movie,
-            detailService: detailService
-        )
+        let viewModel = MovieDetailViewModel(movie: movie, detailService: detailService)
 
         await viewModel.loadIfNeeded()
         await viewModel.reloadForLanguageChange()
 
-        #expect(detailService.loadCount == 2)
+        XCTAssertEqual(detailService.loadCount, 2)
+    }
+
+    func test_MovieDetailViewModel_galleryURLs_deduplicatesFallbackAssets() {
+        let sharedURLPath = "/shared.jpg"
+        let movie = Movie(
+            id: 51,
+            title: "Gallery",
+            overview: nil,
+            posterPath: sharedURLPath,
+            backdropPath: sharedURLPath,
+            releaseDate: "2024-01-01",
+            voteAverage: nil,
+            genreIDs: nil
+        )
+        let viewModel = MovieDetailViewModel(movie: movie, detailService: MockMovieDetailService())
+
+        XCTAssertEqual(viewModel.galleryURLs.count, 1)
     }
 }
