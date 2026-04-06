@@ -1,5 +1,6 @@
-# DeFilms
-
+<p align="left">
+  <img src="./DeFilms/App/Assets.xcassets/AppLogo.imageset/logoDark@3x.png" alt="DeFilms logo" width="125" />
+</p>
 DeFilms is a SwiftUI movie discovery app built with the TMDB API. It was developed as an iOS case study, but I approached it like a small product rather than a one-off demo: stable navigation, testable state, careful persistence, polished localization, and a user flow that holds together across edge cases.
 
 The app is organized around three tabs:
@@ -153,10 +154,10 @@ It is not a full accessibility audit, but it goes beyond defaults.
 - Break a few larger feature views into smaller presentation units over time
 
 ## Screenshots
-
-The screenshots below are grouped by the main product surfaces so the review can move from onboarding to daily use screens more naturally.
-
 ### Onboarding & Auth
+---
+Entry points for the first-run flow and local account experience.
+
 <p align="center">
   <img src="./Screenshots/Onboarding.png" width="220" alt="Onboarding"/>
   <img src="./Screenshots/SignUp-Light.png" width="220" alt="Sign Up"/>
@@ -164,6 +165,9 @@ The screenshots below are grouped by the main product surfaces so the review can
 </p>
 
 ### Movies
+---
+Main browsing surface shown in light, dark, and RTL variants.
+
 <p align="center">
   <img src="./Screenshots/Movies-Light.png" width="220" alt="Movies Light"/>
   <img src="./Screenshots/Movies-Dark.png" width="220" alt="Movies Dark"/>
@@ -171,24 +175,38 @@ The screenshots below are grouped by the main product surfaces so the review can
 </p>
 
 ### Movie Detail
+---
+Detail presentation across the two primary appearance modes.
+
 <p align="center">
   <img src="./Screenshots/MovieDetail-Light.png" width="220" alt="Movie Detail Light"/>
+  <img src="./Screenshots/MovieDetail-Light-2.png" width="220" alt="Movie Detail Light 2"/>
   <img src="./Screenshots/MovieDetail-Dark.png" width="220" alt="Movie Detail Dark"/>
+  <img src="./Screenshots/MovieDetail-Dark-2.png" width="220" alt="Movie Detail Dark 2"/>
 </p>
 
 ### Search
+---
+Search results flow in both light and dark themes.
+
 <p align="center">
   <img src="./Screenshots/MovieSearch-Light.png" width="220" alt="Movie Search Light"/>
   <img src="./Screenshots/MovieSearch-Dark.png" width="220" alt="Movie Search Dark"/>
 </p>
 
 ### Favorites
+---
+Custom list management surface in light and dark variants.
+
 <p align="center">
   <img src="./Screenshots/Favorites-Light.png" width="220" alt="Favorites Light"/>
   <img src="./Screenshots/Favorites-Dark.png" width="220" alt="Favorites Dark"/>
 </p>
 
 ### Settings
+---
+Theme, language, and account controls shown across both appearance modes.
+
 <p align="center">
   <img src="./Screenshots/Settings-Light.png" width="220" alt="Settings Light"/>
   <img src="./Screenshots/Settings-Dark.png" width="220" alt="Settings Dark"/>
