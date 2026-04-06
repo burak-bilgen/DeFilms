@@ -102,11 +102,6 @@ struct FavoriteMovieManagementModalView: View {
             Text(Localization.string("favorites.remove.movie.message", movie.title))
         }
         .task {
-            if destinationLists.isEmpty {
-                isCreatingList = true
-                isTextFieldFocused = true
-            }
-
             isPresented = true
         }
     }

@@ -121,7 +121,17 @@ final class ConnectivityMonitor: ObservableObject {
     }
 
     private func verifyInternetReachability() async -> Bool {
-        guard let url = URL(string: "https://www.apple.com/library/test/success.html") else {
+        guard var components = URLComponents(string: APIConfig.baseURL + "/configuration") else {
+            return false
+        }
+
+        if let apiKey = APIConfig.apiKey, !apiKey.isEmpty {
+            components.queryItems = [
+                URLQueryItem(name: "api_key", value: apiKey)
+            ]
+        }
+
+        guard let url = components.url else {
             return false
         }
 
@@ -132,7 +142,7 @@ final class ConnectivityMonitor: ObservableObject {
         do {
             let (_, response) = try await verificationSession.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else { return false }
-            return (200...299).contains(httpResponse.statusCode)
+            return (200..<500).contains(httpResponse.statusCode)
         } catch {
             return false
         }
@@ -163,4 +173,3 @@ actor ConnectivityStateStore {
 extension Notification.Name {
     static let connectivityDidRestore = Notification.Name("defilms.connectivity.didRestore")
 }
-

@@ -123,10 +123,6 @@ struct SettingsView: View {
             }
         } header: {
             Text(Localization.string("settings.section.account"))
-        } footer: {
-            if !sessionManager.isSignedIn {
-                Text(Localization.string("settings.account.signedOutDescription"))
-            }
         }
     }
 

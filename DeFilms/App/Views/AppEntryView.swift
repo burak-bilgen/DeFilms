@@ -73,8 +73,7 @@ struct AppEntryView: View {
                 )
             }
             .fullScreenCover(
-                item: authModalBinding,
-                onDismiss: { flowCoordinator.dismissModal() }
+                item: authModalBinding
             ) { destination in
                 AuthEntryContainer {
                     switch destination {
@@ -174,7 +173,6 @@ private struct AuthEntryContainer<Content: View>: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(Localization.string("common.close")) {
-                            flowCoordinator.dismissModal()
                             dismiss()
                         }
                     }

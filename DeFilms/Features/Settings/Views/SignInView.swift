@@ -41,13 +41,17 @@ struct SignInView: View {
             }
 
             Section {
-                Button(Localization.string("auth.signIn")) {
+                Button {
                     if viewModel.submit() {
                         dismiss()
                     }
+                } label: {
+                    Text(Localization.string("auth.signIn"))
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryProminentButtonStyle())
                 .disabled(!isSubmitEnabled)
+                .opacity(isSubmitEnabled ? 1 : 0.5)
                 .accessibilityIdentifier("auth.signIn.submit")
             }
         }

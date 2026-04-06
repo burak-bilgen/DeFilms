@@ -119,19 +119,21 @@ struct AuthInputField: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .environment(\.layoutDirection, .leftToRight)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                if kind.isSecure && text.isEmpty == false {
+                if kind.isSecure {
                     Button {
                         isPasswordVisible.toggle()
                     } label: {
                         Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
-                            .frame(width: 18, height: 18)
-                            .padding(8)
+                            .frame(width: 34, height: 34)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .opacity(text.isEmpty ? 0 : 1)
+                    .disabled(text.isEmpty)
                     .accessibilityLabel(
                         Localization.string(
                             isPasswordVisible ? "auth.password.hide" : "auth.password.show"
@@ -140,7 +142,7 @@ struct AuthInputField: View {
                 }
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            .frame(height: 52)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(
