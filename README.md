@@ -96,9 +96,10 @@ These are small details, but they tend to be the difference between a prototype 
 ### Setup
 1. Clone the repository.
 2. Open the project in Xcode.
-3. Add a valid `TMDBApiKey` value to [Info.plist](/Users/burak/Local/DeFilms/DeFilms/Info.plist).
+3. Open the project target settings or the app `Info.plist` and add a valid `TMDBApiKey` value.
 4. Select the `DeFilms` scheme.
-5. Build and run on an iOS 16+ simulator or device.
+5. Build and run on an iOS 16+ simulator or physical device.
+6. If you want to run the UI tests, keep the default test plans enabled; the project already includes seeded launch arguments for deterministic flows.
 
 ## Testing
 
@@ -153,29 +154,44 @@ It is not a full accessibility audit, but it goes beyond defaults.
 
 ## Screenshots
 
-Instead of dumping raw images in a long strip, the gallery below is grouped by the main surfaces of the app.
+The screenshots below are grouped by the main product surfaces so the review can move from onboarding to daily use screens more naturally.
 
-### Core Flow
+### Onboarding & Auth
 <p align="center">
-  <img src="./Screenshots/Onboarding.png" width="170" alt="Onboarding"/>
-  <img src="./Screenshots/Movies-Light.png" width="170" alt="Movies Light"/>
-  <img src="./Screenshots/Movies-Dark.png" width="170" alt="Movies Dark"/>
-  <img src="./Screenshots/Movies-RTLSupport.png" width="170" alt="Movies RTL"/>
+  <img src="./Screenshots/Onboarding.png" width="220" alt="Onboarding"/>
+  <img src="./Screenshots/SignUp-Light.png" width="220" alt="Sign Up"/>
+  <img src="./Screenshots/Sign-In-Light.png" width="220" alt="Sign In"/>
 </p>
 
-### Detail & Discovery
+### Movies
 <p align="center">
-  <img src="./Screenshots/MovieDetail-Light.png" width="170" alt="Movie Detail Light"/>
-  <img src="./Screenshots/MovieDetail-Light-2.png" width="170" alt="Movie Detail Light Secondary"/>
-  <img src="./Screenshots/MovieDetail-Dark.png" width="170" alt="Movie Detail Dark"/>
-  <img src="./Screenshots/MovieDetail-Dark-2.png" width="170" alt="Movie Detail Dark Secondary"/>
+  <img src="./Screenshots/Movies-Light.png" width="220" alt="Movies Light"/>
+  <img src="./Screenshots/Movies-Dark.png" width="220" alt="Movies Dark"/>
+  <img src="./Screenshots/Movies-RTLSupport.png" width="220" alt="Movies RTL"/>
 </p>
 
-### Search, Favorites, Settings
+### Movie Detail
 <p align="center">
-  <img src="./Screenshots/MovieSearch-Light.png" width="170" alt="Search"/>
-  <img src="./Screenshots/Favorites-Dark.png" width="170" alt="Favorites"/>
-  <img src="./Screenshots/Settings-Light.png" width="170" alt="Settings"/>
+  <img src="./Screenshots/MovieDetail-Light.png" width="220" alt="Movie Detail Light"/>
+  <img src="./Screenshots/MovieDetail-Dark.png" width="220" alt="Movie Detail Dark"/>
+</p>
+
+### Search
+<p align="center">
+  <img src="./Screenshots/MovieSearch-Light.png" width="220" alt="Movie Search Light"/>
+  <img src="./Screenshots/MovieSearch-Dark.png" width="220" alt="Movie Search Dark"/>
+</p>
+
+### Favorites
+<p align="center">
+  <img src="./Screenshots/Favorites-Light.png" width="220" alt="Favorites Light"/>
+  <img src="./Screenshots/Favorites-Dark.png" width="220" alt="Favorites Dark"/>
+</p>
+
+### Settings
+<p align="center">
+  <img src="./Screenshots/Settings-Light.png" width="220" alt="Settings Light"/>
+  <img src="./Screenshots/Settings-Dark.png" width="220" alt="Settings Dark"/>
 </p>
 
 ## Closing Note
