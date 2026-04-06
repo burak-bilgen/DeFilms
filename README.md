@@ -181,6 +181,9 @@ Detail presentation across the two primary appearance modes.
 <p align="center">
   <img src="./Screenshots/MovieDetail-Light.png" width="220" alt="Movie Detail Light"/>
   <img src="./Screenshots/MovieDetail-Light-2.png" width="220" alt="Movie Detail Light 2"/>
+</p>
+
+<p align="center">
   <img src="./Screenshots/MovieDetail-Dark.png" width="220" alt="Movie Detail Dark"/>
   <img src="./Screenshots/MovieDetail-Dark-2.png" width="220" alt="Movie Detail Dark 2"/>
 </p>
