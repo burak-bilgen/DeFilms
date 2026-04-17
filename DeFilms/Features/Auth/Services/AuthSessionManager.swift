@@ -53,8 +53,6 @@ struct StoredAccount: Codable, Equatable {
 }
 
 final class AuthSessionManager: ObservableObject, AuthSessionManaging {
-    static let shared = AuthSessionManager(keychainService: KeychainService.shared)
-
     @Published private(set) var session: AuthSession?
     @Published private(set) var toastItem: ToastItem?
 

@@ -15,14 +15,12 @@ protocol RecentSearchRepositoryProtocol {
 }
 
 final class RecentSearchRepository: RecentSearchRepositoryProtocol {
-    static let shared = RecentSearchRepository()
-
     private let persistenceController: PersistenceController
     private let legacyStorageKey = "MovieSearchHistory"
     private let legacyGuestIdentifier = "guest"
     private var legacyMigrationTask: Task<Void, Never>?
 
-    init(persistenceController: PersistenceController = .shared) {
+    init(persistenceController: PersistenceController) {
         self.persistenceController = persistenceController
         legacyMigrationTask = Task { [weak self] in
             guard let self else { return }

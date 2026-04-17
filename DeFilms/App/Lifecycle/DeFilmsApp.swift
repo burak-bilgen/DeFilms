@@ -16,15 +16,16 @@ struct DeFilmsApp: App {
     @StateObject private var favoritesStore: FavoritesStore
     @StateObject private var toastCenter: ToastCenter
     @StateObject private var connectivityMonitor: ConnectivityMonitor
-    private let persistenceController = PersistenceController.shared
+    private let persistenceController: PersistenceController
 
     init() {
-        Self.configureLaunchStateIfNeeded()
         let container = AppContainer()
+        Self.configureLaunchStateIfNeeded(container: container)
         let preferences = AppPreferences()
         let authManager = container.sessionManager
         let toastCenter = container.toastCenter
         self.container = container
+        self.persistenceController = container.persistenceController
         _preferences = StateObject(wrappedValue: preferences)
         _sessionManager = StateObject(wrappedValue: authManager)
         _toastCenter = StateObject(wrappedValue: toastCenter)
@@ -53,7 +54,7 @@ struct DeFilmsApp: App {
         }
     }
 
-    private static func configureLaunchStateIfNeeded() {
+    private static func configureLaunchStateIfNeeded(container: AppContainer) {
         let arguments = ProcessInfo.processInfo.arguments
         let defaults = UserDefaults.standard
 
@@ -61,8 +62,8 @@ struct DeFilmsApp: App {
             defaults.removeObject(forKey: AppPreferences.onboardingKey)
             defaults.removeObject(forKey: AppPreferences.languageKey)
             defaults.removeObject(forKey: AppPreferences.themeKey)
-            try? PersistenceController.shared.resetAllData()
-            AuthSessionManager.shared.resetForUITesting()
+            try? container.persistenceController.resetAllData()
+            container.sessionManager.resetForUITesting()
         }
 
         if arguments.contains("UITest.SkipOnboarding") {
@@ -84,16 +85,16 @@ struct DeFilmsApp: App {
         }
 
         if arguments.contains("UITest.SeedSignedInSession") {
-            AuthSessionManager.shared.seedSignedInSessionForUITesting()
+            container.sessionManager.seedSignedInSessionForUITesting()
         }
 
-        seedUITestContentIfNeeded(arguments: arguments)
+        seedUITestContentIfNeeded(arguments: arguments, container: container)
     }
 
-    private static func seedUITestContentIfNeeded(arguments: [String]) {
-        let sessionManager = AuthSessionManager.shared
-        let favoritesRepository = FavoritesRepository.shared
-        let recentSearchRepository = RecentSearchRepository.shared
+    private static func seedUITestContentIfNeeded(arguments: [String], container: AppContainer) {
+        let sessionManager = container.sessionManager
+        let favoritesRepository = container.favoritesRepository
+        let recentSearchRepository = container.recentSearchRepository
 
         if arguments.contains("UITest.SeedFavorites") {
             let seededLists = [

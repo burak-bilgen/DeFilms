@@ -23,8 +23,6 @@ enum KeychainError: Error, LocalizedError {
 }
 
 final class KeychainService: KeychainServicing {
-    static let shared = KeychainService()
-
     private let service = "com.defilms.secure"
 
     func data(for account: String) throws -> Data? {

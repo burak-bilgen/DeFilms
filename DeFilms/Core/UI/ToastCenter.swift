@@ -9,8 +9,6 @@ import Combine
 import Foundation
 
 final class ToastCenter: ObservableObject {
-    static let shared = ToastCenter()
-
     @Published var item: ToastItem?
 
     func show(message: String, style: ToastItem.Style = .info) {

@@ -6,9 +6,11 @@
 import Foundation
 
 final class AppContainer {
+    let persistenceController: PersistenceController
+    let keychainService: KeychainServicing
     let networkService: NetworkServiceProtocol
-    let recentSearchRepository: RecentSearchRepositoryProtocol
-    let favoritesRepository: FavoritesRepositoryProtocol
+    let recentSearchRepository: RecentSearchRepository
+    let favoritesRepository: FavoritesRepository
     let sessionManager: AuthSessionManager
     let toastCenter: ToastCenter
     let moviesFactory: MoviesFactory
@@ -16,26 +18,41 @@ final class AppContainer {
     let settingsFactory: SettingsFactory
 
     init(
-        networkService: NetworkServiceProtocol = NetworkManager.shared,
-        recentSearchRepository: RecentSearchRepositoryProtocol = RecentSearchRepository.shared,
-        favoritesRepository: FavoritesRepositoryProtocol = FavoritesRepository.shared,
-        sessionManager: AuthSessionManager = AuthSessionManager.shared,
-        toastCenter: ToastCenter = ToastCenter.shared
+        persistenceController: PersistenceController = PersistenceController(),
+        keychainService: KeychainServicing = KeychainService(),
+        networkService: NetworkServiceProtocol? = nil,
+        recentSearchRepository: RecentSearchRepository? = nil,
+        favoritesRepository: FavoritesRepository? = nil,
+        sessionManager: AuthSessionManager? = nil,
+        toastCenter: ToastCenter = ToastCenter()
     ) {
-        self.networkService = networkService
-        self.recentSearchRepository = recentSearchRepository
-        self.favoritesRepository = favoritesRepository
-        self.sessionManager = sessionManager
+        let resolvedNetworkService = networkService ?? NetworkManager()
+        let resolvedRecentSearchRepository = recentSearchRepository ?? RecentSearchRepository(
+            persistenceController: persistenceController
+        )
+        let resolvedFavoritesRepository = favoritesRepository ?? FavoritesRepository(
+            persistenceController: persistenceController
+        )
+        let resolvedSessionManager = sessionManager ?? AuthSessionManager(
+            keychainService: keychainService
+        )
+
+        self.persistenceController = persistenceController
+        self.keychainService = keychainService
+        self.networkService = resolvedNetworkService
+        self.recentSearchRepository = resolvedRecentSearchRepository
+        self.favoritesRepository = resolvedFavoritesRepository
+        self.sessionManager = resolvedSessionManager
         self.toastCenter = toastCenter
         self.moviesFactory = MoviesFactory(
-            networkService: networkService,
-            recentSearchRepository: recentSearchRepository,
-            sessionManager: sessionManager
+            networkService: resolvedNetworkService,
+            recentSearchRepository: resolvedRecentSearchRepository,
+            sessionManager: resolvedSessionManager
         )
         self.favoritesFactory = FavoritesFactory(
-            favoritesRepository: favoritesRepository,
-            sessionManager: sessionManager
+            favoritesRepository: resolvedFavoritesRepository,
+            sessionManager: resolvedSessionManager
         )
-        self.settingsFactory = SettingsFactory(sessionManager: sessionManager)
+        self.settingsFactory = SettingsFactory(sessionManager: resolvedSessionManager)
     }
 }

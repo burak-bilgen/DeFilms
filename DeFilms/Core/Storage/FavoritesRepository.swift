@@ -21,14 +21,12 @@ protocol FavoritesRepositoryProtocol {
 }
 
 final class FavoritesRepository: FavoritesRepositoryProtocol {
-    static let shared = FavoritesRepository()
-
     private let persistenceController: PersistenceController
     private let legacyStorageKey = "FavoriteListsStorage"
     private let legacyGuestIdentifier = "guest"
     private var legacyMigrationTask: Task<Void, Never>?
 
-    init(persistenceController: PersistenceController = .shared) {
+    init(persistenceController: PersistenceController) {
         self.persistenceController = persistenceController
         legacyMigrationTask = Task { [weak self] in
             guard let self else { return }

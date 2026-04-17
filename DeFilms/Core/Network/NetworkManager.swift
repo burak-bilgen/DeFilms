@@ -8,8 +8,6 @@
 import Foundation
 
 final class NetworkManager: NetworkServiceProtocol {
-    static let shared = NetworkManager(session: NetworkManager.makeDefaultSession())
-
     private struct APIErrorPayload: Decodable {
         let statusMessage: String?
 
