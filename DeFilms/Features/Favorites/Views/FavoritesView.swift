@@ -13,9 +13,6 @@ struct FavoritesView: View {
 
     @ObservedObject var viewModel: FavoritesViewModel
     @State private var isCreateListPresented = false
-    @State private var listPendingRename: FavoriteList?
-    @State private var renameText: String = ""
-    @State private var listPendingDeletion: FavoriteList?
 
     var body: some View {
         Group {
@@ -39,14 +36,7 @@ struct FavoritesView: View {
                             ForEach(viewModel.lists) { list in
                                 FavoriteListRow(
                                     list: list,
-                                    openList: { coordinator.show(.list(list.id)) },
-                                    renameList: {
-                                        listPendingRename = list
-                                        renameText = list.name
-                                    },
-                                    deleteList: {
-                                        listPendingDeletion = list
-                                    }
+                                    openList: { coordinator.show(.list(list.id)) }
                                 )
                                 .transition(.opacity.combined(with: .move(edge: .bottom)))
                             }
@@ -72,57 +62,6 @@ struct FavoritesView: View {
                 .accessibilityLabel(Localization.string("favorites.create.title"))
                 .accessibilityIdentifier("favorites.create.button")
             }
-        }
-        .alert(
-            Localization.string("favorites.rename.title"),
-            isPresented: Binding(
-                get: { listPendingRename != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        listPendingRename = nil
-                    }
-                }
-            )
-        ) {
-            TextField(Localization.string("favorites.picker.placeholder"), text: $renameText)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-            Button(Localization.string("common.cancel"), role: .cancel) {
-                listPendingRename = nil
-            }
-            Button(Localization.string("favorites.rename.confirm")) {
-                guard let listPendingRename else { return }
-                Task {
-                    if await viewModel.renameList(listID: listPendingRename.id, name: renameText) {
-                        self.listPendingRename = nil
-                    }
-                }
-            }
-        }
-        .alert(
-            Localization.string("favorites.delete.title"),
-            isPresented: Binding(
-                get: { listPendingDeletion != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        listPendingDeletion = nil
-                    }
-                }
-            )
-        ) {
-            Button(Localization.string("favorites.delete.confirm"), role: .destructive) {
-                if let listPendingDeletion {
-                    Task {
-                        await viewModel.deleteList(listID: listPendingDeletion.id)
-                        self.listPendingDeletion = nil
-                    }
-                }
-            }
-            Button(Localization.string("common.cancel"), role: .cancel) {
-                listPendingDeletion = nil
-            }
-        } message: {
-            Text(Localization.string("favorites.delete.message", listPendingDeletion?.name ?? ""))
         }
         .sheet(isPresented: $isCreateListPresented) {
             NavigationStack {

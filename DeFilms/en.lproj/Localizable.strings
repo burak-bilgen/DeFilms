@@ -16,6 +16,10 @@
 "network.error.decoding" = "There was a problem processing the data.";
 "network.error.server" = "Server error. Code: %d";
 "network.error.missingAPIKey" = "API key could not be found.";
+"network.blocking.title" = "Internet connection required";
+"network.blocking.message" = "DeFilms needs an active Wi-Fi or cellular connection to load movie data. Reconnect to the internet and try again.";
+"network.blocking.button.retry" = "Check Again";
+"network.blocking.button.checking" = "Checking...";
 
 "theme.system" = "System";
 "theme.light" = "Light";
@@ -32,6 +36,8 @@
 "settings.section.about" = "About";
 "settings.appearance.theme" = "Theme";
 "settings.language.appLanguage" = "App Language";
+"settings.language.applying.title" = "Applying language";
+"settings.language.applying.message" = "Updating the interface and text direction for your selected language.";
 "settings.account.status" = "Registered User";
 "settings.account.logout" = "Log Out";
 "settings.account.logout.message" = "Your local session will be signed out on this device.";
@@ -100,6 +106,7 @@
 "favorites.toast.listRenamed" = "Favorite list renamed.";
 "favorites.toast.listDeleted" = "Favorite list deleted.";
 "favorites.toast.movieMoved" = "Movie moved to another list.";
+"favorites.toast.movieMerged" = "Movie was already in the destination list, so it was removed from this list.";
 "favorites.toast.duplicateList" = "A list with this name already exists.";
 "favorites.toast.genericError" = "Favorites could not be updated.";
 "favorites.picker.title" = "Favorite Lists";
@@ -131,13 +138,15 @@
 "favorites.delete.message" = "\"%@\" will be removed permanently.";
 "favorites.manage.movie" = "Manage Movie";
 "favorites.remove.movie.title" = "Remove Movie";
-"favorites.remove.movie.confirm" = "Remove";
+"favorites.remove.movie.confirm" = "Remove from List";
 "favorites.remove.movie.message" = "\"%@\" will be removed from this list.";
 "favorites.remove.from.list.message" = "Remove this movie from \"%@\"?";
 "favorites.move.title" = "Move Movie";
 "favorites.move.message" = "Choose a destination list for \"%@\".";
 "favorites.move.confirm" = "Move";
 "favorites.move.confirm.message" = "Move \"%@\" to \"%@\"?";
+"favorites.move.confirm.merge.message" = "\"%@\" is already in \"%@\". It will stay there and be removed from this list.";
+"favorites.move.destination.contains" = "Already in this list";
 "favorites.share.button" = "Share List";
 "favorites.share.header" = "Hey! Check out my %@ list on DeFilms.";
 

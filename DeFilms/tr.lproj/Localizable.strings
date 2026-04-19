@@ -16,6 +16,10 @@
 "network.error.decoding" = "Veri işlenirken bir hata oluştu.";
 "network.error.server" = "Sunucu hatası. Kod: %d";
 "network.error.missingAPIKey" = "API anahtarı bulunamadı.";
+"network.blocking.title" = "İnternet bağlantısı gerekli";
+"network.blocking.message" = "DeFilms, film verilerini yüklemek için etkin bir Wi-Fi veya mobil veri bağlantısına ihtiyaç duyar. Bağlantıyı geri getirip tekrar dene.";
+"network.blocking.button.retry" = "Tekrar kontrol et";
+"network.blocking.button.checking" = "Kontrol ediliyor...";
 
 "theme.system" = "Sistem";
 "theme.light" = "Açık";
@@ -32,6 +36,8 @@
 "settings.section.about" = "Hakkında";
 "settings.appearance.theme" = "Tema";
 "settings.language.appLanguage" = "Uygulama Dili";
+"settings.language.applying.title" = "Dil uygulanıyor";
+"settings.language.applying.message" = "Arayüz ve metin yönü seçtiğin dile göre güncelleniyor.";
 "settings.account.status" = "Kayıtlı kullanıcı";
 "settings.account.logout" = "Çıkış Yap";
 "settings.account.logout.message" = "Bu cihazdaki yerel oturum sonlandırılacak.";
@@ -100,6 +106,7 @@
 "favorites.toast.listRenamed" = "Favori listesi yeniden adlandırıldı.";
 "favorites.toast.listDeleted" = "Favori listesi silindi.";
 "favorites.toast.movieMoved" = "Film başka bir listeye taşındı.";
+"favorites.toast.movieMerged" = "Film hedef listede zaten vardı, bu listeden kaldırıldı.";
 "favorites.toast.duplicateList" = "Bu isimde bir liste zaten mevcut.";
 "favorites.toast.genericError" = "Favoriler güncellenemedi.";
 "favorites.picker.title" = "Favori Listeleri";
@@ -131,13 +138,15 @@
 "favorites.delete.message" = "\"%@\" kalıcı olarak silinecek.";
 "favorites.manage.movie" = "Filmi Yönet";
 "favorites.remove.movie.title" = "Filmi Çıkar";
-"favorites.remove.movie.confirm" = "Çıkar";
+"favorites.remove.movie.confirm" = "Listeden Çıkar";
 "favorites.remove.movie.message" = "\"%@\" bu listeden çıkarılacak.";
 "favorites.remove.from.list.message" = "Bu filmi \"%@\" listesinden çıkarmak istiyor musun?";
 "favorites.move.title" = "Filmi Taşı";
 "favorites.move.message" = "\"%@\" için hedef listeyi seç.";
 "favorites.move.confirm" = "Taşı";
 "favorites.move.confirm.message" = "\"%@\" filmi \"%@\" listesine taşınsın mı?";
+"favorites.move.confirm.merge.message" = "\"%@\" filmi zaten \"%@\" listesinde var. Orada kalacak ve bu listeden kaldırılacak.";
+"favorites.move.destination.contains" = "Zaten bu listede";
 "favorites.share.button" = "Listeyi Paylaş";
 "favorites.share.header" = "Merhaba! DeFilms'teki %@ listeme göz at.";
 

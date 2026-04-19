@@ -58,27 +58,43 @@ struct SettingsValueRow: View {
     let symbol: String
     let title: String
     let value: String
+    @Environment(\.layoutDirection) private var layoutDirection
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: symbol)
-                .foregroundStyle(.primary)
-                .frame(width: 28, height: 28)
-                .background(Color.primary.opacity(0.06))
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .accessibilityHidden(true)
+            if layoutDirection == .rightToLeft {
+                Text(value)
+                    .foregroundStyle(.secondary)
 
-            Text(title)
-                .foregroundStyle(.primary)
+                Text(title)
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
 
-            Spacer()
+                rowIcon
+            } else {
+                rowIcon
 
-            Text(value)
-                .foregroundStyle(.secondary)
+                Text(title)
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text(value)
+                    .foregroundStyle(.secondary)
+            }
         }
+        .environment(\.layoutDirection, .leftToRight)
         .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+
+    private var rowIcon: some View {
+        Image(systemName: symbol)
+            .foregroundStyle(.primary)
+            .frame(width: 28, height: 28)
+            .background(Color.primary.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .accessibilityHidden(true)
     }
 }
 
@@ -89,22 +105,45 @@ struct SettingsSimpleRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: symbol)
-                .foregroundStyle(.primary)
-                .frame(width: 28, height: 28)
-                .background(Color.primary.opacity(0.06))
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .accessibilityHidden(true)
-            Text(title)
-                .foregroundStyle(.primary)
-            Spacer()
-            Image(systemName: layoutDirection == .rightToLeft ? "chevron.left" : "chevron.right")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.tertiary)
+            if layoutDirection == .rightToLeft {
+                chevronIcon
+
+                Text(title)
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .multilineTextAlignment(.trailing)
+
+                rowIcon
+            } else {
+                rowIcon
+
+                Text(title)
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .multilineTextAlignment(.leading)
+
+                chevronIcon
+            }
         }
+        .environment(\.layoutDirection, .leftToRight)
         .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+
+    private var rowIcon: some View {
+        Image(systemName: symbol)
+            .foregroundStyle(.primary)
+            .frame(width: 28, height: 28)
+            .background(Color.primary.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .accessibilityHidden(true)
+    }
+
+    private var chevronIcon: some View {
+        Image(systemName: layoutDirection == .rightToLeft ? "chevron.left" : "chevron.right")
+            .font(.caption.weight(.bold))
+            .foregroundStyle(.tertiary)
     }
 }
 

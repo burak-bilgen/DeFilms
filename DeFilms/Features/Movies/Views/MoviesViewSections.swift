@@ -21,7 +21,7 @@ struct MoviesBrowseSectionView: View {
                 onSelect: onSelectRecentSearch,
                 onRequestClearConfirmation: onRequestClearSearchHistory
             )
-            .padding(.bottom, 10)
+            .padding(.bottom, 2)
         }
 
         switch screenState {

@@ -3,6 +3,7 @@
 //  DeFilms
 //
 
+import Combine
 import SwiftUI
 
 struct AppEntryView: View {
@@ -36,6 +37,7 @@ struct AppEntryView: View {
                 container: container,
                 favoritesStore: favoritesStore
             )
+            .id(preferences.interfaceLayoutRefreshToken)
             .blur(radius: isInteractionBlocked ? 6 : 0)
             .allowsHitTesting(!isInteractionBlocked)
 
@@ -84,18 +86,19 @@ struct AppEntryView: View {
                     }
                 }
                 .tint(.primary)
-                .toast(item: $toastCenter.item, duration: 1.8)
             }
             .environmentObject(flowCoordinator)
-            .onChange(of: sessionManager.toastItem?.id) { _ in
-                relayToast(from: sessionManager.toastItem) {
-                    sessionManager.clearToast()
-                }
+            .relayToast(from: sessionManager.$toastItem.eraseToAnyPublisher()) {
+                sessionManager.clearToast()
             }
-            .onChange(of: favoritesStore.toastItem?.id) { _ in
-                relayToast(from: favoritesStore.toastItem) {
-                    favoritesStore.clearToast()
-                }
+            .relayToast(from: favoritesStore.$toastItem.eraseToAnyPublisher()) {
+                favoritesStore.clearToast()
+            }
+            .onChange(of: preferences.selectedTheme.rawValue) { _ in
+                toastCenter.clear()
+            }
+            .onChange(of: preferences.selectedLanguage.rawValue) { _ in
+                toastCenter.clear()
             }
     }
 
@@ -128,12 +131,6 @@ struct AppEntryView: View {
     private func dismissOnboarding() {
         preferences.hasCompletedOnboarding = true
     }
-
-    private func relayToast(from item: ToastItem?, onConsumed: () -> Void) {
-        guard let item else { return }
-        toastCenter.show(message: item.message, style: item.style)
-        onConsumed()
-    }
 }
 
 private struct LanguageChangeLoadingView: View {
@@ -145,8 +142,13 @@ private struct LanguageChangeLoadingView: View {
                 .progressViewStyle(.circular)
                 .scaleEffect(1.15)
 
-            Text(Localization.string("settings.language.appLanguage"))
+            Text(Localization.string("settings.language.applying.title"))
                 .font(.headline.weight(.semibold))
+
+            Text(Localization.string("settings.language.applying.message"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
         .padding(.horizontal, AppSpacing.xl)
         .padding(.vertical, AppSpacing.lg)

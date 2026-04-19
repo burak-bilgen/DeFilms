@@ -145,6 +145,9 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     func add(movie: Movie, to listID: UUID, userIdentifier: String) async throws {
         addMovieCallCount += 1
         if let addMovieError { throw addMovieError }
+        guard let index = lists.firstIndex(where: { $0.id == listID }) else { return }
+        guard lists[index].movies.contains(where: { $0.id == movie.id }) == false else { return }
+        lists[index].movies.append(FavoriteMovie(movie: movie))
     }
 
     func remove(movieID: Int, from listID: UUID, userIdentifier: String) async throws {
@@ -159,6 +162,18 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID, userIdentifier: String) async throws {
         moveMovieCallCount += 1
         if let moveMovieError { throw moveMovieError }
+        guard sourceListID != destinationListID else { return }
+        guard
+            let sourceIndex = lists.firstIndex(where: { $0.id == sourceListID }),
+            let destinationIndex = lists.firstIndex(where: { $0.id == destinationListID }),
+            let movie = lists[sourceIndex].movies.first(where: { $0.id == movieID })
+        else {
+            return
+        }
+
+        lists[sourceIndex].movies.removeAll { $0.id == movieID }
+        guard lists[destinationIndex].movies.contains(where: { $0.id == movieID }) == false else { return }
+        lists[destinationIndex].movies.append(movie)
     }
 }
 
@@ -222,6 +237,18 @@ final class SpyFavoritesStore: FavoritesStoreManaging {
 
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) async {
         movedMovies.append((movieID, sourceListID, destinationListID))
+        guard sourceListID != destinationListID else { return }
+        guard
+            let sourceIndex = storedLists.firstIndex(where: { $0.id == sourceListID }),
+            let destinationIndex = storedLists.firstIndex(where: { $0.id == destinationListID }),
+            let movie = storedLists[sourceIndex].movies.first(where: { $0.id == movieID })
+        else {
+            return
+        }
+
+        storedLists[sourceIndex].movies.removeAll { $0.id == movieID }
+        guard storedLists[destinationIndex].movies.contains(where: { $0.id == movieID }) == false else { return }
+        storedLists[destinationIndex].movies.append(movie)
     }
 
     func list(withID listID: UUID) -> FavoriteList? {

@@ -7,106 +7,80 @@ import SwiftUI
 
 struct FavoriteMovieManagementModalView: View {
     let movie: FavoriteMovie
-    let destinationLists: [FavoriteList]
+    let destinations: [FavoriteMovieDestination]
     let moveMovie: (UUID) -> Void
     let createListAndMove: (String) async -> Bool
     let removeMovie: () -> Void
 
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     @FocusState private var isTextFieldFocused: Bool
-    @State private var isPresented = false
     @State private var isCreatingList = false
     @State private var listName = ""
     @State private var isRemoveConfirmationPresented = false
-    @State private var pendingDestinationList: FavoriteList?
-    @State private var isDismissing = false
+    @State private var pendingDestination: FavoriteMovieDestination?
 
     private var proposedListName: String {
         listName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var body: some View {
-        ZStack {
-            Color.clear
-                .ignoresSafeArea()
-                .onTapGesture {
-                    dismissAnimated()
-                }
-
+        FavoritesModalShell(regularMaxWidth: 390, accessibilityMaxWidth: 430) { dismissAnimated in
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                header
+                header(dismissAnimated: dismissAnimated)
                 movieSummary
 
                 if isCreatingList {
-                    createListContent
+                    createListContent(dismissAnimated: dismissAnimated)
                 } else {
-                    destinationContent
+                    destinationContent(dismissAnimated: dismissAnimated)
                 }
             }
-            .padding(AppSpacing.lg)
-            .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? 430 : 390)
-            .background(modalBackground)
-            .overlay(
-                RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous)
-                    .stroke(AppPalette.border.opacity(1.3), lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.24), radius: 28, x: 0, y: 18)
-            .padding(.horizontal, AppSpacing.lg)
-            .scaleEffect(isPresented ? 1 : 0.92)
-            .opacity(isPresented ? 1 : 0)
-            .offset(y: isPresented ? 0 : 16)
-        }
-        .presentationBackground(.clear)
-        .animation(AppAnimation.emphasizedSpring, value: isPresented)
-        .animation(AppAnimation.gentleSpring, value: isCreatingList)
-        .alert(
-            Localization.string("favorites.move.title"),
-            isPresented: Binding(
-                get: { pendingDestinationList != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        pendingDestinationList = nil
+            .alert(
+                Localization.string("favorites.move.title"),
+                isPresented: Binding(
+                    get: { pendingDestination != nil },
+                    set: { isPresented in
+                        if !isPresented {
+                            pendingDestination = nil
+                        }
                     }
-                }
-            )
-        ) {
-            Button(Localization.string("favorites.move.confirm")) {
-                guard let pendingDestinationList else { return }
-                moveMovie(pendingDestinationList.id)
-                dismissAnimated()
-            }
-            Button(Localization.string("common.cancel"), role: .cancel) {
-                pendingDestinationList = nil
-            }
-        } message: {
-            Text(
-                Localization.string(
-                    "favorites.move.confirm.message",
-                    movie.title,
-                    pendingDestinationList?.name ?? ""
                 )
-            )
-        }
-        .alert(
-            Localization.string("favorites.remove.movie.title"),
-            isPresented: $isRemoveConfirmationPresented
-        ) {
-            Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
-                removeMovie()
-                dismissAnimated()
+            ) {
+                Button(Localization.string("favorites.move.confirm")) {
+                    guard let pendingDestination else { return }
+                    moveMovie(pendingDestination.id)
+                    dismissAnimated()
+                }
+                Button(Localization.string("common.cancel"), role: .cancel) {
+                    pendingDestination = nil
+                }
+            } message: {
+                Text(
+                    Localization.string(
+                        pendingDestination?.alreadyContainsMovie == true
+                            ? "favorites.move.confirm.merge.message"
+                            : "favorites.move.confirm.message",
+                        movie.title,
+                        pendingDestination?.list.name ?? ""
+                    )
+                )
             }
-            Button(Localization.string("common.cancel"), role: .cancel) {}
-        } message: {
-            Text(Localization.string("favorites.remove.movie.message", movie.title))
+            .alert(
+                Localization.string("favorites.remove.movie.title"),
+                isPresented: $isRemoveConfirmationPresented
+            ) {
+                Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
+                    removeMovie()
+                    dismissAnimated()
+                }
+                Button(Localization.string("common.cancel"), role: .cancel) {}
+            } message: {
+                Text(Localization.string("favorites.remove.movie.message", movie.title))
+            }
         }
-        .task {
-            isPresented = true
-        }
+        .animation(AppAnimation.gentleSpring, value: isCreatingList)
     }
 
-    private var header: some View {
+    private func header(dismissAnimated: @escaping () -> Void) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(Localization.string(isCreatingList ? "favorites.create.title" : "favorites.move.title"))
@@ -123,7 +97,7 @@ struct FavoriteMovieManagementModalView: View {
                 )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: 0)
@@ -161,7 +135,7 @@ struct FavoriteMovieManagementModalView: View {
                 Text(movie.title)
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(.primary)
-                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text(movie.releaseYear == "--" ? Localization.string("favorites.move.title") : movie.releaseYear)
                     .font(.caption)
@@ -173,36 +147,50 @@ struct FavoriteMovieManagementModalView: View {
     }
 
     @ViewBuilder
-    private var destinationContent: some View {
+    private func destinationContent(dismissAnimated: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            if destinationLists.isEmpty {
+            if destinations.isEmpty {
                 Text(Localization.string("favorites.create.subtitle.movie"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                        ForEach(destinationLists) { destination in
+                        ForEach(destinations) { destination in
                             Button {
-                                pendingDestinationList = destination
+                                pendingDestination = destination
                             } label: {
                                 HStack(spacing: AppSpacing.sm) {
                                     VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                                        Text(destination.name)
+                                        Text(destination.list.name)
                                             .font(.subheadline.weight(.semibold))
                                             .foregroundStyle(.primary)
+                                            .fixedSize(horizontal: false, vertical: true)
 
-                                        Text(Localization.string("favorites.count", destination.movies.count))
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                        HStack(spacing: AppSpacing.xs) {
+                                            Text(Localization.string("favorites.count", destination.list.movies.count))
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                                .fixedSize(horizontal: false, vertical: true)
+
+                                            if destination.alreadyContainsMovie {
+                                                Text(Localization.string("favorites.move.destination.contains"))
+                                                    .font(.caption.weight(.semibold))
+                                                    .foregroundStyle(.orange)
+                                                    .fixedSize(horizontal: false, vertical: true)
+                                            }
+                                        }
                                     }
+                                    .layoutPriority(1)
 
                                     Spacer(minLength: 0)
 
                                     Image(systemName: "arrow.right.circle.fill")
                                         .font(.title3.weight(.semibold))
                                         .foregroundStyle(.primary)
+                                        .fixedSize()
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, AppSpacing.md)
                                 .padding(.vertical, AppSpacing.md)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -212,7 +200,7 @@ struct FavoriteMovieManagementModalView: View {
                         }
                     }
                 }
-                .frame(maxHeight: min(CGFloat(max(destinationLists.count, 1)) * 72, 240))
+                .frame(maxHeight: min(CGFloat(max(destinations.count, 1)) * 92, 280))
             }
 
             HStack(spacing: AppSpacing.sm) {
@@ -226,7 +214,7 @@ struct FavoriteMovieManagementModalView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: AppDimension.controlHeight)
+                        .frame(height: AppDimension.prominentButtonHeight)
                         .appCardSurface(cornerRadius: AppCornerRadius.md, background: AppPalette.cardAccentBackground)
                 }
                 .buttonStyle(.plain)
@@ -236,15 +224,19 @@ struct FavoriteMovieManagementModalView: View {
                 }
                 .font(.subheadline.weight(.semibold))
                 .frame(maxWidth: .infinity)
-                .frame(height: AppDimension.controlHeight)
-                .background(Color.red.opacity(0.12))
+                .frame(height: AppDimension.prominentButtonHeight)
+                .background(Color.red.opacity(0.22))
                 .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous)
+                        .stroke(Color.red.opacity(0.28), lineWidth: 1)
+                )
                 .buttonStyle(.plain)
             }
         }
     }
 
-    private var createListContent: some View {
+    private func createListContent(dismissAnimated: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text(Localization.string("favorites.picker.placeholder"))
@@ -263,7 +255,7 @@ struct FavoriteMovieManagementModalView: View {
                     .submitLabel(.done)
                     .onSubmit {
                         Task {
-                            await submitNewList()
+                            await submitNewList(dismissAnimated: dismissAnimated)
                         }
                     }
             }
@@ -289,7 +281,7 @@ struct FavoriteMovieManagementModalView: View {
 
                 Button {
                     Task {
-                        await submitNewList()
+                        await submitNewList(dismissAnimated: dismissAnimated)
                     }
                 } label: {
                     Text(Localization.string("favorites.action.create"))
@@ -302,30 +294,11 @@ struct FavoriteMovieManagementModalView: View {
         }
     }
 
-    private var modalBackground: some View {
-        RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous)
-            .fill(AppPalette.screenBackground)
-    }
-
-    private func submitNewList() async {
+    private func submitNewList(dismissAnimated: @escaping () -> Void) async {
         guard !proposedListName.isEmpty else { return }
         let moved = await createListAndMove(proposedListName)
         if moved {
             dismissAnimated()
-        }
-    }
-
-    private func dismissAnimated() {
-        guard !isDismissing else { return }
-        isDismissing = true
-
-        withAnimation(AppAnimation.emphasizedSpring) {
-            isPresented = false
-        }
-
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(180))
-            dismiss()
         }
     }
 }

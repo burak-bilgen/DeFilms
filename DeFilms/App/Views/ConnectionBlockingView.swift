@@ -6,8 +6,6 @@
 import SwiftUI
 
 struct ConnectionBlockingView: View {
-    @EnvironmentObject private var preferences: AppPreferences
-
     let isChecking: Bool
     let retryAction: () -> Void
 
@@ -23,11 +21,11 @@ struct ConnectionBlockingView: View {
                     .padding(.bottom, AppSpacing.xs)
 
                 VStack(spacing: AppSpacing.sm) {
-                    Text(copy.title)
+                    Text(Localization.string("network.blocking.title"))
                         .font(.title3.weight(.bold))
                         .multilineTextAlignment(.center)
 
-                    Text(copy.message)
+                    Text(Localization.string("network.blocking.message"))
                         .font(.body)
                         .foregroundStyle(Color.secondary)
                         .multilineTextAlignment(.center)
@@ -42,7 +40,13 @@ struct ConnectionBlockingView: View {
                                 .tint(Color(.systemBackground))
                         }
 
-                        Text(copy.buttonTitle)
+                        Text(
+                            Localization.string(
+                                isChecking
+                                    ? "network.blocking.button.checking"
+                                    : "network.blocking.button.retry"
+                            )
+                        )
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -55,33 +59,4 @@ struct ConnectionBlockingView: View {
             .padding(.horizontal, AppSpacing.xl)
         }
     }
-
-    private var copy: ConnectionBlockingCopy {
-        switch preferences.selectedLanguage {
-        case .english:
-            return ConnectionBlockingCopy(
-                title: "Internet connection required",
-                message: "DeFilms needs an active Wi-Fi or cellular connection to load movie data. Reconnect to the internet and try again.",
-                buttonTitle: isChecking ? "Checking..." : "Check Again"
-            )
-        case .turkish:
-            return ConnectionBlockingCopy(
-                title: "İnternet bağlantısı gerekli",
-                message: "DeFilms, film verilerini yüklemek için etkin bir Wi‑Fi veya mobil veri bağlantısına ihtiyaç duyar. Bağlantıyı geri getirip tekrar deneyin.",
-                buttonTitle: isChecking ? "Kontrol ediliyor..." : "Tekrar kontrol et"
-            )
-        case .arabic:
-            return ConnectionBlockingCopy(
-                title: "الاتصال بالانترنت مطلوب",
-                message: "يحتاج DeFilms الى اتصال فعال عبر الواي فاي او البيانات الخلوية لتحميل بيانات الافلام. اعد الاتصال ثم حاول مرة اخرى.",
-                buttonTitle: isChecking ? "جار التحقق..." : "اعادة التحقق"
-            )
-        }
-    }
-}
-
-private struct ConnectionBlockingCopy {
-    let title: String
-    let message: String
-    let buttonTitle: String
 }

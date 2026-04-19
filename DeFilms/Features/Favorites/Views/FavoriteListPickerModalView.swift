@@ -9,52 +9,28 @@ struct FavoriteListPickerModalView: View {
     let movie: Movie
 
     @EnvironmentObject private var favoritesStore: FavoritesStore
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @FocusState private var isTextFieldFocused: Bool
     @State private var listPendingRemoval: FavoriteList?
     @State private var isCreatingList = false
     @State private var listName = ""
-    @State private var isPresented = false
-    @State private var isDismissing = false
 
     private var proposedListName: String {
         listName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var body: some View {
-        ZStack {
-            Color.clear
-                .ignoresSafeArea()
-                .onTapGesture {
-                    dismissAnimated()
-                }
-
+        FavoritesModalShell(regularMaxWidth: 380, accessibilityMaxWidth: 420) { dismissAnimated in
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                header
+                header(dismissAnimated: dismissAnimated)
 
                 if isCreatingList {
-                    createListContent
+                    createListContent(dismissAnimated: dismissAnimated)
                 } else {
                     pickerContent
                 }
             }
-            .padding(AppSpacing.lg)
-            .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? 420 : 380)
-            .background(modalBackground)
-            .overlay(
-                RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous)
-                    .stroke(AppPalette.border.opacity(1.3), lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.24), radius: 28, x: 0, y: 18)
-            .padding(.horizontal, AppSpacing.lg)
-            .scaleEffect(isPresented ? 1 : 0.92, anchor: .center)
-            .opacity(isPresented ? 1 : 0)
-            .offset(y: isPresented ? 0 : 16)
         }
-        .presentationBackground(.clear)
-        .animation(AppAnimation.emphasizedSpring, value: isPresented)
         .animation(AppAnimation.gentleSpring, value: isCreatingList)
         .alert(
             Localization.string("favorites.remove.movie.title"),
@@ -86,12 +62,10 @@ struct FavoriteListPickerModalView: View {
                 isCreatingList = true
                 isTextFieldFocused = true
             }
-
-            isPresented = true
         }
     }
 
-    private var header: some View {
+    private func header(dismissAnimated: @escaping () -> Void) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
                 Text(Localization.string(isCreatingList ? "favorites.create.title" : "favorites.picker.title"))
@@ -189,14 +163,14 @@ struct FavoriteListPickerModalView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity)
-                    .frame(height: AppDimension.controlHeight)
+                    .frame(height: AppDimension.prominentButtonHeight)
                     .appCardSurface(cornerRadius: AppCornerRadius.md, background: AppPalette.cardAccentBackground)
             }
             .buttonStyle(.plain)
         }
     }
 
-    private var createListContent: some View {
+    private func createListContent(dismissAnimated: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text(Localization.string("favorites.picker.placeholder"))
@@ -215,7 +189,7 @@ struct FavoriteListPickerModalView: View {
                     .submitLabel(.done)
                     .onSubmit {
                         Task {
-                            await createList()
+                            await createList(dismissAnimated: dismissAnimated)
                         }
                     }
             }
@@ -243,7 +217,7 @@ struct FavoriteListPickerModalView: View {
 
                 Button {
                     Task {
-                        await createList()
+                        await createList(dismissAnimated: dismissAnimated)
                     }
                 } label: {
                     Text(Localization.string("favorites.action.create"))
@@ -256,30 +230,11 @@ struct FavoriteListPickerModalView: View {
         }
     }
 
-    private var modalBackground: some View {
-        RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous)
-            .fill(AppPalette.screenBackground)
-    }
-
-    private func createList() async {
+    private func createList(dismissAnimated: @escaping () -> Void) async {
         guard !proposedListName.isEmpty else { return }
         guard let list = await favoritesStore.createList(named: proposedListName) else { return }
         await favoritesStore.add(movie: movie, to: list.id)
         dismissAnimated()
         _ = list
-    }
-
-    private func dismissAnimated() {
-        guard !isDismissing else { return }
-        isDismissing = true
-
-        withAnimation(AppAnimation.emphasizedSpring) {
-            isPresented = false
-        }
-
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(180))
-            dismiss()
-        }
     }
 }

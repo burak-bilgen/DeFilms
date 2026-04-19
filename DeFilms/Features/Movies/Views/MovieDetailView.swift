@@ -3,6 +3,7 @@
 //  DeFilms
 //
 
+import Combine
 import SwiftUI
 
 struct MovieDetailView: View {
@@ -10,7 +11,6 @@ struct MovieDetailView: View {
 
     @StateObject private var viewModel: MovieDetailViewModel
     @EnvironmentObject private var preferences: AppPreferences
-    @EnvironmentObject private var toastCenter: ToastCenter
     @Environment(\.colorScheme) private var colorScheme
     @State private var scrollOffset: CGFloat = 0
     @State private var isContentVisible = false
@@ -106,8 +106,8 @@ struct MovieDetailView: View {
                     .ignoresSafeArea()
             }
         }
-        .onChange(of: viewModel.toastItem?.id) { _ in
-            relayToast(from: viewModel.toastItem)
+        .relayToast(from: viewModel.$toastItem.eraseToAnyPublisher()) {
+            viewModel.clearToast()
         }
     }
 
@@ -137,13 +137,6 @@ struct MovieDetailView: View {
     private var bottomBackgroundColor: Color {
         colorScheme == .dark ? Color.black : Color(.systemBackground)
     }
-
-    private func relayToast(from item: ToastItem?) {
-        guard let item else { return }
-        toastCenter.show(message: item.message, style: item.style)
-        viewModel.clearToast()
-    }
-
     private var hasSupplementarySections: Bool {
         !viewModel.directors.isEmpty ||
         !viewModel.cast.isEmpty ||

@@ -35,6 +35,7 @@ enum AppDimension {
 
 enum AppPalette {
     static let screenBackground = Color(.systemGroupedBackground)
+    static let elevatedBackground = Color(.systemBackground)
     static let cardBackground = Color(.secondarySystemBackground)
     static let cardAccentBackground = Color(.tertiarySystemBackground)
     static let border = Color.primary.opacity(0.08)

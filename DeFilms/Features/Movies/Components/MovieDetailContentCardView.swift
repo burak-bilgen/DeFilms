@@ -84,6 +84,7 @@ private struct MovieGenreBubbleWrapView: View {
                 chip(item)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func chip(_ item: String) -> some View {
@@ -363,7 +364,7 @@ private struct GenreFlowLayout: Layout {
         subviews: Subviews,
         cache: inout ()
     ) -> CGSize {
-        let maxWidth = proposal.width ?? .greatestFiniteMagnitude
+        let maxWidth = max(proposal.width ?? 320, 1)
         var currentRowWidth: CGFloat = 0
         var currentRowHeight: CGFloat = 0
         var totalWidth: CGFloat = 0
@@ -372,12 +373,14 @@ private struct GenreFlowLayout: Layout {
         // Measure chips row by row so long genres can wrap naturally instead of
         // being forced into a fixed-width grid.
         for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
+            let size = measuredSize(for: subview, availableWidth: maxWidth)
             let spacing = currentRowWidth == 0 ? 0 : horizontalSpacing
 
             if currentRowWidth + spacing + size.width > maxWidth {
                 totalWidth = max(totalWidth, currentRowWidth)
-                totalHeight += currentRowHeight + verticalSpacing
+                if currentRowHeight > 0 {
+                    totalHeight += currentRowHeight + verticalSpacing
+                }
                 currentRowWidth = size.width
                 currentRowHeight = size.height
             } else {
@@ -403,10 +406,10 @@ private struct GenreFlowLayout: Layout {
         var rowHeight: CGFloat = 0
 
         for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
+            let size = measuredSize(for: subview, availableWidth: max(bounds.width, 1))
             let spacing = currentX == bounds.minX ? 0 : horizontalSpacing
 
-            if currentX + spacing + size.width > bounds.maxX {
+            if currentX + spacing + size.width > bounds.maxX, currentX > bounds.minX {
                 currentX = bounds.minX
                 currentY += rowHeight + verticalSpacing
                 rowHeight = 0
@@ -422,6 +425,13 @@ private struct GenreFlowLayout: Layout {
             currentX += size.width
             rowHeight = max(rowHeight, size.height)
         }
+    }
+
+    private func measuredSize(for subview: LayoutSubview, availableWidth: CGFloat) -> CGSize {
+        let width = max(availableWidth, 1)
+        return subview.sizeThatFits(
+            ProposedViewSize(width: width, height: nil)
+        )
     }
 }
 

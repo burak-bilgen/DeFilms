@@ -63,6 +63,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 final class AppPreferences: ObservableObject {
     private let defaults: UserDefaults
     private var languageChangeTask: Task<Void, Never>?
+    private let minimumLanguageTransitionDuration = Duration.milliseconds(250)
 
     @Published var selectedTheme: AppTheme {
         didSet {
@@ -85,6 +86,7 @@ final class AppPreferences: ObservableObject {
     }
 
     @Published private(set) var isApplyingLanguageChange = false
+    @Published private(set) var interfaceLayoutRefreshToken = UUID()
 
     nonisolated static let themeKey = "app.theme"
     nonisolated static let languageKey = "app.language"
@@ -124,15 +126,21 @@ final class AppPreferences: ObservableObject {
         guard !isApplyingLanguageChange else { return }
 
         languageChangeTask?.cancel()
+        let transitionStart = ContinuousClock.now
 
         isApplyingLanguageChange = true
         selectedLanguage = language
         AppLayoutDirectionController.apply(language.layoutDirection)
+        interfaceLayoutRefreshToken = UUID()
 
         let task = Task { @MainActor [weak self] in
-            // Give SwiftUI a short blocking window while locale/layout direction
-            // dependent screens are rebuilt to avoid the app appearing frozen.
-            try? await Task.sleep(for: .milliseconds(800))
+            // Keep the loading state long enough to avoid a flash while the
+            // locale and layout direction propagate through the view tree.
+            await Task.yield()
+            let elapsed = transitionStart.duration(to: .now)
+            if elapsed < self?.minimumLanguageTransitionDuration ?? .zero {
+                try? await Task.sleep(for: (self?.minimumLanguageTransitionDuration ?? .zero) - elapsed)
+            }
             guard !Task.isCancelled else { return }
             self?.isApplyingLanguageChange = false
             self?.languageChangeTask = nil

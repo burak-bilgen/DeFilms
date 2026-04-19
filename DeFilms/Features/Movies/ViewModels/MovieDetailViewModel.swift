@@ -56,7 +56,7 @@ final class MovieDetailViewModel: ObservableObject {
 
     var ratingText: String? {
         let rating = detail?.voteAverage ?? movie.voteAverage
-        guard let rating else { return nil }
+        guard let rating, rating > 0 else { return nil }
         return String(format: "%.1f", rating)
     }
 

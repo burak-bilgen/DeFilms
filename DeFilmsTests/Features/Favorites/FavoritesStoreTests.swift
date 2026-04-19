@@ -229,6 +229,28 @@ final class FavoritesStoreTests: XCTestCase {
         XCTAssertNil(store.toastItem)
     }
 
+    func test_FavoritesStore_moveToListThatAlreadyContainsMovie_removesSourceCopyAndShowsMergeToast() async {
+        let sourceListID = UUID()
+        let destinationListID = UUID()
+        let movie = FavoriteMovie(id: 7, title: "Arrival", posterPath: nil, releaseDate: nil, voteAverage: nil)
+        let repository = MockFavoritesRepository()
+        repository.lists = [
+            FavoriteList(id: sourceListID, name: "X", movies: [movie]),
+            FavoriteList(id: destinationListID, name: "Y", movies: [movie])
+        ]
+        let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
+        let store = FavoritesStore(
+            favoritesService: FavoritesService(repository: repository, sessionManager: sessionManager),
+            sessionManager: sessionManager
+        )
+
+        await store.move(movieID: movie.id, from: destinationListID, to: sourceListID)
+
+        XCTAssertEqual(store.toastItem?.message, Localization.string("favorites.toast.movieMerged"))
+        XCTAssertEqual(store.list(withID: sourceListID)?.movies.map(\.id), [movie.id])
+        XCTAssertTrue(store.list(withID: destinationListID)?.movies.isEmpty == true)
+    }
+
     func test_FavoritesStore_deleteMissingList_isNoOp() async {
         let repository = MockFavoritesRepository()
         let sessionManager = AuthSessionManager(keychainService: MockKeychainService())
@@ -253,10 +275,30 @@ final class FavoritesStoreTests: XCTestCase {
         let destinationList = FavoriteList(id: UUID(), name: "Sci-Fi", movies: [])
         let store = SpyFavoritesStore(lists: [primaryList, destinationList])
         let viewModel = FavoriteListDetailViewModel(listID: primaryListID, favoritesStore: store)
+        let destinationOptions = viewModel.destinationOptions(for: 1)
 
         XCTAssertEqual(viewModel.list?.name, "Weekend")
-        XCTAssertEqual(viewModel.destinationLists.map(\.name), ["Sci-Fi"])
+        XCTAssertEqual(destinationOptions.map(\.list.name), ["Sci-Fi"])
+        XCTAssertEqual(destinationOptions.map(\.alreadyContainsMovie), [false])
         XCTAssertTrue(viewModel.shareText?.contains("Dune (2021)") == true)
+    }
+
+    func test_FavoriteListDetailViewModel_destinationOptions_markListsThatAlreadyContainMovie() {
+        let primaryListID = UUID()
+        let duplicateMovie = FavoriteMovie(id: 1, title: "Dune", posterPath: nil, releaseDate: "2021-10-22", voteAverage: nil)
+        let store = SpyFavoritesStore(
+            lists: [
+                FavoriteList(id: primaryListID, name: "X", movies: [duplicateMovie]),
+                FavoriteList(id: UUID(), name: "Y", movies: [duplicateMovie]),
+                FavoriteList(id: UUID(), name: "Z", movies: [])
+            ]
+        )
+        let viewModel = FavoriteListDetailViewModel(listID: primaryListID, favoritesStore: store)
+
+        let destinationOptions = viewModel.destinationOptions(for: duplicateMovie.id)
+
+        XCTAssertEqual(destinationOptions.map(\.list.name), ["Y", "Z"])
+        XCTAssertEqual(destinationOptions.map(\.alreadyContainsMovie), [true, false])
     }
 
     func test_FavoriteListDetailViewModel_updatesPublishedList_whenStorePublishesChange() async {

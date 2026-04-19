@@ -5,6 +5,7 @@
 //  Created by Burak on 2.04.2026.
 //
 
+import Combine
 import SwiftUI
 
 struct ToastItem: Identifiable, Equatable {
@@ -62,7 +63,6 @@ struct ToastView: View {
 
 struct ToastModifier: ViewModifier {
     @Binding var item: ToastItem?
-    let duration: TimeInterval
 
     func body(content: Content) -> some View {
         content
@@ -79,26 +79,32 @@ struct ToastModifier: ViewModifier {
                 }
             }
             .animation(.spring(response: 0.36, dampingFraction: 0.86), value: item?.id)
-            .task(id: item?.id) {
-                guard item != nil else { return }
-
-                do {
-                    try await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
-                    guard !Task.isCancelled else { return }
-                    await MainActor.run {
-                        withAnimation(.easeInOut(duration: 0.24)) {
-                            item = nil
-                        }
-                    }
-                } catch {
-                    return
-                }
-            }
     }
 }
 
 extension View {
-    func toast(item: Binding<ToastItem?>, duration: TimeInterval = 1.2) -> some View {
-        modifier(ToastModifier(item: item, duration: duration))
+    func toast(item: Binding<ToastItem?>) -> some View {
+        modifier(ToastModifier(item: item))
+    }
+
+    func relayToast(
+        from publisher: AnyPublisher<ToastItem?, Never>,
+        onConsumed: @escaping () -> Void
+    ) -> some View {
+        modifier(ToastRelayModifier(publisher: publisher, onConsumed: onConsumed))
+    }
+}
+
+private struct ToastRelayModifier: ViewModifier {
+    @EnvironmentObject private var toastCenter: ToastCenter
+
+    let publisher: AnyPublisher<ToastItem?, Never>
+    let onConsumed: () -> Void
+
+    func body(content: Content) -> some View {
+        content.onReceive(publisher.compactMap { $0 }) { item in
+            toastCenter.show(message: item.message, style: item.style)
+            onConsumed()
+        }
     }
 }

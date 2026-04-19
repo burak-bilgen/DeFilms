@@ -23,7 +23,7 @@ struct MoviesHeaderBar: View {
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .frame(width: 42, height: 42)
-                    .background(AppPalette.cardBackground)
+                    .background(Color(.secondarySystemBackground))
                     .clipShape(Circle())
                     .overlay(
                         Circle()
@@ -33,6 +33,13 @@ struct MoviesHeaderBar: View {
             .buttonStyle(PressableScaleButtonStyle())
             .accessibilityLabel(Localization.string("favorites.navigate"))
         }
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.top, 2)
+        .padding(.bottom, 2)
+        .frame(maxWidth: .infinity)
+        .background(.clear)
+        .shadow(color: AppPalette.shadow.opacity(0.8), radius: 10, x: 0, y: 6)
+        .zIndex(1)
     }
 }
 

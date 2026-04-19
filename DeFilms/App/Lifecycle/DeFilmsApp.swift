@@ -40,7 +40,6 @@ struct DeFilmsApp: App {
                 container: container,
                 favoritesStore: favoritesStore
             )
-                .id("app-root-\(preferences.selectedLanguage.rawValue)")
                 .environment(\.managedObjectContext, persistenceController.viewContext)
                 .environment(\.locale, preferences.locale)
                 .environment(\.layoutDirection, preferences.layoutDirection)
@@ -50,7 +49,7 @@ struct DeFilmsApp: App {
                 .environmentObject(favoritesStore)
                 .environmentObject(toastCenter)
                 .environmentObject(connectivityMonitor)
-                .toast(item: $toastCenter.item, duration: 1.8)
+                .toast(item: $toastCenter.item)
         }
     }
 

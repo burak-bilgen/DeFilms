@@ -47,14 +47,14 @@ struct SearchHistoryView: View {
                                 Text(item)
                                     .font(.subheadline)
                                     .lineLimit(1)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 10)
-                                .background(AppPalette.cardBackground)
-                                .overlay(
-                                    Capsule()
-                                        .stroke(AppPalette.border, lineWidth: 1)
-                                )
-                                .clipShape(Capsule())
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                    .background(AppPalette.elevatedBackground)
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(AppPalette.border, lineWidth: 1)
+                                    )
+                                    .clipShape(Capsule())
                             }
                             .buttonStyle(.plain)
                             .foregroundStyle(.primary)

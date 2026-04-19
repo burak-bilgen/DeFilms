@@ -16,6 +16,10 @@
 "network.error.decoding" = "حدثت مشكلة أثناء معالجة البيانات.";
 "network.error.server" = "خطأ في الخادم. الرمز: %d";
 "network.error.missingAPIKey" = "تعذر العثور على مفتاح API.";
+"network.blocking.title" = "الاتصال بالإنترنت مطلوب";
+"network.blocking.message" = "يحتاج DeFilms إلى اتصال نشط عبر Wi-Fi أو البيانات الخلوية لتحميل بيانات الأفلام. أعد الاتصال بالإنترنت ثم حاول مرة أخرى.";
+"network.blocking.button.retry" = "تحقق مرة أخرى";
+"network.blocking.button.checking" = "جار التحقق...";
 
 "theme.system" = "النظام";
 "theme.light" = "فاتح";
@@ -32,6 +36,8 @@
 "settings.section.about" = "حول";
 "settings.appearance.theme" = "السمة";
 "settings.language.appLanguage" = "لغة التطبيق";
+"settings.language.applying.title" = "جار تطبيق اللغة";
+"settings.language.applying.message" = "يتم تحديث الواجهة واتجاه النص وفقًا للغة التي اخترتها.";
 "settings.account.status" = "مستخدم مسجل";
 "settings.account.logout" = "تسجيل الخروج";
 "settings.account.logout.message" = "ستتم إزالة جلستك المحلية من هذا الجهاز.";
@@ -100,6 +106,7 @@
 "favorites.toast.listRenamed" = "تمت إعادة تسمية قائمة المفضلة.";
 "favorites.toast.listDeleted" = "تم حذف قائمة المفضلة.";
 "favorites.toast.movieMoved" = "تم نقل الفيلم إلى قائمة أخرى.";
+"favorites.toast.movieMerged" = "الفيلم موجود بالفعل في قائمة الوجهة، لذا تمت إزالته من هذه القائمة.";
 "favorites.toast.duplicateList" = "توجد قائمة بهذا الاسم بالفعل.";
 "favorites.toast.genericError" = "تعذر تحديث المفضلة.";
 "favorites.picker.title" = "قوائم المفضلة";
@@ -131,13 +138,15 @@
 "favorites.delete.message" = "ستتم إزالة \"%@\" نهائيًا.";
 "favorites.manage.movie" = "إدارة الفيلم";
 "favorites.remove.movie.title" = "إزالة الفيلم";
-"favorites.remove.movie.confirm" = "إزالة";
+"favorites.remove.movie.confirm" = "إزالة من القائمة";
 "favorites.remove.movie.message" = "سيتم إزالة \"%@\" من هذه القائمة.";
 "favorites.remove.from.list.message" = "إزالة هذا الفيلم من \"%@\"؟";
 "favorites.move.title" = "نقل الفيلم";
 "favorites.move.message" = "اختر قائمة وجهة لـ \"%@\".";
 "favorites.move.confirm" = "نقل";
 "favorites.move.confirm.message" = "هل تريد نقل \"%@\" إلى \"%@\"؟";
+"favorites.move.confirm.merge.message" = "\"%@\" موجود بالفعل في \"%@\". سيبقى هناك وستتم إزالته من هذه القائمة.";
+"favorites.move.destination.contains" = "موجود بالفعل هنا";
 "favorites.share.button" = "مشاركة القائمة";
 "favorites.share.header" = "مرحبًا! ألقِ نظرة على قائمتي %@ في DeFilms.";
 

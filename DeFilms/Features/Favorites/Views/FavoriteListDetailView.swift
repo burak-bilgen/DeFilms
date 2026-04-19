@@ -126,7 +126,7 @@ struct FavoriteListDetailView: View {
         }) { movie in
             FavoriteMovieManagementModalView(
                 movie: movie,
-                destinationLists: viewModel.destinationLists,
+                destinations: viewModel.destinationOptions(for: movie.id),
                 moveMovie: { destinationID in
                     Task {
                         await viewModel.move(movieID: movie.id, to: destinationID)
@@ -165,11 +165,11 @@ private struct FavoriteMovieGridItem: View {
                 Button(action: manageMovie) {
                     Image(systemName: "ellipsis")
                         .font(.footnote.weight(.bold))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.primary)
                         .frame(width: 32, height: 32)
-                        .background(Color.white.opacity(0.96))
+                        .background(AppPalette.elevatedBackground)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.black.opacity(0.08), lineWidth: 1))
+                        .overlay(Circle().stroke(AppPalette.border, lineWidth: 1))
                         .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
                         .padding(.top, 10)
                         .padding(.trailing, 12)

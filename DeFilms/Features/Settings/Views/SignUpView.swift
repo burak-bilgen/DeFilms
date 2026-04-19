@@ -3,10 +3,10 @@
 //  DeFilms
 //
 
+import Combine
 import SwiftUI
 
 struct SignUpView: View {
-    @EnvironmentObject private var toastCenter: ToastCenter
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var viewModel: SignUpViewModel
@@ -63,9 +63,7 @@ struct SignUpView: View {
             }
         }
         .animation(AppAnimation.standard, value: isSubmitEnabled)
-        .onChange(of: viewModel.toastItem?.id) { _ in
-            guard let item = viewModel.toastItem else { return }
-            toastCenter.show(message: item.message, style: item.style)
+        .relayToast(from: viewModel.$toastItem.eraseToAnyPublisher()) {
             viewModel.clearToast()
         }
     }

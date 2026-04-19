@@ -24,12 +24,15 @@ struct SettingsView: View {
 
     var body: some View {
         List {
-            accountOverviewSection
+            if sessionManager.isSignedIn {
+                accountOverviewSection
+            }
             appearanceSection
             languageSection
             accountSection
             aboutSection
         }
+        .id(preferences.interfaceLayoutRefreshToken)
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(AppPalette.screenBackground)

@@ -87,8 +87,10 @@ struct MovieDetailHeroHeaderView: View {
                         heroFacts
                     }
 
-                    MovieDetailRatingBadge(ratingText: viewModel.ratingText, style: .hero)
-                        .padding(.leading, AppSpacing.md)
+                    if let ratingText = viewModel.ratingText {
+                        MovieDetailRatingBadge(ratingText: ratingText, style: .hero)
+                            .padding(.leading, AppSpacing.md)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
@@ -96,7 +98,9 @@ struct MovieDetailHeroHeaderView: View {
                         heroFacts
                     }
 
-                    MovieDetailRatingBadge(ratingText: viewModel.ratingText, style: .hero)
+                    if let ratingText = viewModel.ratingText {
+                        MovieDetailRatingBadge(ratingText: ratingText, style: .hero)
+                    }
                 }
             }
 
@@ -105,19 +109,24 @@ struct MovieDetailHeroHeaderView: View {
                     .padding(.leading, -6)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .layoutPriority(1)
     }
 
     private var regularHeroContent: some View {
-        HStack(alignment: .bottom, spacing: AppSpacing.xl) {
+        HStack(alignment: .bottom, spacing: AppSpacing.lg) {
             VStack(alignment: .leading, spacing: 0) {
                 posterView
             }
+            .fixedSize()
 
             VStack(alignment: .leading, spacing: 0) {
                 titleBlock
             }
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(.horizontal, AppSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var compactHeroContent: some View {

@@ -15,7 +15,6 @@ struct MoviesView: View {
     @State private var isSearchHistoryClearConfirmationPresented = false
     @FocusState private var isSearchFocused: Bool
     @EnvironmentObject private var preferences: AppPreferences
-    @EnvironmentObject private var toastCenter: ToastCenter
 
     private let searchColumns = [
         GridItem(.adaptive(minimum: AppDimension.posterRailWidth, maximum: AppDimension.posterRailWidth), spacing: AppSpacing.xxxl, alignment: .top)
@@ -74,9 +73,8 @@ struct MoviesView: View {
     }
 
     var body: some View {
-        VStack(spacing: AppSpacing.sm) {
+        VStack(spacing: 0) {
             MoviesHeaderBar(openFavorites: openFavorites)
-                .padding(.horizontal)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
@@ -140,7 +138,7 @@ struct MoviesView: View {
                             .transition(.opacity)
                     }
                 }
-                .padding(.top, viewModel.shouldShowBrowseContent ? AppSpacing.lg : 0)
+                .padding(.top, viewModel.shouldShowBrowseContent ? AppSpacing.xs : 0)
                 .padding(.bottom, AppSpacing.xxl)
                 .animation(.easeInOut(duration: 0.22), value: viewModel.shouldShowBrowseContent)
             }
@@ -183,9 +181,6 @@ struct MoviesView: View {
             Button(Localization.string("common.cancel"), role: .cancel) {}
         } message: {
             Text(Localization.string("movies.searchHistory.clear.confirmMessage"))
-        }
-        .onChange(of: viewModel.toastItem?.id) { _ in
-            relayToast(from: viewModel.toastItem)
         }
     }
 
@@ -253,13 +248,6 @@ struct MoviesView: View {
             return sectionID
         }
     }
-
-    private func relayToast(from item: ToastItem?) {
-        guard let item else { return }
-        toastCenter.show(message: item.message, style: item.style)
-        viewModel.clearToast()
-    }
-
     private var summarySubtitle: String {
         if hasActiveFilters || hasActiveSorting {
             return Localization.string("movies.message.filteredEmpty.body")

@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import Combine
 
 struct MainTabView: View {
     let container: AppContainer
     let favoritesStore: FavoritesStore
+    @EnvironmentObject private var preferences: AppPreferences
 
     @State private var selection: Tab = .movies
     @StateObject private var movieCoordinator = MovieCoordinator()
@@ -49,8 +51,12 @@ struct MainTabView: View {
                     Label(Localization.string("tab.settings"), systemImage: selection == .settings ? "gearshape.fill" : "gearshape")
                 }
         }
+        .id(preferences.interfaceLayoutRefreshToken)
         .tint(.primary)
         .animation(AppAnimation.gentleSpring, value: selection)
+        .relayToast(from: moviesViewModel.$toastItem.eraseToAnyPublisher()) {
+            moviesViewModel.clearToast()
+        }
     }
 
     private var moviesTab: some View {

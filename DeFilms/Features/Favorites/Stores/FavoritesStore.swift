@@ -135,6 +135,9 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) async {
         guard sourceListID != destinationListID else { return }
         guard isMovieInList(movieID: movieID, listID: sourceListID) else { return }
+        guard list(withID: destinationListID) != nil else { return }
+
+        let destinationAlreadyContainsMovie = isMovieInList(movieID: movieID, listID: destinationListID)
 
         do {
             try await favoritesService.move(
@@ -143,7 +146,10 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
                 to: destinationListID
             )
             await refreshLists()
-            toastItem = .success(Localization.string("favorites.toast.movieMoved"))
+            let toastKey = destinationAlreadyContainsMovie
+                ? "favorites.toast.movieMerged"
+                : "favorites.toast.movieMoved"
+            toastItem = .success(Localization.string(toastKey))
         } catch {
             toastItem = .error(Localization.string("favorites.toast.genericError"))
         }

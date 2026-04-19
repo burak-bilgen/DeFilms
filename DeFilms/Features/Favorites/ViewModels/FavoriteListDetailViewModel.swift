@@ -6,6 +6,13 @@
 import Combine
 import Foundation
 
+struct FavoriteMovieDestination: Identifiable, Equatable {
+    let list: FavoriteList
+    let alreadyContainsMovie: Bool
+
+    var id: UUID { list.id }
+}
+
 @MainActor
 final class FavoriteListDetailViewModel: ObservableObject {
     @Published private(set) var list: FavoriteList?
@@ -27,8 +34,15 @@ final class FavoriteListDetailViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    var destinationLists: [FavoriteList] {
-        favoritesStore.lists.filter { $0.id != listID }
+    func destinationOptions(for movieID: Int) -> [FavoriteMovieDestination] {
+        favoritesStore.lists.compactMap { list in
+            guard list.id != listID else { return nil }
+
+            return FavoriteMovieDestination(
+                list: list,
+                alreadyContainsMovie: list.movies.contains(where: { $0.id == movieID })
+            )
+        }
     }
 
     var shareText: String? {
