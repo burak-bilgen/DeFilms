@@ -57,11 +57,11 @@ final class DeFilmsUITests: XCTestCase {
 
         let passwordField = app.secureTextFields["auth.signUp.password"]
         passwordField.tap()
-        passwordField.typeText("secret1")
+        passwordField.typeText("Secret123")
 
         let confirmPasswordField = app.secureTextFields["auth.signUp.confirmPassword"]
         confirmPasswordField.tap()
-        confirmPasswordField.typeText("secret1")
+        confirmPasswordField.typeText("Secret123")
 
         app.buttons["auth.signUp.submit"].tap()
 

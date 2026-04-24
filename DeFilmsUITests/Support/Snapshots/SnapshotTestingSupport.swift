@@ -84,7 +84,7 @@ struct SnapshotFingerprint: Equatable {
             lumaValues.append(luma)
         }
 
-        let average = lumaValues.reduce(0, +) / max(lumaValues.count, 1)
+        let average = UInt8(lumaValues.reduce(0) { $0 + Int($1) } / max(lumaValues.count, 1))
         let bits = lumaValues.map { $0 >= average ? "1" : "0" }.joined()
         let hash = stride(from: 0, to: bits.count, by: 4).map { offset in
             let start = bits.index(bits.startIndex, offsetBy: offset)

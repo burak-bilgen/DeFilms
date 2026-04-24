@@ -11,7 +11,16 @@ struct APIConfig {
     private static let apiKeyInfoKey = "TMDBApiKey"
 
     static var apiKey: String? {
-        Bundle.main.object(forInfoDictionaryKey: apiKeyInfoKey) as? String
+        guard let rawValue = Bundle.main.object(forInfoDictionaryKey: apiKeyInfoKey) as? String else {
+            return nil
+        }
+
+        let apiKey = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !apiKey.isEmpty, !apiKey.hasPrefix("$(") else {
+            return nil
+        }
+
+        return apiKey
     }
 
     static let baseURL = "https://api.themoviedb.org/3"

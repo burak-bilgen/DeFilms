@@ -65,7 +65,7 @@ final class FavoritesStoreTests: XCTestCase {
             sessionManager: sessionManager
         )
 
-        try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
+        try sessionManager.signUp(email: "user@example.com", password: "Secret123", confirmPassword: "Secret123")
 
         let didAdopt = await waitUntil {
             repository.lastAdoptedUserIdentifier == sessionManager.currentUserIdentifier

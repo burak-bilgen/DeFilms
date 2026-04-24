@@ -7,7 +7,7 @@ final class AuthSessionManagerTests: XCTestCase {
         let keychain = InMemoryKeychainService()
         let sessionManager = AuthSessionManager(keychainService: keychain)
 
-        try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
+        try sessionManager.signUp(email: "user@example.com", password: "Secret123", confirmPassword: "Secret123")
 
         XCTAssertTrue(sessionManager.isSignedIn)
         XCTAssertEqual(sessionManager.session?.email, "user@example.com")
@@ -24,7 +24,7 @@ final class AuthSessionManagerTests: XCTestCase {
     func testChangePasswordRejectsIncorrectCurrentPasswordBeforeOtherValidation() throws {
         let keychain = InMemoryKeychainService()
         let sessionManager = AuthSessionManager(keychainService: keychain)
-        try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
+        try sessionManager.signUp(email: "user@example.com", password: "Secret123", confirmPassword: "Secret123")
 
         XCTAssertThrowsError(
             try sessionManager.changePassword(
@@ -40,16 +40,31 @@ final class AuthSessionManagerTests: XCTestCase {
     func testChangePasswordRejectsReusingCurrentPassword() throws {
         let keychain = InMemoryKeychainService()
         let sessionManager = AuthSessionManager(keychainService: keychain)
-        try sessionManager.signUp(email: "user@example.com", password: "secret1", confirmPassword: "secret1")
+        try sessionManager.signUp(email: "user@example.com", password: "Secret123", confirmPassword: "Secret123")
 
         XCTAssertThrowsError(
             try sessionManager.changePassword(
-                currentPassword: "secret1",
-                newPassword: "secret1",
-                confirmPassword: "secret1"
+                currentPassword: "Secret123",
+                newPassword: "Secret123",
+                confirmPassword: "Secret123"
             )
         ) { error in
             XCTAssertEqual(error as? AuthError, .newPasswordMustDiffer)
+        }
+    }
+
+    func testDeleteSignedInAccountRemovesAccountAndClearsSession() throws {
+        let keychain = InMemoryKeychainService()
+        let sessionManager = AuthSessionManager(keychainService: keychain)
+        try sessionManager.signUp(email: "user@example.com", password: "Secret123", confirmPassword: "Secret123")
+
+        try sessionManager.deleteSignedInAccount()
+
+        XCTAssertFalse(sessionManager.isSignedIn)
+
+        let restoredSessionManager = AuthSessionManager(keychainService: keychain)
+        XCTAssertThrowsError(try restoredSessionManager.signIn(email: "user@example.com", password: "Secret123")) { error in
+            XCTAssertEqual(error as? AuthError, .accountNotFound)
         }
     }
 }

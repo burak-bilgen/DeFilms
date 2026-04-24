@@ -12,7 +12,5 @@ enum SnapshotBaselines {
     //
     // Example:
     // "onboarding-light": .init(width: 1290, height: 2796, hash: "0123abcd...")
-    static let values: [String: SnapshotFingerprint] = [
-        // Add approved entries here.
-    ]
+    static let values: [String: SnapshotFingerprint] = [:]
 }

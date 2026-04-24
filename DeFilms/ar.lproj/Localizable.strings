@@ -15,6 +15,7 @@
 "network.error.invalidResponse" = "أعاد الخادم استجابة غير صالحة.";
 "network.error.decoding" = "حدثت مشكلة أثناء معالجة البيانات.";
 "network.error.server" = "خطأ في الخادم. الرمز: %d";
+"network.error.rateLimited" = "يتلقى TMDB طلبات كثيرة جدًا. يرجى المحاولة مرة أخرى بعد قليل.";
 "network.error.missingAPIKey" = "تعذر العثور على مفتاح API.";
 "network.blocking.title" = "الاتصال بالإنترنت مطلوب";
 "network.blocking.message" = "يحتاج DeFilms إلى اتصال نشط عبر Wi-Fi أو البيانات الخلوية لتحميل بيانات الأفلام. أعد الاتصال بالإنترنت ثم حاول مرة أخرى.";
@@ -42,7 +43,28 @@
 "settings.account.logout" = "تسجيل الخروج";
 "settings.account.logout.message" = "ستتم إزالة جلستك المحلية من هذا الجهاز.";
 "settings.account.signedOutDescription" = "سجّل الدخول أو أنشئ حسابًا للاحتفاظ بالمفضلة بشكل منفصل لكل مستخدم.";
+"settings.account.delete" = "حذف الحساب المحلي";
+"settings.account.delete.title" = "حذف الحساب المحلي";
+"settings.account.delete.confirm" = "حذف الحساب";
+"settings.account.delete.message" = "يزيل هذا الحساب المحلي وكلمة المرور المحفوظة والمفضلة وعمليات البحث الأخيرة لهذا الملف من هذا الجهاز. لا يمكن التراجع عن ذلك.";
+"settings.account.delete.success" = "تم حذف الحساب المحلي وبيانات الملف.";
+"settings.account.delete.error" = "تعذر حذف الحساب المحلي.";
 "settings.about.version" = "الإصدار";
+"settings.about.tmdb" = "نسبة TMDB";
+"settings.about.tmdb.notice" = "This product uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.";
+"settings.about.tmdb.link" = "فتح The Movie Database";
+"settings.about.tmdb.footer" = "توفر TMDB بيانات الأفلام والصور ومقاطع الفيديو وطاقم العمل ومعلومات مزودي المشاهدة.";
+"settings.about.privacy" = "الخصوصية والبيانات";
+"settings.privacy.section.local" = "مخزن على هذا الجهاز";
+"settings.privacy.local.profile" = "تُخزن بيانات الملف المحلي في Keychain ولا تُرسل إلى خادم DeFilms.";
+"settings.privacy.local.favorites" = "تُخزن قوائم المفضلة محليًا باستخدام Core Data.";
+"settings.privacy.local.searches" = "تُخزن عمليات البحث الأخيرة محليًا ويمكن مسحها من شاشة الأفلام.";
+"settings.privacy.section.network" = "طلبات الشبكة";
+"settings.privacy.network.tmdb" = "تُرسل عمليات البحث وتفاصيل الأفلام إلى TMDB لتحميل محتوى التطبيق.";
+"settings.privacy.network.tracking" = "لا يحتوي DeFilms على إعلانات أو تحليلات طرف ثالث أو تتبع عبر التطبيقات.";
+"settings.privacy.section.controls" = "عناصر التحكم";
+"settings.privacy.controls.deleteAccount" = "يمكن للمستخدمين المسجلين حذف الحساب المحلي والبيانات المرتبطة به من الإعدادات.";
+"settings.privacy.policy" = "فتح سياسة الخصوصية";
 
 "auth.signIn" = "تسجيل الدخول";
 "auth.signUp" = "إنشاء حساب";

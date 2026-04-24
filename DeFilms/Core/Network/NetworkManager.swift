@@ -68,6 +68,11 @@ final class NetworkManager: NetworkServiceProtocol {
                 category: .network,
                 level: .error
             )
+
+            if httpResponse.statusCode == 429 {
+                throw NetworkError.rateLimited(retryAfter: retryAfterInterval(from: httpResponse))
+            }
+
             throw NetworkError.serverError(
                 statusCode: httpResponse.statusCode,
                 message: decodeServerErrorMessage(from: data)
@@ -154,6 +159,27 @@ final class NetworkManager: NetworkServiceProtocol {
 
     private func decodeServerErrorMessage(from data: Data) -> String? {
         try? decoder.decode(APIErrorPayload.self, from: data).statusMessage
+    }
+
+    private func retryAfterInterval(from response: HTTPURLResponse) -> TimeInterval? {
+        guard let retryAfter = response.value(forHTTPHeaderField: "Retry-After") else {
+            return nil
+        }
+
+        if let seconds = TimeInterval(retryAfter) {
+            return seconds
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "EEE',' dd MMM yyyy HH':'mm':'ss z"
+
+        if let date = formatter.date(from: retryAfter) {
+            return max(date.timeIntervalSinceNow, 0)
+        }
+
+        return nil
     }
 
     private static func makeDefaultSession() -> URLSession {

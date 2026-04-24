@@ -5,6 +5,7 @@
 //  Created by Burak on 2.04.2026.
 //
 
+import Combine
 import SwiftUI
 
 struct SettingsView: View {
@@ -16,6 +17,7 @@ struct SettingsView: View {
     @EnvironmentObject private var coordinator: SettingsCoordinator
 
     @State private var showLogoutConfirmation = false
+    @State private var showDeleteAccountConfirmation = false
 
     init(container: AppContainer, viewModel: SettingsViewModel) {
         self.container = container
@@ -46,6 +48,20 @@ struct SettingsView: View {
             Button(Localization.string("common.cancel"), role: .cancel) {}
         } message: {
             Text(Localization.string("settings.account.logout.message"))
+        }
+        .alert(Localization.string("settings.account.delete.title"), isPresented: $showDeleteAccountConfirmation) {
+            Button(Localization.string("settings.account.delete.confirm"), role: .destructive) {
+                Task {
+                    await viewModel.deleteLocalAccount()
+                }
+            }
+
+            Button(Localization.string("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(Localization.string("settings.account.delete.message"))
+        }
+        .relayToast(from: viewModel.$toastItem.eraseToAnyPublisher()) {
+            viewModel.clearToast()
         }
     }
 
@@ -107,6 +123,14 @@ struct SettingsView: View {
                     SettingsSimpleRow(symbol: "rectangle.portrait.and.arrow.right", title: Localization.string("settings.account.logout"))
                 }
                 .accessibilityIdentifier("settings.account.logout")
+
+                Button(role: .destructive) {
+                    showDeleteAccountConfirmation = true
+                } label: {
+                    SettingsSimpleRow(symbol: "trash.fill", title: Localization.string("settings.account.delete"))
+                }
+                .disabled(viewModel.isDeletingAccount)
+                .accessibilityIdentifier("settings.account.delete")
             } else {
                 Button {
                     coordinator.show(.signIn)
@@ -136,6 +160,20 @@ struct SettingsView: View {
                 title: Localization.string("settings.about.version"),
                 value: viewModel.appVersionText
             )
+
+            NavigationLink {
+                TMDBAttributionView()
+            } label: {
+                SettingsLinkRow(symbol: "checkmark.seal.fill", title: Localization.string("settings.about.tmdb"))
+            }
+            .accessibilityIdentifier("settings.about.tmdb")
+
+            NavigationLink {
+                PrivacyDataView()
+            } label: {
+                SettingsLinkRow(symbol: "hand.raised.fill", title: Localization.string("settings.about.privacy"))
+            }
+            .accessibilityIdentifier("settings.about.privacy")
         }
     }
 }

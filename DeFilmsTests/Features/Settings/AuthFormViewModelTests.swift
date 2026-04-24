@@ -19,8 +19,8 @@ final class AuthFormViewModelTests: XCTestCase {
         let authFormService = MockAuthFormService(signUpError: AuthError.accountExists)
         let viewModel = SignUpViewModel(authFormService: authFormService)
         viewModel.email = "user@example.com"
-        viewModel.password = "secret1"
-        viewModel.confirmPassword = "secret1"
+        viewModel.password = "Secret123"
+        viewModel.confirmPassword = "Secret123"
 
         let result = viewModel.submit()
 

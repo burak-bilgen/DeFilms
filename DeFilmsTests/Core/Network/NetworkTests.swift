@@ -182,6 +182,36 @@ final class NetworkManagerTests: XCTestCase {
         }
     }
 
+    func testRequestMapsRateLimitWithRetryAfterHeader() async {
+        let session = makeSession()
+        let manager = NetworkManager(
+            session: session,
+            requestBuilder: NetworkRequestBuilder(
+                apiKeyProvider: { "test-key" },
+                languageProvider: { .english }
+            )
+        )
+
+        MockURLProtocol.handler = { request in
+            let response = try XCTUnwrap(
+                HTTPURLResponse(
+                    url: try XCTUnwrap(request.url),
+                    statusCode: 429,
+                    httpVersion: nil,
+                    headerFields: ["Retry-After": "12"]
+                )
+            )
+            return (response, Data())
+        }
+
+        do {
+            let _: MovieResponse = try await manager.request(endpoint: TMDBEndpoint.popularMovies(page: 1))
+            XCTFail("Expected rate-limit error")
+        } catch {
+            XCTAssertEqual(error as? NetworkError, .rateLimited(retryAfter: 12))
+        }
+    }
+
     func testRequestRetriesTransientTransportFailureOnce() async throws {
         let session = makeSession()
         let manager = NetworkManager(

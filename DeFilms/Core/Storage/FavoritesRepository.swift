@@ -14,6 +14,7 @@ protocol FavoritesRepositoryProtocol {
     func createList(named name: String, userIdentifier: String) async throws -> FavoriteList
     func renameList(listID: UUID, name: String, userIdentifier: String) async throws
     func deleteList(listID: UUID, userIdentifier: String) async throws
+    func deleteLists(for userIdentifiers: [String]) async throws
     func add(movie: Movie, to listID: UUID, userIdentifier: String) async throws
     func remove(movieID: Int, from listID: UUID, userIdentifier: String) async throws
     func remove(movieID: Int, userIdentifier: String) async throws
@@ -114,6 +115,18 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
         AppLogger.log("Deleted favorite list", category: .persistence, level: .success)
     }
 
+    func deleteLists(for userIdentifiers: [String]) async throws {
+        let identifiers = normalizedUserIdentifiers(userIdentifiers)
+        guard !identifiers.isEmpty else { return }
+
+        try persistenceController.performWrite { context in
+            let request = FavoriteListEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "userIdentifier IN %@", identifiers)
+            try context.fetch(request).forEach(context.delete)
+        }
+        AppLogger.log("Deleted account-scoped favorite lists", category: .persistence, level: .success)
+    }
+
     func add(movie: Movie, to listID: UUID, userIdentifier: String) async throws {
         try persistenceController.performWrite { context in
             guard let list = try fetchListEntity(listID: listID, userIdentifier: userIdentifier, context: context) else { return }
@@ -210,6 +223,10 @@ final class FavoritesRepository: FavoritesRepositoryProtocol {
 
     private func normalizedListName(_ name: String) -> String {
         name.normalizedForLookup
+    }
+
+    private func normalizedUserIdentifiers(_ identifiers: [String]) -> [String] {
+        Array(Set(identifiers.map { $0.trimmed }.filter { !$0.isEmpty }))
     }
 
     private func migrateLegacyFavoritesIfNeeded() async {

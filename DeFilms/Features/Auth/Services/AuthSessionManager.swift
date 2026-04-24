@@ -19,6 +19,7 @@ protocol AuthSessionManaging: AnyObject {
     func signIn(email: String, password: String) throws
     func changePassword(currentPassword: String, newPassword: String, confirmPassword: String) throws
     func signOut()
+    func deleteSignedInAccount() throws
 }
 
 struct AuthSession: Equatable {
@@ -192,20 +193,45 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
     }
 
     func signOut() {
-        do {
-            try keychainService.delete(account: StorageKey.sessionEmail)
-            try keychainService.delete(account: StorageKey.sessionToken)
-            try keychainService.delete(account: StorageKey.sessionUserIdentifier)
-        } catch {
-            AppLogger.log("Couldn't clear the saved session", category: .auth, level: .error)
-        }
+        clearStoredSession()
         session = nil
         AppLogger.log("Signed out", category: .auth, level: .success)
         toastItem = .success(Localization.string("auth.toast.signedOut"))
     }
 
+    func deleteSignedInAccount() throws {
+        guard let session else {
+            throw AuthError.notSignedIn
+        }
+
+        var accounts = try loadAccounts()
+        guard let index = accounts.firstIndex(where: { $0.email == session.email }) else {
+            throw AuthError.accountNotFound
+        }
+
+        accounts.remove(at: index)
+        try saveAccounts(accounts)
+        try deleteStoredSession()
+        self.session = nil
+        AppLogger.log("Local account deleted", category: .auth, level: .success)
+    }
+
     func clearToast() {
         toastItem = nil
+    }
+
+    private func clearStoredSession() {
+        do {
+            try deleteStoredSession()
+        } catch {
+            AppLogger.log("Couldn't clear the saved session", category: .auth, level: .error)
+        }
+    }
+
+    private func deleteStoredSession() throws {
+        try keychainService.delete(account: StorageKey.sessionEmail)
+        try keychainService.delete(account: StorageKey.sessionToken)
+        try keychainService.delete(account: StorageKey.sessionUserIdentifier)
     }
 
     private func restoreSession() {

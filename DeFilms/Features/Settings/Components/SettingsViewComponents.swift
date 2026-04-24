@@ -147,6 +147,118 @@ struct SettingsSimpleRow: View {
     }
 }
 
+struct SettingsLinkRow: View {
+    let symbol: String
+    let title: String
+    @Environment(\.layoutDirection) private var layoutDirection
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if layoutDirection == .rightToLeft {
+                Text(title)
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .multilineTextAlignment(.trailing)
+
+                rowIcon
+            } else {
+                rowIcon
+
+                Text(title)
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .multilineTextAlignment(.leading)
+            }
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+
+    private var rowIcon: some View {
+        Image(systemName: symbol)
+            .foregroundStyle(.primary)
+            .frame(width: 28, height: 28)
+            .background(Color.primary.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .accessibilityHidden(true)
+    }
+}
+
+struct TMDBAttributionView: View {
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
+                    Image("TMDBLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 190, maxHeight: 32, alignment: .leading)
+                        .accessibilityLabel("TMDB")
+
+                    Text(Localization.string("settings.about.tmdb.notice"))
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Link(
+                        Localization.string("settings.about.tmdb.link"),
+                        destination: URL(string: "https://www.themoviedb.org")!
+                    )
+                    .font(.body.weight(.semibold))
+                }
+                .padding(.vertical, AppSpacing.xs)
+            } footer: {
+                Text(Localization.string("settings.about.tmdb.footer"))
+            }
+        }
+        .navigationTitle(Localization.string("settings.about.tmdb"))
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct PrivacyDataView: View {
+    var body: some View {
+        List {
+            Section(Localization.string("settings.privacy.section.local")) {
+                PrivacyInfoRow(text: Localization.string("settings.privacy.local.profile"))
+                PrivacyInfoRow(text: Localization.string("settings.privacy.local.favorites"))
+                PrivacyInfoRow(text: Localization.string("settings.privacy.local.searches"))
+            }
+
+            Section(Localization.string("settings.privacy.section.network")) {
+                PrivacyInfoRow(text: Localization.string("settings.privacy.network.tmdb"))
+                PrivacyInfoRow(text: Localization.string("settings.privacy.network.tracking"))
+            }
+
+            Section(Localization.string("settings.privacy.section.controls")) {
+                PrivacyInfoRow(text: Localization.string("settings.privacy.controls.deleteAccount"))
+                Link(
+                    Localization.string("settings.privacy.policy"),
+                    destination: URL(string: "https://github.com/burak-bilgen/DeFilms/blob/main/PRIVACY.md")!
+                )
+            }
+        }
+        .navigationTitle(Localization.string("settings.about.privacy"))
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct PrivacyInfoRow: View {
+    let text: String
+
+    var body: some View {
+        Label {
+            Text(text)
+                .fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        }
+    }
+}
+
 struct ThemeSelectionView: View {
     @EnvironmentObject private var preferences: AppPreferences
 

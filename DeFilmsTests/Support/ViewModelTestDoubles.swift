@@ -142,6 +142,10 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
         lists.removeAll { $0.id == listID }
     }
 
+    func deleteLists(for userIdentifiers: [String]) async throws {
+        lists = []
+    }
+
     func add(movie: Movie, to listID: UUID, userIdentifier: String) async throws {
         addMovieCallCount += 1
         if let addMovieError { throw addMovieError }
@@ -320,6 +324,11 @@ final class MockAuthSessionManager: AuthSessionManaging {
     }
 
     func signOut() {
+        didSignOut = true
+        session = nil
+    }
+
+    func deleteSignedInAccount() throws {
         didSignOut = true
         session = nil
     }

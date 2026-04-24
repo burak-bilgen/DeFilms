@@ -15,6 +15,7 @@
 "network.error.invalidResponse" = "The server returned an invalid response.";
 "network.error.decoding" = "There was a problem processing the data.";
 "network.error.server" = "Server error. Code: %d";
+"network.error.rateLimited" = "TMDB is receiving too many requests. Please try again in a moment.";
 "network.error.missingAPIKey" = "API key could not be found.";
 "network.blocking.title" = "Internet connection required";
 "network.blocking.message" = "DeFilms needs an active Wi-Fi or cellular connection to load movie data. Reconnect to the internet and try again.";
@@ -42,7 +43,28 @@
 "settings.account.logout" = "Log Out";
 "settings.account.logout.message" = "Your local session will be signed out on this device.";
 "settings.account.signedOutDescription" = "Sign in or create an account to keep your favorites separated by user.";
+"settings.account.delete" = "Delete Local Account";
+"settings.account.delete.title" = "Delete Local Account";
+"settings.account.delete.confirm" = "Delete Account";
+"settings.account.delete.message" = "This removes the local account, saved password, favorites, and recent searches for this profile from this device. This cannot be undone.";
+"settings.account.delete.success" = "Local account and profile data deleted.";
+"settings.account.delete.error" = "Local account could not be deleted.";
 "settings.about.version" = "Version";
+"settings.about.tmdb" = "TMDB Attribution";
+"settings.about.tmdb.notice" = "This product uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.";
+"settings.about.tmdb.link" = "Open The Movie Database";
+"settings.about.tmdb.footer" = "Movie metadata, images, videos, credits, and watch-provider information are provided by TMDB.";
+"settings.about.privacy" = "Privacy & Data";
+"settings.privacy.section.local" = "Stored on This Device";
+"settings.privacy.local.profile" = "Local profile credentials are stored in Keychain and never sent to a DeFilms server.";
+"settings.privacy.local.favorites" = "Favorite lists are stored locally with Core Data.";
+"settings.privacy.local.searches" = "Recent searches are stored locally and can be cleared from the Movies screen.";
+"settings.privacy.section.network" = "Network Requests";
+"settings.privacy.network.tmdb" = "Movie searches and detail requests are sent to TMDB to load app content.";
+"settings.privacy.network.tracking" = "DeFilms does not include ads, third-party analytics, or cross-app tracking.";
+"settings.privacy.section.controls" = "Controls";
+"settings.privacy.controls.deleteAccount" = "Signed-in users can delete the local account and account-scoped data from Settings.";
+"settings.privacy.policy" = "Open Privacy Policy";
 
 "auth.signIn" = "Sign In";
 "auth.signUp" = "Sign Up";

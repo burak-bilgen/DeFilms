@@ -26,8 +26,8 @@ The app is organized around three tabs:
 - Light / dark theme selection
 - English, Turkish, and Arabic localization
 - RTL-aware layout handling for Arabic
-- Local sign up, sign in, sign out, and password change flows
-- App version display and session persistence
+- Local sign up, sign in, sign out, password change, and account deletion flows
+- App version display, privacy/data details, and TMDB attribution
 
 ## A Few Product Decisions
 
@@ -84,6 +84,7 @@ This structure keeps screen code reasonably light while avoiding the usual case-
 - Poster loading retries cleanly after connectivity is restored.
 - Auth fields were tuned for more stable layout behavior instead of shifting as content changes.
 - Menu and dialog behavior was adjusted to behave correctly across LTR/RTL language switches.
+- TMDB attribution, local privacy notes, and account deletion are available from Settings for App Store review readiness.
 
 These are small details, but they tend to be the difference between a prototype and something that feels maintained.
 
@@ -96,11 +97,14 @@ These are small details, but they tend to be the difference between a prototype 
 
 ### Setup
 1. Clone the repository.
-2. Open the project in Xcode.
-3. Open the project target settings or the app `Info.plist` and add a valid `TMDBApiKey` value.
-4. Select the `DeFilms` scheme.
-5. Build and run on an iOS 16+ simulator or physical device.
-6. If you want to run the UI tests, keep the default test plans enabled; the project already includes seeded launch arguments for deterministic flows.
+2. Copy `Config/Secrets.xcconfig.example` to `Config/Secrets.xcconfig`.
+3. Set `TMDB_API_KEY` in `Config/Secrets.xcconfig`.
+4. Open the project in Xcode.
+5. Select the `DeFilms` scheme.
+6. Build and run on an iOS 16+ simulator or physical device.
+7. If you want to run the UI tests, keep the default test plans enabled; the project already includes seeded launch arguments for deterministic flows.
+
+`Config/Secrets.xcconfig` is intentionally ignored by git. Rotate any TMDB key that was ever committed before using the app as a public portfolio project.
 
 ## Testing
 
@@ -112,9 +116,9 @@ The project includes both unit tests and UI tests. Coverage is weighted toward t
 - async loading and error handling
 
 Current suite footprint:
-- `61` unit tests
+- `63` unit tests
 - `16` UI tests
-- `77` total test methods
+- `79` total test methods
 
 Example output:
 
@@ -145,6 +149,14 @@ It is not a full accessibility audit, but it goes beyond defaults.
 - There is no offline browsing mode; the app depends on live TMDB content
 - Snapshot-style visual workflows still benefit from environment-specific setup on a fresh machine
 - Some UI composition files are intentionally dense and could be split further if the app grows
+
+## App Store Readiness
+
+- TMDB attribution is available under Settings > About > TMDB Attribution.
+- Local account deletion is available under Settings when signed in.
+- Privacy and data handling notes are available under Settings > About > Privacy & Data.
+- A public privacy policy draft lives in `PRIVACY.md`.
+- App Store review notes and submission checks live in `AppStore/SubmissionChecklist.md`.
 
 ## Possible Next Steps
 - Replace local auth with a backend-backed identity flow

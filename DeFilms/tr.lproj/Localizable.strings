@@ -15,6 +15,7 @@
 "network.error.invalidResponse" = "Sunucudan geçersiz yanıt alındı.";
 "network.error.decoding" = "Veri işlenirken bir hata oluştu.";
 "network.error.server" = "Sunucu hatası. Kod: %d";
+"network.error.rateLimited" = "TMDB çok fazla istek alıyor. Lütfen biraz sonra tekrar dene.";
 "network.error.missingAPIKey" = "API anahtarı bulunamadı.";
 "network.blocking.title" = "İnternet bağlantısı gerekli";
 "network.blocking.message" = "DeFilms, film verilerini yüklemek için etkin bir Wi-Fi veya mobil veri bağlantısına ihtiyaç duyar. Bağlantıyı geri getirip tekrar dene.";
@@ -42,7 +43,28 @@
 "settings.account.logout" = "Çıkış Yap";
 "settings.account.logout.message" = "Bu cihazdaki yerel oturum sonlandırılacak.";
 "settings.account.signedOutDescription" = "Favorilerini kullanıcı bazlı saklamak için giriş yapabilir veya hesap oluşturabilirsin.";
+"settings.account.delete" = "Yerel Hesabı Sil";
+"settings.account.delete.title" = "Yerel Hesabı Sil";
+"settings.account.delete.confirm" = "Hesabı Sil";
+"settings.account.delete.message" = "Bu işlem, bu profildeki yerel hesabı, kayıtlı şifreyi, favorileri ve son aramaları bu cihazdan siler. Geri alınamaz.";
+"settings.account.delete.success" = "Yerel hesap ve profil verileri silindi.";
+"settings.account.delete.error" = "Yerel hesap silinemedi.";
 "settings.about.version" = "Sürüm";
+"settings.about.tmdb" = "TMDB Atıfı";
+"settings.about.tmdb.notice" = "This product uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.";
+"settings.about.tmdb.link" = "The Movie Database'i Aç";
+"settings.about.tmdb.footer" = "Film metadatası, görseller, videolar, ekip bilgileri ve izleme sağlayıcıları TMDB tarafından sağlanır.";
+"settings.about.privacy" = "Gizlilik ve Veri";
+"settings.privacy.section.local" = "Bu Cihazda Saklananlar";
+"settings.privacy.local.profile" = "Yerel profil bilgileri Keychain'de saklanır ve DeFilms sunucusuna gönderilmez.";
+"settings.privacy.local.favorites" = "Favori listeleri Core Data ile yerel olarak saklanır.";
+"settings.privacy.local.searches" = "Son aramalar yerel olarak saklanır ve Filmler ekranından temizlenebilir.";
+"settings.privacy.section.network" = "Ağ İstekleri";
+"settings.privacy.network.tmdb" = "Film aramaları ve detay istekleri, uygulama içeriğini yüklemek için TMDB'ye gönderilir.";
+"settings.privacy.network.tracking" = "DeFilms reklam, üçüncü taraf analitik veya uygulamalar arası takip içermez.";
+"settings.privacy.section.controls" = "Kontroller";
+"settings.privacy.controls.deleteAccount" = "Giriş yapan kullanıcılar yerel hesabı ve hesaba bağlı verileri Ayarlar'dan silebilir.";
+"settings.privacy.policy" = "Gizlilik Politikasını Aç";
 
 "auth.signIn" = "Giriş Yap";
 "auth.signUp" = "Kayıt Ol";

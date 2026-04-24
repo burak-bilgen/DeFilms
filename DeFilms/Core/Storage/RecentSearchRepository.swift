@@ -12,6 +12,7 @@ protocol RecentSearchRepositoryProtocol {
     func fetchRecentSearches(for userIdentifier: String, limit: Int) async throws -> [String]
     func addSearch(_ query: String, for userIdentifier: String, limit: Int) async throws
     func clearRecentSearches(for userIdentifier: String) async throws
+    func clearRecentSearches(for userIdentifiers: [String]) async throws
 }
 
 final class RecentSearchRepository: RecentSearchRepositoryProtocol {
@@ -75,9 +76,16 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
     }
 
     func clearRecentSearches(for userIdentifier: String) async throws {
+        try await clearRecentSearches(for: [userIdentifier])
+    }
+
+    func clearRecentSearches(for userIdentifiers: [String]) async throws {
+        let identifiers = normalizedUserIdentifiers(userIdentifiers)
+        guard !identifiers.isEmpty else { return }
+
         try persistenceController.performWrite { context in
             let request = RecentSearchEntity.fetchRequest()
-            request.predicate = NSPredicate(format: "userIdentifier == %@", userIdentifier)
+            request.predicate = NSPredicate(format: "userIdentifier IN %@", identifiers)
 
             let searches = try context.fetch(request)
             for search in searches {
@@ -160,6 +168,10 @@ final class RecentSearchRepository: RecentSearchRepositoryProtocol {
         }
 
         return deduplicated
+    }
+
+    private func normalizedUserIdentifiers(_ identifiers: [String]) -> [String] {
+        Array(Set(identifiers.map { $0.trimmed }.filter { !$0.isEmpty }))
     }
 
     func replaceSearchesForUITesting(_ searches: [String], userIdentifier: String) throws {

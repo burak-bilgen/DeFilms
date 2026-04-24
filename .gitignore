@@ -4,6 +4,10 @@
 
 ## User settings
 xcuserdata/
+.DS_Store
+
+## Local secrets
+Config/Secrets.xcconfig
 
 ## Obj-C/Swift specific
 *.hmap

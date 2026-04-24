@@ -23,6 +23,7 @@ final class ServiceTestFavoritesRepository: FavoritesRepositoryProtocol {
 
     func renameList(listID: UUID, name: String, userIdentifier: String) async throws {}
     func deleteList(listID: UUID, userIdentifier: String) async throws {}
+    func deleteLists(for userIdentifiers: [String]) async throws {}
     func add(movie: Movie, to listID: UUID, userIdentifier: String) async throws {}
     func remove(movieID: Int, from listID: UUID, userIdentifier: String) async throws {}
     func remove(movieID: Int, userIdentifier: String) async throws {}
@@ -72,6 +73,10 @@ final class ServiceTestAuthSessionManager: AuthSessionManaging {
     }
 
     func signOut() {
+        session = nil
+    }
+
+    func deleteSignedInAccount() throws {
         session = nil
     }
 }

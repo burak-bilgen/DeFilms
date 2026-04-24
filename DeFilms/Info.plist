@@ -3,6 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>TMDBApiKey</key>
-	<string>de78d7352342e3472cafb088c8d112b5</string>
+	<string>$(TMDB_API_KEY)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

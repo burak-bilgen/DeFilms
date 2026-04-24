@@ -24,6 +24,19 @@ final class SettingsViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.appVersionText, "1.0 (1)")
     }
+
+    func test_SettingsViewModel_deleteLocalAccount_deletesThroughService() async {
+        let deletionService = MockLocalAccountDeletionService()
+        let viewModel = SettingsViewModel(
+            sessionManager: MockBoundAuthSessionManager(),
+            accountDeletionService: deletionService
+        )
+
+        await viewModel.deleteLocalAccount()
+
+        XCTAssertEqual(deletionService.deleteCallCount, 1)
+        XCTAssertEqual(viewModel.toastItem?.message, Localization.string("settings.account.delete.success"))
+    }
 }
 
 private final class MockBoundAuthSessionManager: AuthSessionManaging {
@@ -41,5 +54,18 @@ private final class MockBoundAuthSessionManager: AuthSessionManaging {
     func signOut() {
         didSignOut = true
         session = nil
+    }
+
+    func deleteSignedInAccount() throws {
+        didSignOut = true
+        session = nil
+    }
+}
+
+private final class MockLocalAccountDeletionService: LocalAccountDeleting {
+    private(set) var deleteCallCount = 0
+
+    func deleteCurrentAccountAndData() async throws {
+        deleteCallCount += 1
     }
 }

@@ -53,6 +53,10 @@ final class AppContainer {
             favoritesRepository: resolvedFavoritesRepository,
             sessionManager: resolvedSessionManager
         )
-        self.settingsFactory = SettingsFactory(sessionManager: resolvedSessionManager)
+        self.settingsFactory = SettingsFactory(
+            sessionManager: resolvedSessionManager,
+            favoritesRepository: resolvedFavoritesRepository,
+            recentSearchRepository: resolvedRecentSearchRepository
+        )
     }
 }
