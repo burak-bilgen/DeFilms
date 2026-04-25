@@ -1,7 +1,3 @@
-//
-//  FavoriteMovieManagementModalView.swift
-//  DeFilms
-//
 
 import SwiftUI
 

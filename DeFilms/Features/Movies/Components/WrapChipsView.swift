@@ -1,7 +1,3 @@
-//
-//  WrapChipsView.swift
-//  DeFilms
-//
 
 import SwiftUI
 

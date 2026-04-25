@@ -1,7 +1,3 @@
-//
-//  SettingsRoute.swift
-//  DeFilms
-//
 
 import Foundation
 

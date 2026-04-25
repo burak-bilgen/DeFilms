@@ -1,7 +1,3 @@
-//
-//  AppEntryView.swift
-//  DeFilms
-//
 
 import Combine
 import SwiftUI
@@ -80,9 +76,15 @@ struct AppEntryView: View {
                 AuthEntryContainer {
                     switch destination {
                     case .signIn:
-                        SignInView(viewModel: container.settingsFactory.makeSignInViewModel())
+                        SignInView(
+                            viewModel: container.settingsFactory.makeSignInViewModel(),
+                            onSubmitSuccess: flowCoordinator.dismissModal
+                        )
                     case .signUp:
-                        SignUpView(viewModel: container.settingsFactory.makeSignUpViewModel())
+                        SignUpView(
+                            viewModel: container.settingsFactory.makeSignUpViewModel(),
+                            onSubmitSuccess: flowCoordinator.dismissModal
+                        )
                     }
                 }
                 .tint(.primary)
@@ -175,6 +177,7 @@ private struct AuthEntryContainer<Content: View>: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(Localization.string("common.close")) {
+                            flowCoordinator.dismissModal()
                             dismiss()
                         }
                     }

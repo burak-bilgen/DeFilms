@@ -1,7 +1,3 @@
-//
-//  MovieCardNavigationLink.swift
-//  DeFilms
-//
 
 import SwiftUI
 
@@ -73,7 +69,8 @@ struct MovieCardNavigationLink: View {
                 titleFont: cardStyle.titleFont,
                 contentSpacing: cardStyle.contentSpacing,
                 metadataSpacing: cardStyle.metadataSpacing,
-                posterCornerRadius: cardStyle.posterCornerRadius
+                posterCornerRadius: cardStyle.posterCornerRadius,
+                showsFavoriteButton: false
             )
             .frame(width: cardStyle.width)
         }

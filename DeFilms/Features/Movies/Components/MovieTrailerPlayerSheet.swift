@@ -1,7 +1,3 @@
-//
-//  MovieTrailerPlayerSheet.swift
-//  DeFilms
-//
 
 import SafariServices
 import SwiftUI

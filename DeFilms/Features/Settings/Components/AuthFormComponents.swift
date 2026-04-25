@@ -1,7 +1,3 @@
-//
-//  AuthFormComponents.swift
-//  DeFilms
-//
 
 import SwiftUI
 import UIKit

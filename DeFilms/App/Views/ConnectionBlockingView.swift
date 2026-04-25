@@ -1,7 +1,3 @@
-//
-//  ConnectionBlockingView.swift
-//  DeFilms
-//
 
 import SwiftUI
 

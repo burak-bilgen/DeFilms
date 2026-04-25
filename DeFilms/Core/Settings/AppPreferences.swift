@@ -1,9 +1,3 @@
-//
-//  AppPreferences.swift
-//  DeFilms
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import Combine
 import SwiftUI
@@ -134,8 +128,6 @@ final class AppPreferences: ObservableObject {
         interfaceLayoutRefreshToken = UUID()
 
         let task = Task { @MainActor [weak self] in
-            // Keep the loading state long enough to avoid a flash while the
-            // locale and layout direction propagate through the view tree.
             await Task.yield()
             let elapsed = transitionStart.duration(to: .now)
             if elapsed < self?.minimumLanguageTransitionDuration ?? .zero {

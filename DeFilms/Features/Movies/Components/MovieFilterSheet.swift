@@ -1,7 +1,3 @@
-//
-//  MovieFilterSheet.swift
-//  DeFilms
-//
 
 import SwiftUI
 

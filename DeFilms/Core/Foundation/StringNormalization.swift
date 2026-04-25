@@ -1,7 +1,3 @@
-//
-//  StringNormalization.swift
-//  DeFilms
-//
 
 import Foundation
 

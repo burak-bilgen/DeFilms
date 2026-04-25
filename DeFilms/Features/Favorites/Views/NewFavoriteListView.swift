@@ -1,7 +1,3 @@
-//
-//  NewFavoriteListView.swift
-//  DeFilms
-//
 
 import SwiftUI
 

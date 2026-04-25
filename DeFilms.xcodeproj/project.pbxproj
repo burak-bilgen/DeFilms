@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		679A83572F9B5C560051E73F /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 679A83562F9B5C560051E73F /* Secrets.xcconfig */; };
 		67BD88AE2F805A320046D0E7 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 67BD88AD2F805A320046D0E7 /* Lottie */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +30,7 @@
 /* Begin PBXFileReference section */
 		679A83562F9B5C560051E73F /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		67A100012F98000100AA0001 /* App.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = App.xcconfig; sourceTree = "<group>"; };
+		67A100022F98000100AA0002 /* Secrets.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text; path = Secrets.xcconfig.example; sourceTree = "<group>"; };
 		67D50D0E2F7EA12900534A63 /* DeFilms.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DeFilms.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		67D50D202F7EA12B00534A63 /* DeFilmsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DeFilmsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		67D50D2A2F7EA12B00534A63 /* DeFilmsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DeFilmsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -97,6 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				67A100012F98000100AA0001 /* App.xcconfig */,
+				67A100022F98000100AA0002 /* Secrets.xcconfig.example */,
 				679A83562F9B5C560051E73F /* Secrets.xcconfig */,
 			);
 			path = Config;
@@ -249,7 +250,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				679A83572F9B5C560051E73F /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

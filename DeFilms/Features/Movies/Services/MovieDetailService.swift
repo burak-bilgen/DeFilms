@@ -1,7 +1,3 @@
-//
-//  MovieDetailServices.swift
-//  DeFilms
-//
 
 import Foundation
 

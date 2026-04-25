@@ -1,7 +1,3 @@
-//
-//  FavoritesRoute.swift
-//  DeFilms
-//
 
 import Foundation
 

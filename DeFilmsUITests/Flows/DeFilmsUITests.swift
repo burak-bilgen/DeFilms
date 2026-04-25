@@ -1,19 +1,14 @@
-//
-//  DeFilmsUITests.swift
-//  DeFilmsUITests
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import XCTest
 
 final class DeFilmsUITests: XCTestCase {
     private var app: XCUIApplication!
+    private let baseLaunchArguments = ["UITest.ResetState", "UITest.ForceConnected", "UITest.UseInMemoryKeychain"]
 
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = ["UITest.ResetState"]
+        app.launchArguments = baseLaunchArguments
         app.launch()
     }
 
@@ -29,11 +24,11 @@ final class DeFilmsUITests: XCTestCase {
 
     @MainActor
     func testSettingsScreenShowsAppearanceAndLanguageOptions() throws {
-        let settingsButton = app.tabBars.buttons["Settings"].exists ? app.tabBars.buttons["Settings"] : app.tabBars.buttons["Ayarlar"]
-        settingsButton.tap()
+        dismissOnboardingIfNeeded()
+        tabButton(english: "Settings", turkish: "Ayarlar", arabic: "الإعدادات").tap()
 
-        XCTAssertTrue(app.otherElements["settings.appearance.row"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.otherElements["settings.language.row"].exists)
+        XCTAssertTrue(element(withIdentifier: "settings.appearance.row").waitForExistence(timeout: 5))
+        XCTAssertTrue(element(withIdentifier: "settings.language.row").exists)
     }
 
     @MainActor
@@ -65,18 +60,17 @@ final class DeFilmsUITests: XCTestCase {
 
         app.buttons["auth.signUp.submit"].tap()
 
-        let settingsButton = app.tabBars.buttons["Settings"].exists ? app.tabBars.buttons["Settings"] : app.tabBars.buttons["Ayarlar"]
-        settingsButton.tap()
+        XCTAssertFalse(emailField.waitForExistence(timeout: 3))
+        tabButton(english: "Settings", turkish: "Ayarlar", arabic: "الإعدادات").tap()
 
-        XCTAssertTrue(app.otherElements["settings.account.logout"].waitForExistence(timeout: 5))
+        XCTAssertTrue(element(withIdentifier: "settings.account.logout").waitForExistence(timeout: 5))
     }
 
     @MainActor
     func testFavoritesCanCreateListAsGuest() throws {
         app.buttons["onboarding.continueAsGuest"].tap()
 
-        let favoritesButton = app.tabBars.buttons["Favorites"].exists ? app.tabBars.buttons["Favorites"] : app.tabBars.buttons["Favoriler"]
-        favoritesButton.tap()
+        tabButton(english: "Favorites", turkish: "Favoriler", arabic: "المفضلة").tap()
 
         let createButton = app.buttons["favorites.create.button"]
         XCTAssertTrue(createButton.waitForExistence(timeout: 5))
@@ -115,19 +109,18 @@ final class DeFilmsUITests: XCTestCase {
         XCTAssertTrue(submitButton.exists)
         submitButton.tap()
 
-        let cardButton = app.buttons["movie.card.1001"]
+        let cardButton = element(withIdentifier: "movie.card.1001")
         XCTAssertTrue(cardButton.waitForExistence(timeout: 5))
         cardButton.tap()
 
-        XCTAssertTrue(app.otherElements["movies.detail.screen"].waitForExistence(timeout: 5))
+        XCTAssertNotNil(waitForElement(withIdentifier: "movies.detail.screen", timeout: 5))
     }
 
     @MainActor
     func testFavoritesSeededStateShowsLists() throws {
         relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.SeedFavorites"])
 
-        let favoritesButton = app.tabBars.buttons["Favorites"].exists ? app.tabBars.buttons["Favorites"] : app.tabBars.buttons["Favoriler"]
-        favoritesButton.tap()
+        tabButton(english: "Favorites", turkish: "Favoriler", arabic: "المفضلة").tap()
 
         XCTAssertTrue(app.staticTexts["Weekend Watchlist"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Rewatch Soon"].exists)
@@ -137,20 +130,19 @@ final class DeFilmsUITests: XCTestCase {
     func testMoviesSearchHistoryCanBeCleared() throws {
         relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.SeedSearchHistory"])
 
-        XCTAssertTrue(app.staticTexts["Dune"].waitForExistence(timeout: 5))
+        XCTAssertTrue(element(withIdentifier: "movies.searchHistory.item.Dune").waitForExistence(timeout: 5))
         app.buttons[LocalizationProbe.moviesSearchHistoryClearIdentifier].tap()
         app.buttons[localizedString("movies.searchHistory.clear.confirmAction", fallback: "Clear")].tap()
 
-        XCTAssertFalse(app.staticTexts["Dune"].waitForExistence(timeout: 2))
+        XCTAssertFalse(element(withIdentifier: "movies.searchHistory.item.Dune").waitForExistence(timeout: 2))
     }
 
     @MainActor
     func testSettingsCanOpenSignInFromSignedOutState() throws {
         relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding"])
 
-        let settingsButton = app.tabBars.buttons["Settings"].exists ? app.tabBars.buttons["Settings"] : app.tabBars.buttons["Ayarlar"]
-        settingsButton.tap()
-        app.buttons["settings.account.signIn"].tap()
+        tabButton(english: "Settings", turkish: "Ayarlar", arabic: "الإعدادات").tap()
+        element(withIdentifier: "settings.account.signIn").tap()
 
         XCTAssertTrue(app.textFields["auth.signIn.email"].waitForExistence(timeout: 5))
     }
@@ -179,11 +171,11 @@ final class DeFilmsUITests: XCTestCase {
         searchField.typeText("Dune")
         app.buttons["movies.search.submitButton"].tap()
 
-        let cardButton = app.buttons["movie.card.1001"]
+        let cardButton = element(withIdentifier: "movie.card.1001")
         XCTAssertTrue(cardButton.waitForExistence(timeout: 5))
         cardButton.tap()
 
-        XCTAssertTrue(app.otherElements["movies.detail.screen"].waitForExistence(timeout: 5))
+        XCTAssertNotNil(waitForElement(withIdentifier: "movies.detail.screen", timeout: 5))
         assertSnapshot(named: "movie-detail-arabic-dark")
     }
 
@@ -191,8 +183,7 @@ final class DeFilmsUITests: XCTestCase {
     func testVisualReferenceFavoritesFilledDark() throws {
         relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.SeedFavorites", "UITest.Theme.Dark"])
 
-        let favoritesButton = app.tabBars.buttons["Favorites"].exists ? app.tabBars.buttons["Favorites"] : app.tabBars.buttons["Favoriler"]
-        favoritesButton.tap()
+        tabButton(english: "Favorites", turkish: "Favoriler", arabic: "المفضلة").tap()
 
         XCTAssertTrue(app.staticTexts["Weekend Watchlist"].waitForExistence(timeout: 5))
         assertSnapshot(named: "favorites-filled-dark")
@@ -202,18 +193,66 @@ final class DeFilmsUITests: XCTestCase {
     func testVisualReferenceSettingsSignedInArabic() throws {
         relaunchApp(arguments: ["UITest.ResetState", "UITest.SkipOnboarding", "UITest.SeedSignedInSession", "UITest.Theme.Dark", "UITest.Locale.Arabic"])
 
-        let settingsButton = app.tabBars.buttons["Settings"].exists ? app.tabBars.buttons["Settings"] : app.tabBars.buttons["Ayarlar"]
-        settingsButton.tap()
+        tabButton(english: "Settings", turkish: "Ayarlar", arabic: "الإعدادات").tap()
 
-        XCTAssertTrue(app.otherElements["settings.account.logout"].waitForExistence(timeout: 5))
+        XCTAssertTrue(element(withIdentifier: "settings.account.logout").waitForExistence(timeout: 5))
         assertSnapshot(named: "settings-signed-in-arabic")
     }
 
     private func relaunchApp(arguments: [String]) {
         app.terminate()
         app = XCUIApplication()
-        app.launchArguments = arguments
+        app.launchArguments = normalizedLaunchArguments(arguments)
         app.launch()
+    }
+
+    private func normalizedLaunchArguments(_ arguments: [String]) -> [String] {
+        var resolvedArguments = arguments
+        if !resolvedArguments.contains("UITest.ForceConnected") {
+            resolvedArguments.append("UITest.ForceConnected")
+        }
+        if !resolvedArguments.contains("UITest.UseInMemoryKeychain") {
+            resolvedArguments.append("UITest.UseInMemoryKeychain")
+        }
+        return resolvedArguments
+    }
+
+    private func tabButton(english: String, turkish: String, arabic: String) -> XCUIElement {
+        let candidates = [
+            app.tabBars.buttons[english],
+            app.tabBars.buttons[turkish],
+            app.tabBars.buttons[arabic]
+        ]
+
+        return candidates.first(where: { $0.exists }) ?? candidates[0]
+    }
+
+    private func element(withIdentifier identifier: String) -> XCUIElement {
+        let candidates = elementCandidates(withIdentifier: identifier)
+        return candidates.first(where: { $0.exists }) ?? candidates[0]
+    }
+
+    private func waitForElement(withIdentifier identifier: String, timeout: TimeInterval) -> XCUIElement? {
+        let deadline = Date().addingTimeInterval(timeout)
+
+        repeat {
+            if let element = elementCandidates(withIdentifier: identifier).first(where: { $0.exists }) {
+                return element
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        } while Date() < deadline
+
+        return nil
+    }
+
+    private func elementCandidates(withIdentifier identifier: String) -> [XCUIElement] {
+        [
+            app.buttons[identifier],
+            app.otherElements[identifier],
+            app.scrollViews[identifier],
+            app.staticTexts[identifier],
+            app.cells[identifier]
+        ]
     }
 
     private func dismissOnboardingIfNeeded() {

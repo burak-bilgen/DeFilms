@@ -1,7 +1,3 @@
-//
-//  NetworkRequestBuilder.swift
-//  DeFilms
-//
 
 import Foundation
 

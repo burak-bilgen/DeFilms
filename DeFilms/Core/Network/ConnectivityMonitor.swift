@@ -1,7 +1,3 @@
-//
-//  ConnectivityMonitor.swift
-//  DeFilms
-//
 
 import Foundation
 import Network
@@ -19,10 +15,23 @@ final class ConnectivityMonitor: ObservableObject {
     private var monitor: NWPathMonitor?
     private var verificationTask: Task<Void, Never>?
 
-    init(session: URLSession = ConnectivityMonitor.makeVerificationSession()) {
+    init(
+        session: URLSession = ConnectivityMonitor.makeVerificationSession(),
+        forceConnected: Bool = false
+    ) {
         self.verificationSession = session
 
-        startMonitoring()
+        if forceConnected {
+            isConnected = true
+            isChecking = false
+            hasResolvedInitialStatus = true
+            connectionDescription = "UI Test"
+            Task {
+                await ConnectivityStateStore.shared.setConnected(true)
+            }
+        } else {
+            startMonitoring()
+        }
     }
 
     deinit {

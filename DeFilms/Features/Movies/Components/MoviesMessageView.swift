@@ -1,7 +1,3 @@
-//
-//  MoviesMessageView.swift
-//  DeFilms
-//
 
 import Lottie
 import SwiftUI

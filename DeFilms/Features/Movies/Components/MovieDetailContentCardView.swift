@@ -1,7 +1,3 @@
-//
-//  MovieDetailContentCardView.swift
-//  DeFilms
-//
 
 import SwiftUI
 
@@ -370,8 +366,6 @@ private struct GenreFlowLayout: Layout {
         var totalWidth: CGFloat = 0
         var totalHeight: CGFloat = 0
 
-        // Measure chips row by row so long genres can wrap naturally instead of
-        // being forced into a fixed-width grid.
         for subview in subviews {
             let size = measuredSize(for: subview, availableWidth: maxWidth)
             let spacing = currentRowWidth == 0 ? 0 : horizontalSpacing

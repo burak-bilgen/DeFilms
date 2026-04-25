@@ -1,9 +1,3 @@
-//
-//  FavoritesStore.swift
-//  DeFilms
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import Combine
 import Foundation
@@ -18,6 +12,8 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     private let sessionManager: AuthSessionManager
     private var cancellables: Set<AnyCancellable> = []
     private var activeRefreshRequestID = UUID()
+    private var hasLoadedLists = false
+    private var refreshTask: Task<Void, Never>?
 
     var listsPublisher: AnyPublisher<[FavoriteList], Never> {
         $lists.eraseToAnyPublisher()
@@ -31,20 +27,22 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
         self.sessionManager = sessionManager
 
         sessionManager.$session
+            .dropFirst()
             .sink { [weak self] _ in
-                guard let self else { return }
-                Task { @MainActor in
-                    await self.refreshLists()
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.hasLoadedLists = false
+                    self.startRefresh()
                 }
             }
             .store(in: &cancellables)
 
-        Task { @MainActor in
-            await refreshLists()
-        }
+        startRefresh()
     }
 
     func createList(named name: String) async -> FavoriteList? {
+        await ensureListsLoaded()
+
         if let matchingList = list(named: name) {
             return matchingList
         }
@@ -71,6 +69,7 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func add(movie: Movie, to listID: UUID) async {
+        await ensureListsLoaded()
         guard isMovieInList(movieID: movie.id, listID: listID) == false else { return }
 
         do {
@@ -85,6 +84,7 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func remove(movieID: Int, from listID: UUID) async {
+        await ensureListsLoaded()
         guard isMovieInList(movieID: movieID, listID: listID) else { return }
 
         do {
@@ -99,6 +99,8 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func renameList(listID: UUID, name: String) async -> Bool {
+        await ensureListsLoaded()
+
         if let existingList = list(withID: listID),
            normalizedListName(existingList.name) == normalizedListName(name) {
             return true
@@ -121,6 +123,7 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func deleteList(listID: UUID) async {
+        await ensureListsLoaded()
         guard list(withID: listID) != nil else { return }
 
         do {
@@ -133,6 +136,7 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
     }
 
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) async {
+        await ensureListsLoaded()
         guard sourceListID != destinationListID else { return }
         guard isMovieInList(movieID: movieID, listID: sourceListID) else { return }
         guard list(withID: destinationListID) != nil else { return }
@@ -191,6 +195,25 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
         lists.first(where: { $0.id == listID })
     }
 
+    private func startRefresh() {
+        refreshTask?.cancel()
+        refreshTask = Task { [weak self] in
+            await self?.refreshLists()
+        }
+    }
+
+    private func ensureListsLoaded() async {
+        guard hasLoadedLists == false else { return }
+
+        if let refreshTask {
+            await refreshTask.value
+        }
+
+        if hasLoadedLists == false {
+            await refreshLists()
+        }
+    }
+
     private func refreshLists() async {
         let requestID = UUID()
         activeRefreshRequestID = requestID
@@ -201,10 +224,12 @@ final class FavoritesStore: ObservableObject, FavoritesStoreManaging {
             withAnimation(.easeInOut(duration: 0.24)) {
                 lists = latestLists
             }
+            hasLoadedLists = true
             AppLogger.log("Favorites refreshed", category: .favorites)
         } catch {
             guard activeRefreshRequestID == requestID else { return }
             AppLogger.log("Failed to refresh favorites", category: .favorites, level: .error)
+            hasLoadedLists = false
             toastItem = .error(Localization.string("favorites.toast.genericError"))
         }
     }

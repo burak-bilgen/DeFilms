@@ -116,9 +116,9 @@ The project includes both unit tests and UI tests. Coverage is weighted toward t
 - async loading and error handling
 
 Current suite footprint:
-- `63` unit tests
+- `72` unit tests
 - `16` UI tests
-- `79` total test methods
+- `88` total test methods
 
 Example output:
 
@@ -126,7 +126,7 @@ Example output:
 Test Suite 'All tests' started
 Test Suite 'DeFilmsTests' passed
 Test Suite 'DeFilmsUITests' passed
-Executed 77 tests, with 0 failures in 18.4 seconds
+Executed 88 tests, with 0 failures
 ```
 
 ## Localization & Accessibility
@@ -155,6 +155,7 @@ It is not a full accessibility audit, but it goes beyond defaults.
 - TMDB attribution is available under Settings > About > TMDB Attribution.
 - Local account deletion is available under Settings when signed in.
 - Privacy and data handling notes are available under Settings > About > Privacy & Data.
+- `PrivacyInfo.xcprivacy` is included for required-reason API disclosure.
 - A public privacy policy draft lives in `PRIVACY.md`.
 - App Store review notes and submission checks live in `AppStore/SubmissionChecklist.md`.
 

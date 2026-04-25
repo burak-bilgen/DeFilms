@@ -1,9 +1,3 @@
-//
-//  MovieSearchViewModel.swift
-//  DeFilms
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import Combine
 import Foundation
@@ -177,8 +171,6 @@ final class MovieSearchViewModel: ObservableObject {
             return
         }
 
-        // Skip duplicate requests unless the caller explicitly asks for a refresh,
-        // for example after the active language changes.
         guard force || searchText != lastExecutedSearchQuery else { return }
 
         query = searchText
@@ -341,8 +333,6 @@ final class MovieSearchViewModel: ObservableObject {
         guard canLoadMoreSearchResults, !isLoadingNextSearchPage else { return }
         guard let currentIndex = displayedMovies.firstIndex(where: { $0.id == currentMovie.id }) else { return }
 
-        // Start loading before the user hits the absolute end so the grid feels
-        // continuous instead of pausing on every page boundary.
         let prefetchBuffer = min(max(displayedMovies.count / 4, 6), 12)
         let thresholdIndex = max(displayedMovies.count - prefetchBuffer, 0)
         guard currentIndex >= thresholdIndex else { return }
@@ -387,8 +377,6 @@ final class MovieSearchViewModel: ObservableObject {
         totalSearchPages = max(response.totalPages, 1)
 
         if appendingResults {
-            // TMDB can repeat items across adjacent pages, so de-duplicate before
-            // appending to keep the infinite scroll stable.
             let existingMovieIDs = Set(searchResults.map(\.id))
             let newResults = response.results.filter { !existingMovieIDs.contains($0.id) }
             withAnimation(.easeOut(duration: 0.24)) {

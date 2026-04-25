@@ -1,7 +1,3 @@
-//
-//  FavoritesCoordinator.swift
-//  DeFilms
-//
 
 import Foundation
 

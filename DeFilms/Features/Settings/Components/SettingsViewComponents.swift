@@ -1,7 +1,3 @@
-//
-//  SettingsScreenComponents.swift
-//  DeFilms
-//
 
 import SwiftUI
 

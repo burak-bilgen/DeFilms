@@ -1,7 +1,3 @@
-//
-//  MovieDetailHeroHeaderView.swift
-//  DeFilms
-//
 
 import SwiftUI
 

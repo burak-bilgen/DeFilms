@@ -1,9 +1,3 @@
-//
-//  AuthSessionManager.swift
-//  DeFilms
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import Combine
 import CryptoKit
@@ -298,8 +292,6 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
             return identifier
         }
 
-        // Older builds keyed favorites by email. If we can still resolve that
-        // account, persist the canonical identifier once and reuse it from then on.
         let emailAddress = normalizedEmail(from: email)
         let accountIdentifier = (try? loadAccounts().first(where: { $0.email == emailAddress })?.id)
 

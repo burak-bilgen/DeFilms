@@ -1,7 +1,3 @@
-//
-//  FavoritesViewModel.swift
-//  DeFilms
-//
 
 import Combine
 import Foundation

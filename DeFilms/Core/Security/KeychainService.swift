@@ -1,9 +1,3 @@
-//
-//  KeychainService.swift
-//  DeFilms
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import Foundation
 import Security
@@ -76,9 +70,25 @@ final class KeychainService: KeychainServicing {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
-            // Keep credentials available after the first unlock, but never migrate
-            // them to another device through backups.
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
     }
 }
+
+#if DEBUG
+final class InMemoryKeychainService: KeychainServicing {
+    private var storage: [String: Data] = [:]
+
+    func data(for account: String) throws -> Data? {
+        storage[account]
+    }
+
+    func save(_ data: Data, for account: String) throws {
+        storage[account] = data
+    }
+
+    func delete(account: String) throws {
+        storage.removeValue(forKey: account)
+    }
+}
+#endif

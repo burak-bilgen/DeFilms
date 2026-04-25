@@ -1,9 +1,3 @@
-//
-//  NetworkManager.swift
-//  DeFilms
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import Foundation
 
@@ -108,8 +102,6 @@ final class NetworkManager: NetworkServiceProtocol {
                 throw NetworkError.cancelled
             } catch let error as URLError {
                 let mappedError = mapTransportError(error)
-                // Retry only for short-lived connectivity failures; anything else
-                // is surfaced immediately so the caller can decide what to do next.
                 if shouldRetry(after: error, policy: endpoint.retryPolicy, attempt: attempt) {
                     attempt += 1
                     AppLogger.log(
@@ -183,8 +175,6 @@ final class NetworkManager: NetworkServiceProtocol {
     }
 
     private static func makeDefaultSession() -> URLSession {
-        // Keep the session conservative for a content app: prefer fresh data,
-        // but still allow the system to reuse cached responses when possible.
         let configuration = URLSessionConfiguration.default
         configuration.requestCachePolicy = .reloadRevalidatingCacheData
         configuration.timeoutIntervalForRequest = 15

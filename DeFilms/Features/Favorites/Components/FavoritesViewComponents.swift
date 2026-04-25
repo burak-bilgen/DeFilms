@@ -1,7 +1,3 @@
-//
-//  FavoritesScreenComponents.swift
-//  DeFilms
-//
 
 import SwiftUI
 

@@ -1,7 +1,3 @@
-//
-//  MovieMetaChip.swift
-//  DeFilms
-//
 
 import SwiftUI
 

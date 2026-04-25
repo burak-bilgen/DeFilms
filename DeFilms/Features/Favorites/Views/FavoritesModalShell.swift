@@ -1,7 +1,3 @@
-//
-//  FavoritesModalShell.swift
-//  DeFilms
-//
 
 import SwiftUI
 

@@ -1,7 +1,3 @@
-//
-//  MoviesContentSections.swift
-//  DeFilms
-//
 
 import SwiftUI
 

@@ -1,7 +1,3 @@
-//
-//  MoviesFactory.swift
-//  DeFilms
-//
 
 import Foundation
 

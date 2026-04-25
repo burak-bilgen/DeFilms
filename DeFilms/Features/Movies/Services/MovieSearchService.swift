@@ -1,7 +1,3 @@
-//
-//  MovieSearchServices.swift
-//  DeFilms
-//
 
 import Foundation
 

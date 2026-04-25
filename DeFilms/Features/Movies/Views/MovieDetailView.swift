@@ -1,7 +1,3 @@
-//
-//  MovieDetailView.swift
-//  DeFilms
-//
 
 import Combine
 import SwiftUI

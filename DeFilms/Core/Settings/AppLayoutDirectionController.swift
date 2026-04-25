@@ -1,7 +1,3 @@
-//
-//  AppLayoutDirectionController.swift
-//  DeFilms
-//
 
 import SwiftUI
 #if canImport(UIKit)

@@ -1,7 +1,3 @@
-//
-//  AppContainer.swift
-//  DeFilms
-//
 
 import Foundation
 
@@ -19,13 +15,14 @@ final class AppContainer {
 
     init(
         persistenceController: PersistenceController = PersistenceController(),
-        keychainService: KeychainServicing = KeychainService(),
+        keychainService: KeychainServicing? = nil,
         networkService: NetworkServiceProtocol? = nil,
         recentSearchRepository: RecentSearchRepository? = nil,
         favoritesRepository: FavoritesRepository? = nil,
         sessionManager: AuthSessionManager? = nil,
         toastCenter: ToastCenter = ToastCenter()
     ) {
+        let resolvedKeychainService = keychainService ?? Self.makeDefaultKeychainService()
         let resolvedNetworkService = networkService ?? NetworkManager()
         let resolvedRecentSearchRepository = recentSearchRepository ?? RecentSearchRepository(
             persistenceController: persistenceController
@@ -34,11 +31,11 @@ final class AppContainer {
             persistenceController: persistenceController
         )
         let resolvedSessionManager = sessionManager ?? AuthSessionManager(
-            keychainService: keychainService
+            keychainService: resolvedKeychainService
         )
 
         self.persistenceController = persistenceController
-        self.keychainService = keychainService
+        self.keychainService = resolvedKeychainService
         self.networkService = resolvedNetworkService
         self.recentSearchRepository = resolvedRecentSearchRepository
         self.favoritesRepository = resolvedFavoritesRepository
@@ -58,5 +55,15 @@ final class AppContainer {
             favoritesRepository: resolvedFavoritesRepository,
             recentSearchRepository: resolvedRecentSearchRepository
         )
+    }
+
+    private static func makeDefaultKeychainService() -> KeychainServicing {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("UITest.UseInMemoryKeychain") {
+            return InMemoryKeychainService()
+        }
+        #endif
+
+        return KeychainService()
     }
 }

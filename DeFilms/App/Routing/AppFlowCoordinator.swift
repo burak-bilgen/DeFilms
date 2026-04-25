@@ -1,7 +1,3 @@
-//
-//  AppFlowCoordinator.swift
-//  DeFilms
-//
 
 import Combine
 import Foundation

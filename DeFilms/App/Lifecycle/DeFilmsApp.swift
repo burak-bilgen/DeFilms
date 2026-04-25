@@ -1,9 +1,3 @@
-//
-//  DeFilmsApp.swift
-//  DeFilms
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import SwiftUI
 import Foundation
@@ -30,7 +24,11 @@ struct DeFilmsApp: App {
         _sessionManager = StateObject(wrappedValue: authManager)
         _toastCenter = StateObject(wrappedValue: toastCenter)
         _favoritesStore = StateObject(wrappedValue: container.favoritesFactory.makeStore())
-        _connectivityMonitor = StateObject(wrappedValue: ConnectivityMonitor())
+        _connectivityMonitor = StateObject(
+            wrappedValue: ConnectivityMonitor(
+                forceConnected: ProcessInfo.processInfo.arguments.contains("UITest.ForceConnected")
+            )
+        )
         AppLogger.log("Application configured", category: .app, level: .success)
     }
 

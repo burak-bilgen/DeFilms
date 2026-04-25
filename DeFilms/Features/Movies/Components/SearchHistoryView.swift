@@ -1,9 +1,3 @@
-//
-//  SearchHistoryView.swift
-//  DeFilms
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import SwiftUI
 
@@ -59,6 +53,7 @@ struct SearchHistoryView: View {
                             .buttonStyle(.plain)
                             .foregroundStyle(.primary)
                             .accessibilityLabel(Localization.string("movies.accessibility.recentSearch", item))
+                            .accessibilityIdentifier("movies.searchHistory.item.\(item)")
                         }
                     }
                     .padding(.horizontal, 16)

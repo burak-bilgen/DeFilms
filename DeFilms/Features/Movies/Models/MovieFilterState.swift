@@ -1,9 +1,3 @@
-//
-//  MovieFilterState.swift
-//  DeFilms
-//
-//  Created by Burak on 2.04.2026.
-//
 
 import Foundation
 

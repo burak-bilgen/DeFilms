@@ -1,7 +1,3 @@
-//
-//  SignUpView.swift
-//  DeFilms
-//
 
 import Combine
 import SwiftUI
@@ -10,9 +6,11 @@ struct SignUpView: View {
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var viewModel: SignUpViewModel
+    private let onSubmitSuccess: (() -> Void)?
 
-    init(viewModel: SignUpViewModel) {
+    init(viewModel: SignUpViewModel, onSubmitSuccess: (() -> Void)? = nil) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.onSubmitSuccess = onSubmitSuccess
     }
 
     private var isSubmitEnabled: Bool {
@@ -50,6 +48,7 @@ struct SignUpView: View {
             Section {
                 Button {
                     if viewModel.submit() {
+                        onSubmitSuccess?()
                         dismiss()
                     }
                 } label: {

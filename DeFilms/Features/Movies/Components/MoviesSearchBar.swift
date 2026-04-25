@@ -1,7 +1,3 @@
-//
-//  MoviesSearchBar.swift
-//  DeFilms
-//
 
 import SwiftUI
 

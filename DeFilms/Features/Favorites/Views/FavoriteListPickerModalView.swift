@@ -1,7 +1,3 @@
-//
-//  FavoriteListPickerModalView.swift
-//  DeFilms
-//
 
 import SwiftUI
 

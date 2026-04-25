@@ -1,7 +1,3 @@
-//
-//  SignInViewModel.swift
-//  DeFilms
-//
 
 import Combine
 import Foundation

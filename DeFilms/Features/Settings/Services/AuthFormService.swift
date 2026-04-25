@@ -1,7 +1,3 @@
-//
-//  SettingsAccountServices.swift
-//  DeFilms
-//
 
 import Foundation
 

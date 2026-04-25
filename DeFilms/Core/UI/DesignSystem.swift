@@ -1,7 +1,3 @@
-//
-//  DesignSystem.swift
-//  DeFilms
-//
 
 import SwiftUI
 

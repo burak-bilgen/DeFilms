@@ -1,7 +1,3 @@
-//
-//  SettingsCoordinator.swift
-//  DeFilms
-//
 
 import Foundation
 

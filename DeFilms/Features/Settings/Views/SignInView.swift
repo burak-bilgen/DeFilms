@@ -1,7 +1,3 @@
-//
-//  SignInView.swift
-//  DeFilms
-//
 
 import Combine
 import SwiftUI
@@ -10,9 +6,11 @@ struct SignInView: View {
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var viewModel: SignInViewModel
+    private let onSubmitSuccess: (() -> Void)?
 
-    init(viewModel: SignInViewModel) {
+    init(viewModel: SignInViewModel, onSubmitSuccess: (() -> Void)? = nil) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.onSubmitSuccess = onSubmitSuccess
     }
 
     private var isSubmitEnabled: Bool {
@@ -43,6 +41,7 @@ struct SignInView: View {
             Section {
                 Button {
                     if viewModel.submit() {
+                        onSubmitSuccess?()
                         dismiss()
                     }
                 } label: {

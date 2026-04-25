@@ -1,7 +1,3 @@
-//
-//  MovieHorizontalSection.swift
-//  DeFilms
-//
 
 import SwiftUI
 

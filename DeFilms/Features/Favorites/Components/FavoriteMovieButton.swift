@@ -1,7 +1,3 @@
-//
-//  FavoriteMovieButton.swift
-//  DeFilms
-//
 
 import SwiftUI
 

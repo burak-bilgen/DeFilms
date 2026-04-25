@@ -1,7 +1,3 @@
-//
-//  FavoritesStoreManaging.swift
-//  DeFilms
-//
 
 import Combine
 import Foundation

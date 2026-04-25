@@ -1,7 +1,3 @@
-//
-//  MovieRoute.swift
-//  DeFilms
-//
 
 import Foundation
 

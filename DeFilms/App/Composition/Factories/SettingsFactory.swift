@@ -1,7 +1,3 @@
-//
-//  SettingsFactory.swift
-//  DeFilms
-//
 
 import Foundation
 

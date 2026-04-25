@@ -1,7 +1,3 @@
-//
-//  LocalAccountDeletionService.swift
-//  DeFilms
-//
 
 import Foundation
 

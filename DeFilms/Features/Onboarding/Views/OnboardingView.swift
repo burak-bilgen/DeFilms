@@ -1,7 +1,3 @@
-//
-//  OnboardingView.swift
-//  DeFilms
-//
 
 import SwiftUI
 

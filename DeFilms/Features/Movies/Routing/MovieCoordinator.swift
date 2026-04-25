@@ -1,7 +1,3 @@
-//
-//  MovieCoordinator.swift
-//  DeFilms
-//
 
 import Foundation
 

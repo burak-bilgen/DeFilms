@@ -1,7 +1,3 @@
-//
-//  FavoriteListDetailViewModel.swift
-//  DeFilms
-//
 
 import Combine
 import Foundation
@@ -28,8 +24,9 @@ final class FavoriteListDetailViewModel: ObservableObject {
         self.list = favoritesStore.list(withID: listID)
 
         favoritesStore.listsPublisher
-            .sink { [weak self] _ in
-                self?.refreshCurrentList()
+            .sink { [weak self] lists in
+                guard let self else { return }
+                self.list = lists.first { $0.id == self.listID }
             }
             .store(in: &cancellables)
     }
@@ -48,8 +45,6 @@ final class FavoriteListDetailViewModel: ObservableObject {
     var shareText: String? {
         guard let list, !list.movies.isEmpty else { return nil }
 
-        // Keep the exported text intentionally plain so the system share sheet
-        // works equally well with Notes, Messages, and third-party apps.
         let movieLines = list.movies.map { movie in
             "• \(movie.title) (\(movie.releaseYear))"
         }
@@ -85,9 +80,5 @@ final class FavoriteListDetailViewModel: ObservableObject {
 
         await favoritesStore.move(movieID: movieID, from: listID, to: list.id)
         return true
-    }
-
-    private func refreshCurrentList() {
-        list = favoritesStore.list(withID: listID)
     }
 }
