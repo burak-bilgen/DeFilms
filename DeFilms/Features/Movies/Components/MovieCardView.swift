@@ -54,6 +54,7 @@ struct MovieCardView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: posterCornerRadius, style: .continuous))
                 )
+                .frame(maxWidth: 150)
 
                 if showsFavoriteButton {
                     favoriteButton
