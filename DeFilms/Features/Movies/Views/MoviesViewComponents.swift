@@ -2,7 +2,7 @@
 import SwiftUI
 
 struct MoviesHeaderBar: View {
-    let openFavorites: () -> Void
+    let openLists: () -> Void
 
     var body: some View {
         HStack(alignment: .center) {
@@ -14,7 +14,7 @@ struct MoviesHeaderBar: View {
 
             Spacer()
 
-            Button(action: openFavorites) {
+            Button(action: openLists) {
                 Image(systemName: "rectangle.stack.badge.play")
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(.primary)
@@ -27,7 +27,7 @@ struct MoviesHeaderBar: View {
                     )
             }
             .buttonStyle(PressableScaleButtonStyle())
-            .accessibilityLabel(Localization.string("favorites.navigate"))
+            .accessibilityLabel(Localization.string("lists.navigate"))
         }
         .padding(.horizontal, AppSpacing.md)
         .padding(.top, 2)
@@ -189,6 +189,59 @@ struct MovieDecisionCard: View {
         .frame(height: 30)
         .background(Color.primary.opacity(0.06))
         .clipShape(Capsule())
+    }
+}
+
+struct AppleIntelligenceHelpSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                Image(systemName: "apple.intelligence")
+                    .font(.largeTitle.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 58, height: 58)
+                    .background(Color.primary.opacity(0.07))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    Text(Localization.string("movies.ai.help.title"))
+                        .font(.title3.weight(.bold))
+
+                    Text(Localization.string("movies.ai.help.message"))
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    helpStep(Localization.string("movies.ai.help.step1"))
+                    helpStep(Localization.string("movies.ai.help.step2"))
+                    helpStep(Localization.string("movies.ai.help.step3"))
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(AppSpacing.lg)
+            .background(AppPalette.screenBackground)
+            .navigationTitle(Localization.string("movies.ai.help.navTitle"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(Localization.string("common.done")) {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private func helpStep(_ text: String) -> some View {
+        Label(text, systemImage: "checkmark.circle.fill")
+            .font(.subheadline)
+            .foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 

@@ -1,7 +1,7 @@
 
 import Foundation
 
-enum FavoritesServiceError: LocalizedError, Equatable {
+enum ListsServiceError: LocalizedError, Equatable {
     case invalidListName
     case duplicateListName
     case persistenceFailure
@@ -9,50 +9,46 @@ enum FavoritesServiceError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidListName:
-            return Localization.string("favorites.form.requiredHint")
+            return Localization.string("lists.form.requiredHint")
         case .duplicateListName:
-            return Localization.string("favorites.toast.duplicateList")
+            return Localization.string("lists.toast.duplicateList")
         case .persistenceFailure:
-            return Localization.string("favorites.toast.genericError")
+            return Localization.string("lists.toast.genericError")
         }
     }
 }
 
-protocol FavoritesServicing {
-    func loadLists() async throws -> [FavoriteList]
-    func createList(named name: String, lists: [FavoriteList]) async throws -> FavoriteList
-    func renameList(listID: UUID, name: String, lists: [FavoriteList]) async throws
+protocol ListsServicing {
+    func loadLists() async throws -> [MovieList]
+    func createList(named name: String, lists: [MovieList]) async throws -> MovieList
+    func renameList(listID: UUID, name: String, lists: [MovieList]) async throws
     func deleteList(listID: UUID) async throws
     func add(movie: Movie, to listID: UUID) async throws
     func remove(movieID: Int, from listID: UUID) async throws
     func move(movieID: Int, from sourceListID: UUID, to destinationListID: UUID) async throws
 }
 
-final class FavoritesService: FavoritesServicing {
-    private let repository: FavoritesRepositoryProtocol
+final class ListsService: ListsServicing {
+    private let repository: ListsRepositoryProtocol
     private let sessionManager: AuthSessionManaging
 
     init(
-        repository: FavoritesRepositoryProtocol,
+        repository: ListsRepositoryProtocol,
         sessionManager: AuthSessionManaging
     ) {
         self.repository = repository
         self.sessionManager = sessionManager
     }
 
-    func loadLists() async throws -> [FavoriteList] {
+    func loadLists() async throws -> [MovieList] {
         do {
-            try await repository.adoptListsIfNeeded(
-                for: currentUserIdentifier,
-                from: sessionManager.legacyUserIdentifiers
-            )
             return try await repository.fetchLists(for: currentUserIdentifier)
         } catch {
-            throw FavoritesServiceError.persistenceFailure
+            throw ListsServiceError.persistenceFailure
         }
     }
 
-    func createList(named name: String, lists: [FavoriteList]) async throws -> FavoriteList {
+    func createList(named name: String, lists: [MovieList]) async throws -> MovieList {
         let listName = try validateListName(name, in: lists)
 
         do {
@@ -61,11 +57,11 @@ final class FavoritesService: FavoritesServicing {
                 userIdentifier: currentUserIdentifier
             )
         } catch {
-            throw FavoritesServiceError.persistenceFailure
+            throw ListsServiceError.persistenceFailure
         }
     }
 
-    func renameList(listID: UUID, name: String, lists: [FavoriteList]) async throws {
+    func renameList(listID: UUID, name: String, lists: [MovieList]) async throws {
         let listName = try validateListName(
             name,
             in: lists,
@@ -79,7 +75,7 @@ final class FavoritesService: FavoritesServicing {
                 userIdentifier: currentUserIdentifier
             )
         } catch {
-            throw FavoritesServiceError.persistenceFailure
+            throw ListsServiceError.persistenceFailure
         }
     }
 
@@ -90,7 +86,7 @@ final class FavoritesService: FavoritesServicing {
                 userIdentifier: currentUserIdentifier
             )
         } catch {
-            throw FavoritesServiceError.persistenceFailure
+            throw ListsServiceError.persistenceFailure
         }
     }
 
@@ -102,7 +98,7 @@ final class FavoritesService: FavoritesServicing {
                 userIdentifier: currentUserIdentifier
             )
         } catch {
-            throw FavoritesServiceError.persistenceFailure
+            throw ListsServiceError.persistenceFailure
         }
     }
 
@@ -114,7 +110,7 @@ final class FavoritesService: FavoritesServicing {
                 userIdentifier: currentUserIdentifier
             )
         } catch {
-            throw FavoritesServiceError.persistenceFailure
+            throw ListsServiceError.persistenceFailure
         }
     }
 
@@ -127,7 +123,7 @@ final class FavoritesService: FavoritesServicing {
                 userIdentifier: currentUserIdentifier
             )
         } catch {
-            throw FavoritesServiceError.persistenceFailure
+            throw ListsServiceError.persistenceFailure
         }
     }
 
@@ -137,12 +133,12 @@ final class FavoritesService: FavoritesServicing {
 
     private func validateListName(
         _ name: String,
-        in lists: [FavoriteList],
+        in lists: [MovieList],
         excluding listID: UUID? = nil
     ) throws -> String {
         let listName = name.trimmed
         guard !listName.isEmpty else {
-            throw FavoritesServiceError.invalidListName
+            throw ListsServiceError.invalidListName
         }
 
         let matchingList = lists.first {
@@ -151,7 +147,7 @@ final class FavoritesService: FavoritesServicing {
         }
 
         guard matchingList == nil else {
-            throw FavoritesServiceError.duplicateListName
+            throw ListsServiceError.duplicateListName
         }
 
         return listName

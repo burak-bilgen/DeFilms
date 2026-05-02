@@ -1,11 +1,11 @@
 
 import SwiftUI
 
-struct FavoriteListDetailView: View {
+struct MovieListDetailView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var coordinator: FavoritesCoordinator
+    @EnvironmentObject private var coordinator: ListsCoordinator
 
-    @ObservedObject var viewModel: FavoriteListDetailViewModel
+    @ObservedObject var viewModel: MovieListDetailViewModel
     private let columns = [
         GridItem(.flexible(), spacing: 20),
         GridItem(.flexible(), spacing: 20)
@@ -15,23 +15,32 @@ struct FavoriteListDetailView: View {
     @State private var isDeletePresented = false
     @State private var isListActionsPresented = false
     @State private var isSharePreviewPresented = false
-    @State private var moviePendingManagement: FavoriteMovie?
+    @State private var moviePendingManagement: ListedMovie?
 
     var body: some View {
         Group {
             if let list = viewModel.list {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
-                        FavoriteListDetailHeader(list: list)
+                        MovieListDetailHeader(list: list)
                             .padding(.horizontal, 16)
 
                         if list.movies.isEmpty {
-                            FavoriteListDetailEmptyState(listName: list.name)
-                                .padding(.horizontal, 16)
+                            VStack(spacing: 0) {
+                                Spacer(minLength: 0)
+                                    .frame(maxHeight: 70)
+
+                                MovieListDetailEmptyState(listName: list.name)
+                                    .padding(.horizontal, 16)
+
+                                Spacer(minLength: 0)
+                                    .layoutPriority(1)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 420)
                         } else {
                             LazyVGrid(columns: columns, spacing: 18) {
                                 ForEach(list.movies) { movie in
-                                    FavoriteMovieGridItem(
+                                    ListedMovieGridItem(
                                         movie: movie,
                                         openMovie: { coordinator.show(.movie(movie.asMovie)) },
                                         manageMovie: { moviePendingManagement = movie }
@@ -56,7 +65,7 @@ struct FavoriteListDetailView: View {
                             } label: {
                                 Image(systemName: "square.and.arrow.up")
                             }
-                            .accessibilityLabel(Localization.string("favorites.share.button"))
+                            .accessibilityLabel(Localization.string("lists.share.button"))
                         }
                     }
 
@@ -70,8 +79,8 @@ struct FavoriteListDetailView: View {
                 }
             } else {
                 MoviesMessageView(
-                    title: Localization.string("favorites.list.unavailable.title"),
-                    message: Localization.string("favorites.list.unavailable.message"),
+                    title: Localization.string("lists.list.unavailable.title"),
+                    message: Localization.string("lists.list.unavailable.message"),
                     buttonTitle: nil,
                     action: nil
                 )
@@ -81,36 +90,36 @@ struct FavoriteListDetailView: View {
             }
         }
         .confirmationDialog(
-            Localization.string("favorites.manage.movie"),
+            Localization.string("lists.manage.movie"),
             isPresented: $isListActionsPresented,
             titleVisibility: .hidden
         ) {
             if let list = viewModel.list {
-                Button(Localization.string("favorites.rename.title")) {
+                Button(Localization.string("lists.rename.title")) {
                     renameText = list.name
                     isRenamePresented = true
                 }
 
-                Button(Localization.string("favorites.delete.confirm"), role: .destructive) {
+                Button(Localization.string("lists.delete.confirm"), role: .destructive) {
                     isDeletePresented = true
                 }
             }
 
             Button(Localization.string("common.cancel"), role: .cancel) {}
         }
-        .alert(Localization.string("favorites.rename.title"), isPresented: $isRenamePresented) {
-            TextField(Localization.string("favorites.picker.placeholder"), text: $renameText)
+        .alert(Localization.string("lists.rename.title"), isPresented: $isRenamePresented) {
+            TextField(Localization.string("lists.picker.placeholder"), text: $renameText)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
             Button(Localization.string("common.cancel"), role: .cancel) {}
-            Button(Localization.string("favorites.rename.confirm")) {
+            Button(Localization.string("lists.rename.confirm")) {
                 Task {
                     _ = await viewModel.renameList(name: renameText)
                 }
             }
         }
-        .alert(Localization.string("favorites.delete.title"), isPresented: $isDeletePresented) {
-            Button(Localization.string("favorites.delete.confirm"), role: .destructive) {
+        .alert(Localization.string("lists.delete.title"), isPresented: $isDeletePresented) {
+            Button(Localization.string("lists.delete.confirm"), role: .destructive) {
                 Task {
                     await viewModel.deleteList()
                     dismiss()
@@ -118,12 +127,12 @@ struct FavoriteListDetailView: View {
             }
             Button(Localization.string("common.cancel"), role: .cancel) {}
         } message: {
-            Text(Localization.string("favorites.delete.message", viewModel.list?.name ?? ""))
+            Text(Localization.string("lists.delete.message", viewModel.list?.name ?? ""))
         }
         .fullScreenCover(item: $moviePendingManagement, onDismiss: {
             moviePendingManagement = nil
         }) { movie in
-            FavoriteMovieManagementModalView(
+            ListedMovieManagementModalView(
                 movie: movie,
                 destinations: viewModel.destinationOptions(for: movie.id),
                 moveMovie: { destinationID in
@@ -143,14 +152,14 @@ struct FavoriteListDetailView: View {
         }
         .sheet(isPresented: $isSharePreviewPresented) {
             if let list = viewModel.list, let shareText = viewModel.shareText {
-                FavoriteListSharePreview(list: list, shareText: shareText)
+                MovieListSharePreview(list: list, shareText: shareText)
             }
         }
     }
 }
 
-private struct FavoriteListSharePreview: View {
-    let list: FavoriteList
+private struct MovieListSharePreview: View {
+    let list: MovieList
     let shareText: String
 
     @Environment(\.dismiss) private var dismiss
@@ -159,12 +168,12 @@ private struct FavoriteListSharePreview: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppSpacing.lg) {
-                    FavoriteListShareCard(list: list)
+                    MovieListShareCard(list: list)
                         .padding(.horizontal, AppSpacing.lg)
                         .padding(.top, AppSpacing.lg)
 
                     ShareLink(item: shareText) {
-                        Label(Localization.string("favorites.share.button"), systemImage: "square.and.arrow.up")
+                        Label(Localization.string("lists.share.button"), systemImage: "square.and.arrow.up")
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity)
                     }
@@ -174,7 +183,7 @@ private struct FavoriteListSharePreview: View {
                 .padding(.bottom, AppSpacing.xxl)
             }
             .background(AppPalette.screenBackground)
-            .navigationTitle(Localization.string("favorites.share.preview.title"))
+            .navigationTitle(Localization.string("lists.share.preview.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -187,8 +196,8 @@ private struct FavoriteListSharePreview: View {
     }
 }
 
-private struct FavoriteListShareCard: View {
-    let list: FavoriteList
+private struct MovieListShareCard: View {
+    let list: MovieList
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.lg) {
@@ -203,7 +212,7 @@ private struct FavoriteListShareCard: View {
                     .foregroundStyle(.primary)
                     .lineLimit(2)
 
-                Text(Localization.string("favorites.list.card.subtitle", list.movies.count))
+                Text(Localization.string("lists.list.card.subtitle", list.movies.count))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -216,7 +225,7 @@ private struct FavoriteListShareCard: View {
                             cornerRadius: 12,
                             placeholderSystemImage: "film"
                         )
-                        .aspectRatio(2.0 / 3.0, contentMode: .fit)
+                        .aspectRatio(AppDimension.posterAspectRatio, contentMode: .fit)
 
                         Text(movie.title)
                             .font(.caption.weight(.semibold))
@@ -243,8 +252,8 @@ private struct FavoriteListShareCard: View {
     }
 }
 
-private struct FavoriteMovieGridItem: View {
-    let movie: FavoriteMovie
+private struct ListedMovieGridItem: View {
+    let movie: ListedMovie
     let openMovie: () -> Void
     let manageMovie: () -> Void
 
@@ -257,7 +266,7 @@ private struct FavoriteMovieGridItem: View {
                     contentSpacing: AppSpacing.xs,
                     metadataSpacing: 2,
                     posterCornerRadius: 14,
-                    showsFavoriteButton: false
+                    showsListButton: false
                 )
                 .padding(.horizontal, 3)
             }
@@ -276,13 +285,13 @@ private struct FavoriteMovieGridItem: View {
                     .padding(.trailing, 12)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Localization.string("favorites.manage.movie"))
+            .accessibilityLabel(Localization.string("lists.manage.movie"))
         }
     }
 }
 
-private struct FavoriteListDetailHeader: View {
-    let list: FavoriteList
+private struct MovieListDetailHeader: View {
+    let list: MovieList
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -290,7 +299,7 @@ private struct FavoriteListDetailHeader: View {
                 .font(.title2.weight(.bold))
                 .foregroundStyle(.primary)
 
-            Text(Localization.string("favorites.list.detail.subtitle", list.movies.count))
+            Text(Localization.string("lists.list.detail.subtitle", list.movies.count))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -305,7 +314,7 @@ private struct FavoriteListDetailHeader: View {
     }
 }
 
-private struct FavoriteListDetailEmptyState: View {
+private struct MovieListDetailEmptyState: View {
     let listName: String
 
     var body: some View {
@@ -315,10 +324,10 @@ private struct FavoriteListDetailEmptyState: View {
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
 
-            Text(Localization.string("favorites.list.empty.title"))
+            Text(Localization.string("lists.list.empty.title"))
                 .font(.headline.weight(.bold))
 
-            Text(Localization.string("favorites.list.empty.message", listName))
+            Text(Localization.string("lists.list.empty.message", listName))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

@@ -1,22 +1,15 @@
 import XCTest
 @testable import DeFilms
 
-final class ServiceTestFavoritesRepository: FavoritesRepositoryProtocol {
-    var lists: [FavoriteList] = []
-    private(set) var lastAdoptedUserIdentifier: String?
-    private(set) var lastLegacyUserIdentifiers: [String] = []
+final class ServiceTestListsRepository: ListsRepositoryProtocol {
+    var lists: [MovieList] = []
 
-    func fetchLists(for userIdentifier: String) async throws -> [FavoriteList] {
+    func fetchLists(for userIdentifier: String) async throws -> [MovieList] {
         lists
     }
 
-    func adoptListsIfNeeded(for userIdentifier: String, from legacyUserIdentifiers: [String]) async throws {
-        lastAdoptedUserIdentifier = userIdentifier
-        lastLegacyUserIdentifiers = legacyUserIdentifiers
-    }
-
-    func createList(named name: String, userIdentifier: String) async throws -> FavoriteList {
-        let list = FavoriteList(id: UUID(), name: name, movies: [])
+    func createList(named name: String, userIdentifier: String) async throws -> MovieList {
+        let list = MovieList(id: UUID(), name: name, movies: [])
         lists.append(list)
         return list
     }
@@ -35,13 +28,6 @@ final class ServiceTestAuthSessionManager: AuthSessionManaging {
     var isSignedIn: Bool { session != nil }
     var currentUserIdentifier: String { session?.userIdentifier ?? guestUserIdentifier }
     var guestUserIdentifier: String = "guest-device-id"
-    var legacyUserIdentifiers: [String] {
-        var identifiers = ["guest", guestUserIdentifier]
-        if let session {
-            identifiers.append(session.email.lowercased())
-        }
-        return identifiers.filter { $0 != currentUserIdentifier }
-    }
 
     var signUpError: Error?
     var signInError: Error?

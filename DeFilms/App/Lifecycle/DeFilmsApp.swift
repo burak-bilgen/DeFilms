@@ -7,7 +7,7 @@ struct DeFilmsApp: App {
     private let container: AppContainer
     @StateObject private var preferences: AppPreferences
     @StateObject private var sessionManager: AuthSessionManager
-    @StateObject private var favoritesStore: FavoritesStore
+    @StateObject private var listsStore: ListsStore
     @StateObject private var toastCenter: ToastCenter
     @StateObject private var connectivityMonitor: ConnectivityMonitor
     private let persistenceController: PersistenceController
@@ -23,7 +23,7 @@ struct DeFilmsApp: App {
         _preferences = StateObject(wrappedValue: preferences)
         _sessionManager = StateObject(wrappedValue: authManager)
         _toastCenter = StateObject(wrappedValue: toastCenter)
-        _favoritesStore = StateObject(wrappedValue: container.favoritesFactory.makeStore())
+        _listsStore = StateObject(wrappedValue: container.listsFactory.makeStore())
         _connectivityMonitor = StateObject(
             wrappedValue: ConnectivityMonitor(
                 forceConnected: ProcessInfo.processInfo.arguments.contains("UITest.ForceConnected")
@@ -36,7 +36,7 @@ struct DeFilmsApp: App {
         WindowGroup {
             AppEntryView(
                 container: container,
-                favoritesStore: favoritesStore
+                listsStore: listsStore
             )
                 .environment(\.managedObjectContext, persistenceController.viewContext)
                 .environment(\.locale, preferences.locale)
@@ -44,7 +44,7 @@ struct DeFilmsApp: App {
                 .preferredColorScheme(preferences.colorScheme)
                 .environmentObject(preferences)
                 .environmentObject(sessionManager)
-                .environmentObject(favoritesStore)
+                .environmentObject(listsStore)
                 .environmentObject(toastCenter)
                 .environmentObject(connectivityMonitor)
                 .toast(item: $toastCenter.item)
@@ -90,29 +90,29 @@ struct DeFilmsApp: App {
 
     private static func seedUITestContentIfNeeded(arguments: [String], container: AppContainer) {
         let sessionManager = container.sessionManager
-        let favoritesRepository = container.favoritesRepository
+        let listsRepository = container.listsRepository
         let recentSearchRepository = container.recentSearchRepository
 
-        if arguments.contains("UITest.SeedFavorites") {
+        if arguments.contains("UITest.SeedLists") {
             let seededLists = [
-                FavoriteList(
+                MovieList(
                     id: UUID(uuidString: "11111111-1111-1111-1111-111111111111") ?? UUID(),
                     name: "Weekend Watchlist",
                     movies: [
-                        FavoriteMovie(id: 1001, title: "Dune", posterPath: nil, releaseDate: "2021-10-22", voteAverage: 8.0),
-                        FavoriteMovie(id: 1002, title: "Arrival", posterPath: nil, releaseDate: "2016-11-11", voteAverage: 7.9)
+                        ListedMovie(id: 1001, title: "Dune", posterPath: nil, releaseDate: "2021-10-22", voteAverage: 8.0),
+                        ListedMovie(id: 1002, title: "Arrival", posterPath: nil, releaseDate: "2016-11-11", voteAverage: 7.9)
                     ]
                 ),
-                FavoriteList(
+                MovieList(
                     id: UUID(uuidString: "22222222-2222-2222-2222-222222222222") ?? UUID(),
                     name: "Rewatch Soon",
                     movies: [
-                        FavoriteMovie(id: 1003, title: "Blade Runner 2049", posterPath: nil, releaseDate: "2017-10-06", voteAverage: 8.1)
+                        ListedMovie(id: 1003, title: "Blade Runner 2049", posterPath: nil, releaseDate: "2017-10-06", voteAverage: 8.1)
                     ]
                 )
             ]
 
-            try? favoritesRepository.replaceListsForUITesting(
+            try? listsRepository.replaceListsForUITesting(
                 seededLists,
                 userIdentifier: sessionManager.currentUserIdentifier
             )

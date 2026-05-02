@@ -8,7 +8,6 @@ protocol AuthSessionManaging: AnyObject {
     var isSignedIn: Bool { get }
     var currentUserIdentifier: String { get }
     var guestUserIdentifier: String { get }
-    var legacyUserIdentifiers: [String] { get }
     func signUp(email: String, password: String, confirmPassword: String) throws
     func signIn(email: String, password: String) throws
     func changePassword(currentPassword: String, newPassword: String, confirmPassword: String) throws
@@ -76,16 +75,6 @@ final class AuthSessionManager: ObservableObject, AuthSessionManaging {
 
     var guestUserIdentifier: String {
         (try? storedGuestUserIdentifier()) ?? "guest.device.default"
-    }
-
-    var legacyUserIdentifiers: [String] {
-        var identifiers = ["guest", guestUserIdentifier]
-
-        if let session {
-            identifiers.append(session.email.lowercased())
-        }
-
-        return Array(Set(identifiers)).filter { $0 != currentUserIdentifier }
     }
 
     func signUp(email: String, password: String, confirmPassword: String) throws {

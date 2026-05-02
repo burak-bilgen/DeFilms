@@ -8,14 +8,14 @@ final class SettingsFactory {
 
     init(
         sessionManager: AuthSessionManager,
-        favoritesRepository: FavoritesRepositoryProtocol,
+        listsRepository: ListsRepositoryProtocol,
         recentSearchRepository: RecentSearchRepositoryProtocol
     ) {
         self.sessionManager = sessionManager
         self.authFormService = AuthFormService(sessionManager: sessionManager)
         self.accountDeletionService = LocalAccountDeletionService(
             sessionManager: sessionManager,
-            favoritesRepository: favoritesRepository,
+            listsRepository: listsRepository,
             recentSearchRepository: recentSearchRepository
         )
     }

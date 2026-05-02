@@ -1,7 +1,7 @@
 
 import SwiftUI
 
-struct FavoritesModalShell<Content: View>: View {
+struct ListsModalShell<Content: View>: View {
     let regularMaxWidth: CGFloat
     let accessibilityMaxWidth: CGFloat
     let content: (@escaping () -> Void) -> Content

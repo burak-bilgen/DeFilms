@@ -1,29 +1,29 @@
 
 import SwiftUI
 
-struct FavoriteListRow: View {
-    let list: FavoriteList
+struct MovieListRow: View {
+    let list: MovieList
     let openList: () -> Void
 
     var body: some View {
         Button(action: openList) {
-            FavoriteListCard(list: list)
+            MovieListCard(list: list)
         }
         .buttonStyle(PressableScaleButtonStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Localization.string("favorites.accessibility.listSummary", list.name, list.movies.count))
+        .accessibilityLabel(Localization.string("lists.accessibility.listSummary", list.name, list.movies.count))
         .accessibilityHint(Localization.string("movies.accessibility.openDetails"))
     }
 }
 
-struct FavoritesEmptyState: View {
+struct ListsEmptyState: View {
     let title: String
     let message: String
     let actionTitle: String
     let action: () -> Void
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             VStack(spacing: AppSpacing.lg) {
                 Image(systemName: "rectangle.stack.badge.plus")
                     .font(.system(size: 54, weight: .semibold))
@@ -38,6 +38,8 @@ struct FavoritesEmptyState: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, AppSpacing.xxl)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Button(actionTitle, action: action)
                     .buttonStyle(PrimaryProminentButtonStyle())
@@ -46,29 +48,33 @@ struct FavoritesEmptyState: View {
             .frame(maxWidth: 420)
             .appElevatedSurface()
             .padding(.horizontal, AppSpacing.md)
+
+            Spacer(minLength: 0)
+                .layoutPriority(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, AppSpacing.xxl)
         .background(AppPalette.screenBackground)
         .accessibilityElement(children: .contain)
     }
 }
 
-struct FavoritesSummaryCard: View {
+struct ListsSummaryCard: View {
     let listCount: Int
     let movieCount: Int
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text(Localization.string("favorites.summary.title"))
+            Text(Localization.string("lists.summary.title"))
                 .font(.title2.weight(.bold))
 
-            Text(Localization.string("favorites.summary.subtitle", listCount, movieCount))
+            Text(Localization.string("lists.summary.subtitle", listCount, movieCount))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 12) {
-                summaryBadge(systemImage: "square.stack.3d.up.fill", text: Localization.string("favorites.summary.lists", listCount))
-                summaryBadge(systemImage: "film.stack.fill", text: Localization.string("favorites.count", movieCount))
+                summaryBadge(systemImage: "square.stack.3d.up.fill", text: Localization.string("lists.summary.lists", listCount))
+                summaryBadge(systemImage: "film.stack.fill", text: Localization.string("lists.count", movieCount))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -103,8 +109,8 @@ struct FavoritesSummaryCard: View {
     }
 }
 
-struct FavoriteListCard: View {
-    let list: FavoriteList
+struct MovieListCard: View {
+    let list: MovieList
     @Environment(\.layoutDirection) private var layoutDirection
 
     var body: some View {
@@ -116,7 +122,7 @@ struct FavoriteListCard: View {
                         .foregroundStyle(.primary)
                         .lineLimit(2)
 
-                    Text(Localization.string("favorites.list.card.subtitle", list.movies.count))
+                    Text(Localization.string("lists.list.card.subtitle", list.movies.count))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -130,7 +136,7 @@ struct FavoriteListCard: View {
             }
 
             if list.movies.isEmpty {
-                Text(Localization.string("favorites.list.empty.inline"))
+                Text(Localization.string("lists.list.empty.inline"))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -144,14 +150,14 @@ struct FavoriteListCard: View {
                             placeholderSystemImage: "film"
                         )
                         .frame(maxWidth: .infinity)
-                        .aspectRatio(2.0 / 3.0, contentMode: .fit)
+                        .aspectRatio(AppDimension.posterAspectRatio, contentMode: .fit)
                     }
 
                     ForEach(0..<max(0, 3 - min(list.movies.count, 3)), id: \.self) { _ in
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(Color.clear)
                             .frame(maxWidth: .infinity)
-                            .aspectRatio(2.0 / 3.0, contentMode: .fit)
+                            .aspectRatio(AppDimension.posterAspectRatio, contentMode: .fit)
                             .hidden()
                     }
                 }

@@ -4,7 +4,7 @@ import SwiftUI
 struct MoviesView: View {
     @EnvironmentObject private var coordinator: MovieCoordinator
     @ObservedObject var viewModel: MovieSearchViewModel
-    let openFavorites: () -> Void
+    let openLists: () -> Void
     @State private var isFilterSheetPresented = false
     @State private var isSearchHistoryClearConfirmationPresented = false
     @FocusState private var isSearchFocused: Bool
@@ -15,9 +15,9 @@ struct MoviesView: View {
         GridItem(.adaptive(minimum: AppDimension.posterRailWidth, maximum: AppDimension.posterRailWidth), spacing: AppSpacing.xxxl, alignment: .top)
     ]
 
-    init(viewModel: MovieSearchViewModel, openFavorites: @escaping () -> Void) {
+    init(viewModel: MovieSearchViewModel, openLists: @escaping () -> Void) {
         self.viewModel = viewModel
-        self.openFavorites = openFavorites
+        self.openLists = openLists
     }
 
     private var hasActiveFilters: Bool {
@@ -46,16 +46,15 @@ struct MoviesView: View {
     var body: some View {
         let displayedSearchMovies = viewModel.filteredSearchResults
         let searchResultCount = displayedSearchMovies.count
-        let browseMovies = viewModel.browseSections.flatMap(\.movies).uniquedByID()
         let watchlistMovies = movieStatusStore.watchlistMovies
-        let recommendedMovies = movieStatusStore.recommendations(from: browseMovies)
         let shouldShowFilterControl = hasActiveFilters || searchResultCount > 0
         let shouldShowSortControl = hasActiveSorting || searchResultCount > 1
+        let shouldShowSearchControls = !viewModel.shouldShowBrowseContent && viewModel.screenState != .emptyResults
         let shouldShowSearchSummary = !viewModel.shouldShowBrowseContent &&
             (searchResultCount > 0 || hasActiveFilters || hasActiveSorting)
 
         VStack(spacing: 0) {
-            MoviesHeaderBar(openFavorites: openFavorites)
+            MoviesHeaderBar(openLists: openLists)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
@@ -74,35 +73,25 @@ struct MoviesView: View {
                         .padding(.horizontal)
                         .animation(.easeInOut(duration: 0.2), value: viewModel.shouldShowBrowseContent)
 
-                    if viewModel.shouldShowBrowseContent {
-                        MovieDecisionCard(
-                            stats: movieStatusStore.stats,
-                            primaryAction: {
-                                openTonightPick(
-                                    watchlistMovies: watchlistMovies,
-                                    recommendedMovies: recommendedMovies,
-                                    fallbackMovies: browseMovies
-                                )
-                            }
+                    if viewModel.shouldShowBrowseContent && !viewModel.searchHistory.isEmpty {
+                        SearchHistoryView(
+                            history: viewModel.searchHistory,
+                            onSelect: runRecentSearch,
+                            onRequestClearConfirmation: { isSearchHistoryClearConfirmationPresented = true }
                         )
-                        .padding(.horizontal)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
 
+                    if viewModel.shouldShowBrowseContent {
                         if !watchlistMovies.isEmpty {
                             MovieHorizontalSection(
                                 title: Localization.string("movies.section.watchlist"),
                                 movies: Array(watchlistMovies.prefix(12))
                             )
                         }
-
-                        if !recommendedMovies.isEmpty {
-                            MovieHorizontalSection(
-                                title: Localization.string("movies.section.forYou"),
-                                movies: recommendedMovies
-                            )
-                        }
                     }
 
-                    if !viewModel.shouldShowBrowseContent {
+                    if shouldShowSearchControls {
                         MoviesSearchControlsRow(
                             shouldShowFilterControl: shouldShowFilterControl,
                             shouldShowSortControl: shouldShowSortControl,
@@ -123,11 +112,10 @@ struct MoviesView: View {
 
                     if viewModel.shouldShowBrowseContent {
                         MoviesBrowseSectionView(
-                            searchHistory: viewModel.searchHistory,
                             screenState: viewModel.screenState,
                             browseSections: viewModel.browseSections,
-                            onSelectRecentSearch: runRecentSearch,
-                            onRequestClearSearchHistory: { isSearchHistoryClearConfirmationPresented = true },
+                            isSectionLoadingMore: viewModel.isLoadingMoreBrowseSection,
+                            onLoadMoreSection: loadNextBrowseSectionPage,
                             onReloadBrowseContent: refreshBrowseContent,
                             localizedBrowseTitle: localizedBrowseTitle
                         )
@@ -239,15 +227,10 @@ struct MoviesView: View {
         }
     }
 
-    private func openTonightPick(
-        watchlistMovies: [Movie],
-        recommendedMovies: [Movie],
-        fallbackMovies: [Movie]
-    ) {
-        let candidates = [watchlistMovies, recommendedMovies, fallbackMovies]
-            .first(where: { !$0.isEmpty }) ?? []
-        guard let movie = candidates.randomElement() else { return }
-        coordinator.show(.detail(movie))
+    private func loadNextBrowseSectionPage(after movie: Movie, in section: MovieBrowseSection) {
+        Task {
+            await viewModel.loadNextBrowseSectionPageIfNeeded(after: movie, in: section)
+        }
     }
 
     private func localizedBrowseTitle(_ sectionID: String) -> String {
@@ -264,6 +247,14 @@ struct MoviesView: View {
             return Localization.string("movies.section.nowPlaying")
         case "top-rated":
             return Localization.string("movies.section.topRated")
+        case "critically-acclaimed":
+            return Localization.string("movies.section.criticallyAcclaimed")
+        case "hidden-gems":
+            return Localization.string("movies.section.hiddenGems")
+        case "action-adventure":
+            return Localization.string("movies.section.actionAdventure")
+        case "family-night":
+            return Localization.string("movies.section.familyNight")
         default:
             return sectionID
         }

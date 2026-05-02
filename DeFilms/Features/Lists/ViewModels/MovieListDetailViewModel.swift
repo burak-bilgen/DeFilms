@@ -2,28 +2,28 @@
 import Combine
 import Foundation
 
-struct FavoriteMovieDestination: Identifiable, Equatable {
-    let list: FavoriteList
+struct ListedMovieDestination: Identifiable, Equatable {
+    let list: MovieList
     let alreadyContainsMovie: Bool
 
     var id: UUID { list.id }
 }
 
 @MainActor
-final class FavoriteListDetailViewModel: ObservableObject {
-    @Published private(set) var list: FavoriteList?
+final class MovieListDetailViewModel: ObservableObject {
+    @Published private(set) var list: MovieList?
 
     let listID: UUID
 
-    private let favoritesStore: FavoritesStoreManaging
+    private let listsStore: ListsStoreManaging
     private var cancellables: Set<AnyCancellable> = []
 
-    init(listID: UUID, favoritesStore: FavoritesStoreManaging) {
+    init(listID: UUID, listsStore: ListsStoreManaging) {
         self.listID = listID
-        self.favoritesStore = favoritesStore
-        self.list = favoritesStore.list(withID: listID)
+        self.listsStore = listsStore
+        self.list = listsStore.list(withID: listID)
 
-        favoritesStore.listsPublisher
+        listsStore.listsPublisher
             .sink { [weak self] lists in
                 guard let self else { return }
                 self.list = lists.first { $0.id == self.listID }
@@ -31,11 +31,11 @@ final class FavoriteListDetailViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    func destinationOptions(for movieID: Int) -> [FavoriteMovieDestination] {
-        favoritesStore.lists.compactMap { list in
+    func destinationOptions(for movieID: Int) -> [ListedMovieDestination] {
+        listsStore.lists.compactMap { list in
             guard list.id != listID else { return nil }
 
-            return FavoriteMovieDestination(
+            return ListedMovieDestination(
                 list: list,
                 alreadyContainsMovie: list.movies.contains(where: { $0.id == movieID })
             )
@@ -51,34 +51,34 @@ final class FavoriteListDetailViewModel: ObservableObject {
         .joined(separator: "\n")
 
         return """
-        \(Localization.string("favorites.share.header", list.name))
+        \(Localization.string("lists.share.header", list.name))
 
         \(movieLines)
         """
     }
 
     func renameList(name: String) async -> Bool {
-        await favoritesStore.renameList(listID: listID, name: name)
+        await listsStore.renameList(listID: listID, name: name)
     }
 
     func deleteList() async {
-        await favoritesStore.deleteList(listID: listID)
+        await listsStore.deleteList(listID: listID)
     }
 
     func remove(movieID: Int) async {
-        await favoritesStore.remove(movieID: movieID, from: listID)
+        await listsStore.remove(movieID: movieID, from: listID)
     }
 
     func move(movieID: Int, to destinationListID: UUID) async {
-        await favoritesStore.move(movieID: movieID, from: listID, to: destinationListID)
+        await listsStore.move(movieID: movieID, from: listID, to: destinationListID)
     }
 
     func createDestinationListAndMove(movieID: Int, listName: String) async -> Bool {
-        guard let list = await favoritesStore.createList(named: listName) else {
+        guard let list = await listsStore.createList(named: listName) else {
             return false
         }
 
-        await favoritesStore.move(movieID: movieID, from: listID, to: list.id)
+        await listsStore.move(movieID: movieID, from: listID, to: list.id)
         return true
     }
 }

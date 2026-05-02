@@ -1,13 +1,13 @@
 
 import SwiftUI
 
-struct FavoriteListPickerModalView: View {
+struct MovieListPickerModalView: View {
     let movie: Movie
 
-    @EnvironmentObject private var favoritesStore: FavoritesStore
+    @EnvironmentObject private var listsStore: ListsStore
 
     @FocusState private var isTextFieldFocused: Bool
-    @State private var listPendingRemoval: FavoriteList?
+    @State private var listPendingRemoval: MovieList?
     @State private var isCreatingList = false
     @State private var listName = ""
 
@@ -16,7 +16,7 @@ struct FavoriteListPickerModalView: View {
     }
 
     var body: some View {
-        FavoritesModalShell(regularMaxWidth: 380, accessibilityMaxWidth: 420) { dismissAnimated in
+        ListsModalShell(regularMaxWidth: 380, accessibilityMaxWidth: 420) { dismissAnimated in
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
                 header(dismissAnimated: dismissAnimated)
 
@@ -29,7 +29,7 @@ struct FavoriteListPickerModalView: View {
         }
         .animation(AppAnimation.gentleSpring, value: isCreatingList)
         .alert(
-            Localization.string("favorites.remove.movie.title"),
+            Localization.string("lists.remove.movie.title"),
             isPresented: Binding(
                 get: { listPendingRemoval != nil },
                 set: { isPresented in
@@ -39,10 +39,10 @@ struct FavoriteListPickerModalView: View {
                 }
             )
         ) {
-            Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
+            Button(Localization.string("lists.remove.movie.confirm"), role: .destructive) {
                 if let listPendingRemoval {
                     Task {
-                        await favoritesStore.remove(movieID: movie.id, from: listPendingRemoval.id)
+                        await listsStore.remove(movieID: movie.id, from: listPendingRemoval.id)
                         self.listPendingRemoval = nil
                     }
                 }
@@ -51,10 +51,10 @@ struct FavoriteListPickerModalView: View {
                 listPendingRemoval = nil
             }
         } message: {
-            Text(Localization.string("favorites.remove.from.list.message", listPendingRemoval?.name ?? ""))
+            Text(Localization.string("lists.remove.from.list.message", listPendingRemoval?.name ?? ""))
         }
         .task {
-            if favoritesStore.lists.isEmpty {
+            if listsStore.lists.isEmpty {
                 isCreatingList = true
                 isTextFieldFocused = true
             }
@@ -64,15 +64,15 @@ struct FavoriteListPickerModalView: View {
     private func header(dismissAnimated: @escaping () -> Void) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text(Localization.string(isCreatingList ? "favorites.create.title" : "favorites.picker.title"))
+                Text(Localization.string(isCreatingList ? "lists.create.title" : "lists.picker.title"))
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
 
                 Text(
                     Localization.string(
                         isCreatingList
-                            ? (favoritesStore.lists.isEmpty ? "favorites.create.subtitle.empty" : "favorites.create.subtitle.movie")
-                            : "favorites.picker.subtitle"
+                            ? (listsStore.lists.isEmpty ? "lists.create.subtitle.empty" : "lists.create.subtitle.movie")
+                            : "lists.picker.subtitle"
                     )
                 )
                 .font(.subheadline)
@@ -106,13 +106,13 @@ struct FavoriteListPickerModalView: View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                    ForEach(favoritesStore.lists) { list in
+                    ForEach(listsStore.lists) { list in
                         Button {
-                            if favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) {
+                            if listsStore.isMovieInList(movieID: movie.id, listID: list.id) {
                                 listPendingRemoval = list
                             } else {
                                 Task {
-                                    await favoritesStore.add(movie: movie, to: list.id)
+                                    await listsStore.add(movie: movie, to: list.id)
                                 }
                             }
                         } label: {
@@ -122,17 +122,17 @@ struct FavoriteListPickerModalView: View {
                                         .font(.subheadline.weight(.semibold))
                                         .foregroundStyle(.primary)
 
-                                    Text(Localization.string("favorites.count", list.movies.count))
+                                    Text(Localization.string("lists.count", list.movies.count))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
 
                                 Spacer(minLength: 0)
 
-                                Image(systemName: favoritesStore.isMovieInList(movieID: movie.id, listID: list.id) ? "checkmark.circle.fill" : "plus.circle.fill")
+                                Image(systemName: listsStore.isMovieInList(movieID: movie.id, listID: list.id) ? "checkmark.circle.fill" : "plus.circle.fill")
                                     .font(.title3.weight(.semibold))
                                     .foregroundStyle(
-                                        favoritesStore.isMovieInList(movieID: movie.id, listID: list.id)
+                                        listsStore.isMovieInList(movieID: movie.id, listID: list.id)
                                             ? Color(red: 0.96, green: 0.74, blue: 0.22)
                                             : .primary
                                     )
@@ -143,11 +143,11 @@ struct FavoriteListPickerModalView: View {
                             .appCardSurface(cornerRadius: AppCornerRadius.md, background: AppPalette.cardBackground)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel(Localization.string("favorites.accessibility.listSummary", list.name, list.movies.count))
+                        .accessibilityLabel(Localization.string("lists.accessibility.listSummary", list.name, list.movies.count))
                     }
                 }
             }
-            .frame(maxHeight: min(CGFloat(max(favoritesStore.lists.count, 1)) * 72, 280))
+            .frame(maxHeight: min(CGFloat(max(listsStore.lists.count, 1)) * 72, 280))
 
             Button {
                 withAnimation(AppAnimation.gentleSpring) {
@@ -155,7 +155,7 @@ struct FavoriteListPickerModalView: View {
                 }
                 isTextFieldFocused = true
             } label: {
-                Label(Localization.string("favorites.picker.newList"), systemImage: "plus")
+                Label(Localization.string("lists.picker.newList"), systemImage: "plus")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity)
@@ -169,11 +169,11 @@ struct FavoriteListPickerModalView: View {
     private func createListContent(dismissAnimated: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text(Localization.string("favorites.picker.placeholder"))
+                Text(Localization.string("lists.picker.placeholder"))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 
-                TextField(Localization.string("favorites.picker.placeholder"), text: $listName)
+                TextField(Localization.string("lists.picker.placeholder"), text: $listName)
                     .textFieldStyle(.plain)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
@@ -191,13 +191,13 @@ struct FavoriteListPickerModalView: View {
             }
 
             if proposedListName.isEmpty {
-                Text(Localization.string("favorites.form.requiredHint"))
+                Text(Localization.string("lists.form.requiredHint"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
             HStack(spacing: AppSpacing.sm) {
-                if !favoritesStore.lists.isEmpty {
+                if !listsStore.lists.isEmpty {
                     Button(Localization.string("common.cancel")) {
                         withAnimation(AppAnimation.gentleSpring) {
                             isCreatingList = false
@@ -216,7 +216,7 @@ struct FavoriteListPickerModalView: View {
                         await createList(dismissAnimated: dismissAnimated)
                     }
                 } label: {
-                    Text(Localization.string("favorites.action.create"))
+                    Text(Localization.string("lists.action.create"))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryProminentButtonStyle())
@@ -228,8 +228,8 @@ struct FavoriteListPickerModalView: View {
 
     private func createList(dismissAnimated: @escaping () -> Void) async {
         guard !proposedListName.isEmpty else { return }
-        guard let list = await favoritesStore.createList(named: proposedListName) else { return }
-        await favoritesStore.add(movie: movie, to: list.id)
+        guard let list = await listsStore.createList(named: proposedListName) else { return }
+        await listsStore.add(movie: movie, to: list.id)
         dismissAnimated()
         _ = list
     }

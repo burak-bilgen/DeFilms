@@ -72,8 +72,16 @@ private struct UITestMovieCatalogService: MovieCatalogServicing {
             popularMovies: [featuredMovie, supportingMovie],
             upcomingMovies: [featuredMovie],
             nowPlayingMovies: [supportingMovie],
-            topRatedMovies: [featuredMovie]
+            topRatedMovies: [featuredMovie],
+            criticallyAcclaimedMovies: [supportingMovie],
+            hiddenGemMovies: [featuredMovie],
+            actionAdventureMovies: [supportingMovie],
+            familyNightMovies: [featuredMovie]
         )
+    }
+
+    func loadBrowseSection(sectionID: String, page: Int) async throws -> MovieResponse {
+        MovieResponse(page: page, results: [], totalPages: page)
     }
 
     func searchMovies(query: String, page: Int) async throws -> MovieResponse {

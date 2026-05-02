@@ -6,21 +6,9 @@ struct MoviesSearchBar: View {
     let isFocused: FocusState<Bool>.Binding
     let onSubmit: () -> Void
     let onClear: () -> Void
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        ViewThatFits(in: .vertical) {
-            HStack(spacing: 6) {
-                searchField
-                submitButton
-            }
-
-            VStack(spacing: AppSpacing.xs) {
-                searchField
-                submitButton
-                    .frame(maxWidth: .infinity)
-            }
-        }
+        searchField
         .padding(AppSpacing.xxs + 2)
         .background(
             LinearGradient(
@@ -76,12 +64,4 @@ struct MoviesSearchBar: View {
         .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
     }
 
-    private var submitButton: some View {
-        Button(Localization.string("movies.search.action")) {
-            onSubmit()
-        }
-        .buttonStyle(PrimaryProminentButtonStyle())
-        .fixedSize(horizontal: dynamicTypeSize.isAccessibilitySize, vertical: false)
-        .accessibilityIdentifier("movies.search.submitButton")
-    }
 }

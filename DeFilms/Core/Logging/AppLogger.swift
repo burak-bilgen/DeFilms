@@ -11,7 +11,7 @@ enum AppLogger {
         case auth = "auth"
         case localization = "localization"
         case theme = "theme"
-        case favorites = "favorites"
+        case lists = "lists"
         case navigation = "navigation"
     }
 

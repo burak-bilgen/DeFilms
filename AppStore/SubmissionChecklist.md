@@ -21,7 +21,7 @@ Use `PRIVACY.md` as the public Privacy Policy URL after it is hosted on a public
 Suggested disclosure basis for the current build:
 
 - DeFilms does not run ads, analytics, or tracking.
-- Favorites, recent searches, local profile data, and preferences are stored on device.
+- Movie lists, recent searches, local profile data, and preferences are stored on device.
 - Movie search text and content requests are sent to TMDB to service the user's request.
 - `PrivacyInfo.xcprivacy` declares the app's UserDefaults usage as a required-reason API.
 - Re-check App Store Connect answers if analytics, crash reporting, ads, subscriptions, or a backend account system are added later.

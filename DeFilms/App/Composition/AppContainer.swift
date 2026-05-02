@@ -7,12 +7,12 @@ final class AppContainer {
     let keychainService: KeychainServicing
     let networkService: NetworkServiceProtocol
     let recentSearchRepository: RecentSearchRepository
-    let favoritesRepository: FavoritesRepository
+    let listsRepository: ListsRepository
     let sessionManager: AuthSessionManager
     let toastCenter: ToastCenter
     let movieStatusStore: UserMovieStatusStore
     let moviesFactory: MoviesFactory
-    let favoritesFactory: FavoritesFactory
+    let listsFactory: ListsFactory
     let settingsFactory: SettingsFactory
 
     init(
@@ -20,7 +20,7 @@ final class AppContainer {
         keychainService: KeychainServicing? = nil,
         networkService: NetworkServiceProtocol? = nil,
         recentSearchRepository: RecentSearchRepository? = nil,
-        favoritesRepository: FavoritesRepository? = nil,
+        listsRepository: ListsRepository? = nil,
         sessionManager: AuthSessionManager? = nil,
         movieStatusStore: UserMovieStatusStore? = nil,
         toastCenter: ToastCenter? = nil
@@ -31,7 +31,7 @@ final class AppContainer {
         let resolvedRecentSearchRepository = recentSearchRepository ?? RecentSearchRepository(
             persistenceController: resolvedPersistenceController
         )
-        let resolvedFavoritesRepository = favoritesRepository ?? FavoritesRepository(
+        let resolvedListsRepository = listsRepository ?? ListsRepository(
             persistenceController: resolvedPersistenceController
         )
         let resolvedSessionManager = sessionManager ?? AuthSessionManager(
@@ -44,7 +44,7 @@ final class AppContainer {
         self.keychainService = resolvedKeychainService
         self.networkService = resolvedNetworkService
         self.recentSearchRepository = resolvedRecentSearchRepository
-        self.favoritesRepository = resolvedFavoritesRepository
+        self.listsRepository = resolvedListsRepository
         self.sessionManager = resolvedSessionManager
         self.toastCenter = resolvedToastCenter
         self.movieStatusStore = resolvedMovieStatusStore
@@ -53,13 +53,13 @@ final class AppContainer {
             recentSearchRepository: resolvedRecentSearchRepository,
             sessionManager: resolvedSessionManager
         )
-        self.favoritesFactory = FavoritesFactory(
-            favoritesRepository: resolvedFavoritesRepository,
+        self.listsFactory = ListsFactory(
+            listsRepository: resolvedListsRepository,
             sessionManager: resolvedSessionManager
         )
         self.settingsFactory = SettingsFactory(
             sessionManager: resolvedSessionManager,
-            favoritesRepository: resolvedFavoritesRepository,
+            listsRepository: resolvedListsRepository,
             recentSearchRepository: resolvedRecentSearchRepository
         )
     }

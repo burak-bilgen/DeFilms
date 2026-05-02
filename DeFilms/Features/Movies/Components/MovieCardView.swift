@@ -3,14 +3,14 @@ import SwiftUI
 
 struct MovieCardView: View {
     let movie: Movie
-    var posterAspectRatio: CGFloat = 0.62
+    var posterAspectRatio: CGFloat = AppDimension.posterAspectRatio
     var titleFont: Font = .subheadline
     var contentSpacing: CGFloat = AppSpacing.sm
     var metadataSpacing: CGFloat = AppSpacing.xxs
     var posterCornerRadius: CGFloat = AppCornerRadius.sm
-    var showsFavoriteButton: Bool = true
+    var showsListButton: Bool = true
 
-    @EnvironmentObject private var favoritesStore: FavoritesStore
+    @EnvironmentObject private var listsStore: ListsStore
     @EnvironmentObject private var movieStatusStore: UserMovieStatusStore
 
     var body: some View {
@@ -62,8 +62,8 @@ struct MovieCardView: View {
 
                     Spacer(minLength: 0)
 
-                    if showsFavoriteButton {
-                        favoriteButton
+                    if showsListButton {
+                        listButton
                     }
                 }
                 .padding(AppSpacing.xs)
@@ -89,8 +89,8 @@ struct MovieCardView: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
-    private var favoriteButton: some View {
-        FavoriteMovieButton(movie: movie, style: .card)
+    private var listButton: some View {
+        MovieListButton(movie: movie, style: .card)
     }
 
     @ViewBuilder

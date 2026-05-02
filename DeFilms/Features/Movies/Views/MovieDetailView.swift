@@ -9,6 +9,7 @@ struct MovieDetailView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var scrollOffset: CGFloat = 0
     @State private var isContentVisible = false
+    @State private var isScreenVisible = false
 
     init(viewModel: MovieDetailViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -27,11 +28,20 @@ struct MovieDetailView: View {
                 }
             }
         }
+        .opacity(isScreenVisible ? 1 : 0)
+        .scaleEffect(reduceMotion || isScreenVisible ? 1 : 0.985, anchor: .top)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .statusBar(hidden: true)
         .accessibilityIdentifier("movies.detail.screen")
         .task {
+            if reduceMotion {
+                isScreenVisible = true
+            } else {
+                withAnimation(.easeOut(duration: 0.24)) {
+                    isScreenVisible = true
+                }
+            }
             await viewModel.loadIfNeeded()
         }
         .onChange(of: viewModel.detail?.id) { detailID in

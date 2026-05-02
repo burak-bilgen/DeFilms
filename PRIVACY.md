@@ -10,7 +10,7 @@ DeFilms stores the following data locally on your device:
 
 - Local profile email and password hash in Keychain
 - Local session token in Keychain
-- Favorite lists in Core Data
+- Movie lists in Core Data
 - Recent movie searches in Core Data
 - App preferences such as theme, language, and onboarding status
 
@@ -26,9 +26,9 @@ DeFilms does not include ads, third-party analytics, or cross-app tracking.
 
 ## Account and Data Deletion
 
-If you create a local account, you can delete it in Settings. Deleting the local account removes the local profile record, saved session, favorite lists, and recent searches associated with that profile from the device.
+If you create a local account, you can delete it in Settings. Deleting the local account removes the local profile record, saved session, movie lists, and recent searches associated with that profile from the device.
 
-Guest-mode favorites and preferences remain on the device unless the app is deleted or the device data is otherwise cleared.
+Guest-mode lists and preferences remain on the device unless the app is deleted or the device data is otherwise cleared.
 
 ## Contact
 

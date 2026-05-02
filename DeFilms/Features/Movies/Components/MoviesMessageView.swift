@@ -10,10 +10,10 @@ struct MoviesMessageView: View {
     var animationName: String? = nil
 
     var body: some View {
-        VStack(spacing: AppSpacing.sm) {
+        VStack(spacing: animationName == nil ? AppSpacing.sm : AppSpacing.xs) {
             if let animationName {
                 MoviesLottieView(animationName: animationName)
-                    .frame(height: 140)
+                    .frame(height: 120)
                     .frame(maxWidth: .infinity)
                     .accessibilityHidden(true)
             }
@@ -33,7 +33,7 @@ struct MoviesMessageView: View {
                     .buttonStyle(PrimaryProminentButtonStyle())
             }
         }
-        .padding(AppSpacing.xl)
+        .padding(animationName == nil ? AppSpacing.xl : AppSpacing.lg)
         .appCardSurface(cornerRadius: AppCornerRadius.md)
         .accessibilityElement(children: .contain)
     }

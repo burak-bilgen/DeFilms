@@ -4,24 +4,25 @@ import Combine
 
 struct MainTabView: View {
     let container: AppContainer
-    let favoritesStore: FavoritesStore
+    let listsStore: ListsStore
     @EnvironmentObject private var preferences: AppPreferences
 
     @State private var selection: Tab = .movies
     @StateObject private var movieCoordinator = MovieCoordinator()
-    @StateObject private var favoritesCoordinator = FavoritesCoordinator()
+    @StateObject private var aiCoordinator = MovieCoordinator()
+    @StateObject private var listsCoordinator = ListsCoordinator()
     @StateObject private var settingsCoordinator = SettingsCoordinator()
     @StateObject private var moviesViewModel: MovieSearchViewModel
-    @StateObject private var favoritesViewModel: FavoritesViewModel
+    @StateObject private var listsViewModel: ListsViewModel
     @StateObject private var movieStatusStore: UserMovieStatusStore
 
-    init(container: AppContainer, favoritesStore: FavoritesStore) {
+    init(container: AppContainer, listsStore: ListsStore) {
         self.container = container
-        self.favoritesStore = favoritesStore
+        self.listsStore = listsStore
         _moviesViewModel = StateObject(wrappedValue: container.moviesFactory.makeSearchViewModel())
-        _favoritesViewModel = StateObject(
-            wrappedValue: container.favoritesFactory.makeFavoritesViewModel(
-                favoritesStore: favoritesStore
+        _listsViewModel = StateObject(
+            wrappedValue: container.listsFactory.makeListsViewModel(
+                listsStore: listsStore
             )
         )
         _movieStatusStore = StateObject(wrappedValue: container.movieStatusStore)
@@ -35,10 +36,16 @@ struct MainTabView: View {
                     Label(Localization.string("tab.movies"), systemImage: selection == .movies ? "movieclapper.fill" : "movieclapper")
                 }
 
-            favoritesTab
-                .tag(Tab.favorites)
+            aiTab
+                .tag(Tab.ai)
                 .tabItem {
-                    Label(Localization.string("tab.favorites"), systemImage: selection == .favorites ? "rectangle.stack.badge.play.fill" : "rectangle.stack.badge.play")
+                    Label(Localization.string("tab.ai"), systemImage: "sparkles")
+                }
+
+            listsTab
+                .tag(Tab.lists)
+                .tabItem {
+                    Label(Localization.string("tab.lists"), systemImage: selection == .lists ? "rectangle.stack.badge.play.fill" : "rectangle.stack.badge.play")
                 }
 
             settingsTab
@@ -60,8 +67,8 @@ struct MainTabView: View {
         NavigationStack(path: $movieCoordinator.path) {
             MoviesView(
                 viewModel: moviesViewModel,
-                openFavorites: {
-                    selection = .favorites
+                openLists: {
+                    selection = .lists
                 }
             )
             .navigationDestination(for: MovieRoute.self) { route in
@@ -74,18 +81,34 @@ struct MainTabView: View {
         .environmentObject(movieCoordinator)
     }
 
-    private var favoritesTab: some View {
-        NavigationStack(path: $favoritesCoordinator.path) {
-            FavoritesView(
-                viewModel: favoritesViewModel
+    private var aiTab: some View {
+        NavigationStack(path: $aiCoordinator.path) {
+            MovieAIPicksView(
+                moviesViewModel: moviesViewModel,
+                listsStore: listsStore
             )
-            .navigationDestination(for: FavoritesRoute.self) { route in
+            .navigationDestination(for: MovieRoute.self) { route in
+                switch route {
+                case let .detail(movie):
+                    MovieDetailView(viewModel: container.moviesFactory.makeDetailViewModel(movie: movie))
+                }
+            }
+        }
+        .environmentObject(aiCoordinator)
+    }
+
+    private var listsTab: some View {
+        NavigationStack(path: $listsCoordinator.path) {
+            ListsView(
+                viewModel: listsViewModel
+            )
+            .navigationDestination(for: ListsRoute.self) { route in
                 switch route {
                 case let .list(listID):
-                    FavoriteListDetailView(
-                        viewModel: container.favoritesFactory.makeListDetailViewModel(
+                    MovieListDetailView(
+                        viewModel: container.listsFactory.makeListDetailViewModel(
                             listID: listID,
-                            favoritesStore: favoritesStore
+                            listsStore: listsStore
                         )
                     )
                 case let .movie(movie):
@@ -93,7 +116,7 @@ struct MainTabView: View {
                 }
             }
         }
-        .environmentObject(favoritesCoordinator)
+        .environmentObject(listsCoordinator)
     }
 
     private var settingsTab: some View {
@@ -119,6 +142,7 @@ struct MainTabView: View {
 
 private enum Tab: Hashable {
     case movies
-    case favorites
+    case ai
+    case lists
     case settings
 }

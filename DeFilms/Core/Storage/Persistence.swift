@@ -56,8 +56,8 @@ struct PersistenceController {
     func resetAllData() throws {
         try performWrite { context in
             let entityNames = [
-                "FavoriteMovieEntity",
-                "FavoriteListEntity",
+                "ListedMovieEntity",
+                "MovieListEntity",
                 "RecentSearchEntity"
             ]
 

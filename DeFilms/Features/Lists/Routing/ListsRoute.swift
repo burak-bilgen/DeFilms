@@ -1,7 +1,7 @@
 
 import Foundation
 
-enum FavoritesRoute: Hashable {
+enum ListsRoute: Hashable {
     case list(UUID)
     case movie(Movie)
 }

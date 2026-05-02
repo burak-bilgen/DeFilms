@@ -1,11 +1,11 @@
 
 import SwiftUI
 
-struct NewFavoriteListView: View {
+struct NewMovieListView: View {
     let movie: Movie?
-    let onListCreated: ((FavoriteList) -> Void)?
+    let onListCreated: ((MovieList) -> Void)?
 
-    @EnvironmentObject private var favoritesStore: FavoritesStore
+    @EnvironmentObject private var listsStore: ListsStore
     @Environment(\.dismiss) private var dismiss
 
     @FocusState private var isTextFieldFocused: Bool
@@ -15,7 +15,7 @@ struct NewFavoriteListView: View {
         listName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    init(movie: Movie?, onListCreated: ((FavoriteList) -> Void)? = nil) {
+    init(movie: Movie?, onListCreated: ((MovieList) -> Void)? = nil) {
         self.movie = movie
         self.onListCreated = onListCreated
     }
@@ -23,25 +23,25 @@ struct NewFavoriteListView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.xl) {
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text(Localization.string("favorites.create.heading"))
+                Text(Localization.string("lists.create.heading"))
                     .font(.title2.weight(.bold))
 
-                Text(Localization.string(movie == nil ? "favorites.create.subtitle.empty" : "favorites.create.subtitle.movie"))
+                Text(Localization.string(movie == nil ? "lists.create.subtitle.empty" : "lists.create.subtitle.movie"))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                Text(Localization.string("favorites.picker.placeholder"))
+                Text(Localization.string("lists.picker.placeholder"))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 
-                TextField(Localization.string("favorites.picker.placeholder"), text: $listName)
+                TextField(Localization.string("lists.picker.placeholder"), text: $listName)
                     .textFieldStyle(.plain)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
-                    .accessibilityLabel(Localization.string("favorites.picker.placeholder"))
-                    .accessibilityIdentifier("favorites.create.textField")
+                    .accessibilityLabel(Localization.string("lists.picker.placeholder"))
+                    .accessibilityIdentifier("lists.create.textField")
                     .padding(.horizontal, 16)
                     .frame(height: 54)
                     .background(AppPalette.cardBackground)
@@ -56,7 +56,7 @@ struct NewFavoriteListView: View {
             }
 
             if proposedListName.isEmpty {
-                Text(Localization.string("favorites.form.requiredHint"))
+                Text(Localization.string("lists.form.requiredHint"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -66,19 +66,19 @@ struct NewFavoriteListView: View {
                     await createList()
                 }
             } label: {
-                Text(Localization.string("favorites.action.create"))
+                Text(Localization.string("lists.action.create"))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryProminentButtonStyle())
             .disabled(proposedListName.isEmpty)
             .opacity(proposedListName.isEmpty ? 0.5 : 1)
-            .accessibilityLabel(Localization.string("favorites.action.create"))
-            .accessibilityIdentifier("favorites.create.submit")
+            .accessibilityLabel(Localization.string("lists.action.create"))
+            .accessibilityIdentifier("lists.create.submit")
 
             Spacer(minLength: 0)
         }
         .padding(AppSpacing.lg)
-        .navigationTitle(Localization.string("favorites.create.title"))
+        .navigationTitle(Localization.string("lists.create.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -95,9 +95,9 @@ struct NewFavoriteListView: View {
 
     private func createList() async {
         guard !proposedListName.isEmpty else { return }
-        guard let list = await favoritesStore.createList(named: listName) else { return }
+        guard let list = await listsStore.createList(named: listName) else { return }
         if let movie {
-            await favoritesStore.add(movie: movie, to: list.id)
+            await listsStore.add(movie: movie, to: list.id)
         }
         onListCreated?(list)
         dismiss()

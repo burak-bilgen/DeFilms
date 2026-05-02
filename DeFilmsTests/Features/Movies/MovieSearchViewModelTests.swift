@@ -160,7 +160,11 @@ final class MovieSearchViewModelTests: XCTestCase {
             popularMovies: [],
             upcomingMovies: [],
             nowPlayingMovies: [],
-            topRatedMovies: []
+            topRatedMovies: [],
+            criticallyAcclaimedMovies: [],
+            hiddenGemMovies: [],
+            actionAdventureMovies: [],
+            familyNightMovies: []
         )
         let viewModel = MovieSearchViewModel(
             movieCatalogService: catalogService,

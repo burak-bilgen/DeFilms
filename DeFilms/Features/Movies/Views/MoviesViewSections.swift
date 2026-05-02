@@ -2,24 +2,14 @@
 import SwiftUI
 
 struct MoviesBrowseSectionView: View {
-    let searchHistory: [String]
     let screenState: MoviesScreenState
     let browseSections: [MovieBrowseSection]
-    let onSelectRecentSearch: (String) -> Void
-    let onRequestClearSearchHistory: () -> Void
+    let isSectionLoadingMore: (String) -> Bool
+    let onLoadMoreSection: (Movie, MovieBrowseSection) -> Void
     let onReloadBrowseContent: () -> Void
     let localizedBrowseTitle: (String) -> String
 
     var body: some View {
-        if !searchHistory.isEmpty {
-            SearchHistoryView(
-                history: searchHistory,
-                onSelect: onSelectRecentSearch,
-                onRequestClearConfirmation: onRequestClearSearchHistory
-            )
-            .padding(.bottom, 2)
-        }
-
         switch screenState {
         case .loadingBrowse:
             browseLoadingState
@@ -29,7 +19,11 @@ struct MoviesBrowseSectionView: View {
             ForEach(browseSections) { section in
                 MovieHorizontalSection(
                     title: localizedBrowseTitle(section.id),
-                    movies: section.movies
+                    movies: section.movies,
+                    isLoadingMore: isSectionLoadingMore(section.id),
+                    onLoadMore: { movie, _ in
+                        onLoadMoreSection(movie, section)
+                    }
                 )
             }
         }
@@ -128,8 +122,6 @@ struct MoviesSearchResultsView: View {
         animationName: String? = nil
     ) -> some View {
         VStack {
-            Spacer(minLength: AppSpacing.xxl)
-
             MovieSearchEmptyStateView(
                 title: title,
                 message: message,
@@ -141,7 +133,8 @@ struct MoviesSearchResultsView: View {
 
             Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, minHeight: AppDimension.emptyStateMinHeight)
+        .frame(maxWidth: .infinity, minHeight: animationName == nil ? 320 : 240)
+        .padding(.top, animationName == nil ? AppSpacing.lg : 0)
         .padding(.horizontal, 16)
     }
 

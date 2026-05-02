@@ -9,7 +9,11 @@ final class MockMovieCatalogService: MovieCatalogServicing {
         popularMovies: [],
         upcomingMovies: [],
         nowPlayingMovies: [],
-        topRatedMovies: []
+        topRatedMovies: [],
+        criticallyAcclaimedMovies: [],
+        hiddenGemMovies: [],
+        actionAdventureMovies: [],
+        familyNightMovies: []
     )
     var genres: [MovieGenre] = []
     var browseContentError: Error?
@@ -30,6 +34,10 @@ final class MockMovieCatalogService: MovieCatalogServicing {
         browseLoadCount += 1
         if let browseContentError { throw browseContentError }
         return browseContent
+    }
+
+    func loadBrowseSection(sectionID: String, page: Int) async throws -> MovieResponse {
+        MovieResponse(page: page, results: [], totalPages: page)
     }
 
     func searchMovies(query: String, page: Int) async throws -> MovieResponse {
@@ -79,16 +87,14 @@ final class MockMovieSearchHistoryService: MovieSearchHistoryServicing {
     }
 }
 
-final class MockFavoritesRepository: FavoritesRepositoryProtocol {
-    var lists: [FavoriteList] = []
+final class MockListsRepository: ListsRepositoryProtocol {
+    var lists: [MovieList] = []
     var createListError: Error?
     var renameListError: Error?
     var deleteListError: Error?
     var addMovieError: Error?
     var removeMovieError: Error?
     var moveMovieError: Error?
-    private(set) var lastAdoptedUserIdentifier: String?
-    private(set) var lastLegacyUserIdentifiers: [String] = []
     private(set) var createListCallCount = 0
     private(set) var renameListCallCount = 0
     private(set) var deleteListCallCount = 0
@@ -112,19 +118,14 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
         self.moveMovieError = moveMovieError
     }
 
-    func fetchLists(for userIdentifier: String) async throws -> [FavoriteList] {
+    func fetchLists(for userIdentifier: String) async throws -> [MovieList] {
         lists
     }
 
-    func adoptListsIfNeeded(for userIdentifier: String, from legacyUserIdentifiers: [String]) async throws {
-        lastAdoptedUserIdentifier = userIdentifier
-        lastLegacyUserIdentifiers = legacyUserIdentifiers
-    }
-
-    func createList(named name: String, userIdentifier: String) async throws -> FavoriteList {
+    func createList(named name: String, userIdentifier: String) async throws -> MovieList {
         createListCallCount += 1
         if let createListError { throw createListError }
-        let list = FavoriteList(id: UUID(), name: name, movies: [])
+        let list = MovieList(id: UUID(), name: name, movies: [])
         lists.append(list)
         return list
     }
@@ -151,7 +152,7 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
         if let addMovieError { throw addMovieError }
         guard let index = lists.firstIndex(where: { $0.id == listID }) else { return }
         guard lists[index].movies.contains(where: { $0.id == movie.id }) == false else { return }
-        lists[index].movies.append(FavoriteMovie(movie: movie))
+        lists[index].movies.append(ListedMovie(movie: movie))
     }
 
     func remove(movieID: Int, from listID: UUID, userIdentifier: String) async throws {
@@ -182,8 +183,8 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
 }
 
 @MainActor
-final class SpyFavoritesStore: FavoritesStoreManaging {
-    @Published private var storedLists: [FavoriteList]
+final class SpyListsStore: ListsStoreManaging {
+    @Published private var storedLists: [MovieList]
 
     private(set) var createdNames: [String] = []
     private(set) var renamedLists: [(UUID, String)] = []
@@ -192,22 +193,22 @@ final class SpyFavoritesStore: FavoritesStoreManaging {
     private(set) var removedMovies: [(Int, UUID)] = []
     private(set) var movedMovies: [(Int, UUID, UUID)] = []
 
-    var createListResult: FavoriteList?
+    var createListResult: MovieList?
     var renameListResult = true
 
-    init(lists: [FavoriteList] = []) {
+    init(lists: [MovieList] = []) {
         self.storedLists = lists
     }
 
-    var lists: [FavoriteList] {
+    var lists: [MovieList] {
         storedLists
     }
 
-    var listsPublisher: AnyPublisher<[FavoriteList], Never> {
+    var listsPublisher: AnyPublisher<[MovieList], Never> {
         $storedLists.eraseToAnyPublisher()
     }
 
-    func createList(named name: String) async -> FavoriteList? {
+    func createList(named name: String) async -> MovieList? {
         createdNames.append(name)
         if let createListResult {
             storedLists.append(createListResult)
@@ -255,11 +256,11 @@ final class SpyFavoritesStore: FavoritesStoreManaging {
         storedLists[destinationIndex].movies.append(movie)
     }
 
-    func list(withID listID: UUID) -> FavoriteList? {
+    func list(withID listID: UUID) -> MovieList? {
         storedLists.first { $0.id == listID }
     }
 
-    func publish(lists: [FavoriteList]) {
+    func publish(lists: [MovieList]) {
         storedLists = lists
     }
 }
@@ -285,13 +286,6 @@ final class MockAuthSessionManager: AuthSessionManaging {
     var isSignedIn: Bool { session != nil }
     var currentUserIdentifier: String { session?.userIdentifier ?? guestUserIdentifier }
     var guestUserIdentifier: String = "guest-device-id"
-    var legacyUserIdentifiers: [String] {
-        var identifiers = ["guest", guestUserIdentifier]
-        if let session {
-            identifiers.append(session.email.lowercased())
-        }
-        return identifiers.filter { $0 != currentUserIdentifier }
-    }
 
     var signUpError: Error?
     var signInError: Error?

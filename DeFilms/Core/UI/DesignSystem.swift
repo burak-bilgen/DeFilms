@@ -23,6 +23,7 @@ enum AppDimension {
     static let controlHeight: CGFloat = 44
     static let prominentButtonHeight: CGFloat = 50
     static let chipHeight: CGFloat = 30
+    static let posterAspectRatio: CGFloat = 2.0 / 3.0
     static let posterHeroWidth: CGFloat = 132
     static let posterHeroHeight: CGFloat = 198
     static let posterRailWidth: CGFloat = 146

@@ -1,7 +1,7 @@
 
 import Foundation
 
-struct FavoriteMovie: Identifiable, Codable, Equatable {
+struct ListedMovie: Identifiable, Codable, Equatable {
     let id: Int
     let title: String
     let posterPath: String?
@@ -43,8 +43,8 @@ struct FavoriteMovie: Identifiable, Codable, Equatable {
     }
 }
 
-struct FavoriteList: Identifiable, Codable, Equatable {
+struct MovieList: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
-    var movies: [FavoriteMovie]
+    var movies: [ListedMovie]
 }

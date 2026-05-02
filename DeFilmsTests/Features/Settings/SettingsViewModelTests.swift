@@ -44,7 +44,6 @@ private final class MockBoundAuthSessionManager: AuthSessionManaging {
     var isSignedIn: Bool { session != nil }
     var currentUserIdentifier: String { session?.userIdentifier ?? guestUserIdentifier }
     let guestUserIdentifier: String = "guest-device-id"
-    var legacyUserIdentifiers: [String] { ["guest", guestUserIdentifier, "bound@example.com"] }
     private(set) var didSignOut = false
 
     func signUp(email: String, password: String, confirmPassword: String) throws {}

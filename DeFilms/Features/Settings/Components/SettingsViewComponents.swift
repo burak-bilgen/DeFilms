@@ -219,7 +219,7 @@ struct PrivacyDataView: View {
         List {
             Section(Localization.string("settings.privacy.section.local")) {
                 PrivacyInfoRow(text: Localization.string("settings.privacy.local.profile"))
-                PrivacyInfoRow(text: Localization.string("settings.privacy.local.favorites"))
+                PrivacyInfoRow(text: Localization.string("settings.privacy.local.lists"))
                 PrivacyInfoRow(text: Localization.string("settings.privacy.local.searches"))
             }
 

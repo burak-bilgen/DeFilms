@@ -3,17 +3,17 @@ import Combine
 import Foundation
 
 @MainActor
-final class FavoritesViewModel: ObservableObject {
-    @Published private(set) var lists: [FavoriteList] = []
+final class ListsViewModel: ObservableObject {
+    @Published private(set) var lists: [MovieList] = []
 
-    private let store: FavoritesStoreManaging
+    private let store: ListsStoreManaging
     private var cancellables: Set<AnyCancellable> = []
 
-    init(favoritesStore: FavoritesStoreManaging) {
-        self.store = favoritesStore
-        self.lists = favoritesStore.lists
+    init(listsStore: ListsStoreManaging) {
+        self.store = listsStore
+        self.lists = listsStore.lists
 
-        favoritesStore.listsPublisher
+        listsStore.listsPublisher
             .sink { [weak self] lists in
                 self?.lists = lists
             }
@@ -24,7 +24,7 @@ final class FavoritesViewModel: ObservableObject {
         lists.reduce(0) { $0 + $1.movies.count }
     }
 
-    func createList(named name: String) async -> FavoriteList? {
+    func createList(named name: String) async -> MovieList? {
         await store.createList(named: name)
     }
 

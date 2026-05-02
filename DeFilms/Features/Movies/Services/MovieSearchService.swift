@@ -8,19 +8,28 @@ struct MovieBrowseContent: Equatable {
     let upcomingMovies: [Movie]
     let nowPlayingMovies: [Movie]
     let topRatedMovies: [Movie]
+    let criticallyAcclaimedMovies: [Movie]
+    let hiddenGemMovies: [Movie]
+    let actionAdventureMovies: [Movie]
+    let familyNightMovies: [Movie]
 
     var allMovies: [Movie] {
         trendingTodayMovies +
+            nowPlayingMovies +
             trendingThisWeekMovies +
             popularMovies +
-            upcomingMovies +
-            nowPlayingMovies +
-            topRatedMovies
+            topRatedMovies +
+            criticallyAcclaimedMovies +
+            hiddenGemMovies +
+            actionAdventureMovies +
+            familyNightMovies +
+            upcomingMovies
     }
 }
 
 protocol MovieCatalogServicing {
     func loadBrowseContent() async throws -> MovieBrowseContent
+    func loadBrowseSection(sectionID: String, page: Int) async throws -> MovieResponse
     func searchMovies(query: String, page: Int) async throws -> MovieResponse
     func loadGenres() async throws -> [MovieGenre]
     func prefetchImages(for movies: [Movie]) async
@@ -61,6 +70,10 @@ final class TMDBMovieCatalogService: MovieCatalogServicing {
         async let upcoming = fetchMovies(for: .upcomingMovies(page: 1))
         async let nowPlaying = fetchMovies(for: .nowPlayingMovies(page: 1))
         async let topRated = fetchMovies(for: .topRatedMovies(page: 1))
+        async let criticallyAcclaimed = fetchMovies(for: .discoverMovies(category: .criticallyAcclaimed, page: 1))
+        async let hiddenGems = fetchMovies(for: .discoverMovies(category: .hiddenGems, page: 1))
+        async let actionAdventure = fetchMovies(for: .discoverMovies(category: .actionAdventure, page: 1))
+        async let familyNight = fetchMovies(for: .discoverMovies(category: .familyNight, page: 1))
 
         return try await MovieBrowseContent(
             trendingTodayMovies: trendingToday,
@@ -68,13 +81,23 @@ final class TMDBMovieCatalogService: MovieCatalogServicing {
             popularMovies: popular,
             upcomingMovies: upcoming,
             nowPlayingMovies: nowPlaying,
-            topRatedMovies: topRated
+            topRatedMovies: topRated,
+            criticallyAcclaimedMovies: criticallyAcclaimed,
+            hiddenGemMovies: hiddenGems,
+            actionAdventureMovies: actionAdventure,
+            familyNightMovies: familyNight
         )
     }
 
     func searchMovies(query: String, page: Int) async throws -> MovieResponse {
         try await networkService.request(
             endpoint: TMDBEndpoint.searchMovie(query: query, page: page)
+        )
+    }
+
+    func loadBrowseSection(sectionID: String, page: Int) async throws -> MovieResponse {
+        try await networkService.request(
+            endpoint: endpoint(for: sectionID, page: page)
         )
     }
 
@@ -98,6 +121,33 @@ final class TMDBMovieCatalogService: MovieCatalogServicing {
     private func fetchMovies(for endpoint: TMDBEndpoint) async throws -> [Movie] {
         let response: MovieResponse = try await networkService.request(endpoint: endpoint)
         return response.results
+    }
+
+    private func endpoint(for sectionID: String, page: Int) -> TMDBEndpoint {
+        switch sectionID {
+        case "trending-today":
+            return .trendingMovies(window: .day, page: page)
+        case "trending-week":
+            return .trendingMovies(window: .week, page: page)
+        case "popular":
+            return .popularMovies(page: page)
+        case "upcoming":
+            return .upcomingMovies(page: page)
+        case "now-playing":
+            return .nowPlayingMovies(page: page)
+        case "top-rated":
+            return .topRatedMovies(page: page)
+        case "critically-acclaimed":
+            return .discoverMovies(category: .criticallyAcclaimed, page: page)
+        case "hidden-gems":
+            return .discoverMovies(category: .hiddenGems, page: page)
+        case "action-adventure":
+            return .discoverMovies(category: .actionAdventure, page: page)
+        case "family-night":
+            return .discoverMovies(category: .familyNight, page: page)
+        default:
+            return .popularMovies(page: page)
+        }
     }
 }
 

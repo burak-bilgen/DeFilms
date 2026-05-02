@@ -1,9 +1,9 @@
 
 import SwiftUI
 
-struct FavoriteMovieManagementModalView: View {
-    let movie: FavoriteMovie
-    let destinations: [FavoriteMovieDestination]
+struct ListedMovieManagementModalView: View {
+    let movie: ListedMovie
+    let destinations: [ListedMovieDestination]
     let moveMovie: (UUID) -> Void
     let createListAndMove: (String) async -> Bool
     let removeMovie: () -> Void
@@ -12,14 +12,14 @@ struct FavoriteMovieManagementModalView: View {
     @State private var isCreatingList = false
     @State private var listName = ""
     @State private var isRemoveConfirmationPresented = false
-    @State private var pendingDestination: FavoriteMovieDestination?
+    @State private var pendingDestination: ListedMovieDestination?
 
     private var proposedListName: String {
         listName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var body: some View {
-        FavoritesModalShell(regularMaxWidth: 390, accessibilityMaxWidth: 430) { dismissAnimated in
+        ListsModalShell(regularMaxWidth: 390, accessibilityMaxWidth: 430) { dismissAnimated in
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
                 header(dismissAnimated: dismissAnimated)
                 movieSummary
@@ -31,7 +31,7 @@ struct FavoriteMovieManagementModalView: View {
                 }
             }
             .alert(
-                Localization.string("favorites.move.title"),
+                Localization.string("lists.move.title"),
                 isPresented: Binding(
                     get: { pendingDestination != nil },
                     set: { isPresented in
@@ -41,7 +41,7 @@ struct FavoriteMovieManagementModalView: View {
                     }
                 )
             ) {
-                Button(Localization.string("favorites.move.confirm")) {
+                Button(Localization.string("lists.move.confirm")) {
                     guard let pendingDestination else { return }
                     moveMovie(pendingDestination.id)
                     dismissAnimated()
@@ -53,24 +53,24 @@ struct FavoriteMovieManagementModalView: View {
                 Text(
                     Localization.string(
                         pendingDestination?.alreadyContainsMovie == true
-                            ? "favorites.move.confirm.merge.message"
-                            : "favorites.move.confirm.message",
+                            ? "lists.move.confirm.merge.message"
+                            : "lists.move.confirm.message",
                         movie.title,
                         pendingDestination?.list.name ?? ""
                     )
                 )
             }
             .alert(
-                Localization.string("favorites.remove.movie.title"),
+                Localization.string("lists.remove.movie.title"),
                 isPresented: $isRemoveConfirmationPresented
             ) {
-                Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
+                Button(Localization.string("lists.remove.movie.confirm"), role: .destructive) {
                     removeMovie()
                     dismissAnimated()
                 }
                 Button(Localization.string("common.cancel"), role: .cancel) {}
             } message: {
-                Text(Localization.string("favorites.remove.movie.message", movie.title))
+                Text(Localization.string("lists.remove.movie.message", movie.title))
             }
         }
         .animation(AppAnimation.gentleSpring, value: isCreatingList)
@@ -79,15 +79,15 @@ struct FavoriteMovieManagementModalView: View {
     private func header(dismissAnimated: @escaping () -> Void) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                Text(Localization.string(isCreatingList ? "favorites.create.title" : "favorites.move.title"))
+                Text(Localization.string(isCreatingList ? "lists.create.title" : "lists.move.title"))
                     .font(.title3.weight(.bold))
                     .foregroundStyle(.primary)
 
                 Text(
                     Localization.string(
                         isCreatingList
-                            ? "favorites.create.subtitle.movie"
-                            : "favorites.move.message",
+                            ? "lists.create.subtitle.movie"
+                            : "lists.move.message",
                         movie.title
                     )
                 )
@@ -133,7 +133,7 @@ struct FavoriteMovieManagementModalView: View {
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(movie.releaseYear == "--" ? Localization.string("favorites.move.title") : movie.releaseYear)
+                Text(movie.releaseYear == "--" ? Localization.string("lists.move.title") : movie.releaseYear)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -146,7 +146,7 @@ struct FavoriteMovieManagementModalView: View {
     private func destinationContent(dismissAnimated: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             if destinations.isEmpty {
-                Text(Localization.string("favorites.create.subtitle.movie"))
+                Text(Localization.string("lists.create.subtitle.movie"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {
@@ -164,13 +164,13 @@ struct FavoriteMovieManagementModalView: View {
                                             .fixedSize(horizontal: false, vertical: true)
 
                                         HStack(spacing: AppSpacing.xs) {
-                                            Text(Localization.string("favorites.count", destination.list.movies.count))
+                                            Text(Localization.string("lists.count", destination.list.movies.count))
                                                 .font(.caption)
                                                 .foregroundStyle(.secondary)
                                                 .fixedSize(horizontal: false, vertical: true)
 
                                             if destination.alreadyContainsMovie {
-                                                Text(Localization.string("favorites.move.destination.contains"))
+                                                Text(Localization.string("lists.move.destination.contains"))
                                                     .font(.caption.weight(.semibold))
                                                     .foregroundStyle(.orange)
                                                     .fixedSize(horizontal: false, vertical: true)
@@ -206,7 +206,7 @@ struct FavoriteMovieManagementModalView: View {
                     }
                     isTextFieldFocused = true
                 } label: {
-                    Label(Localization.string("favorites.picker.newList"), systemImage: "plus")
+                    Label(Localization.string("lists.picker.newList"), systemImage: "plus")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
                         .frame(maxWidth: .infinity)
@@ -215,7 +215,7 @@ struct FavoriteMovieManagementModalView: View {
                 }
                 .buttonStyle(.plain)
 
-                Button(Localization.string("favorites.remove.movie.confirm"), role: .destructive) {
+                Button(Localization.string("lists.remove.movie.confirm"), role: .destructive) {
                     isRemoveConfirmationPresented = true
                 }
                 .font(.subheadline.weight(.semibold))
@@ -235,11 +235,11 @@ struct FavoriteMovieManagementModalView: View {
     private func createListContent(dismissAnimated: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text(Localization.string("favorites.picker.placeholder"))
+                Text(Localization.string("lists.picker.placeholder"))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
 
-                TextField(Localization.string("favorites.picker.placeholder"), text: $listName)
+                TextField(Localization.string("lists.picker.placeholder"), text: $listName)
                     .textFieldStyle(.plain)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
@@ -257,7 +257,7 @@ struct FavoriteMovieManagementModalView: View {
             }
 
             if proposedListName.isEmpty {
-                Text(Localization.string("favorites.form.requiredHint"))
+                Text(Localization.string("lists.form.requiredHint"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -280,7 +280,7 @@ struct FavoriteMovieManagementModalView: View {
                         await submitNewList(dismissAnimated: dismissAnimated)
                     }
                 } label: {
-                    Text(Localization.string("favorites.action.create"))
+                    Text(Localization.string("lists.action.create"))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryProminentButtonStyle())

@@ -5,7 +5,8 @@ DeFilms is a SwiftUI movie discovery app built with the TMDB API. It was develop
 
 The app is organized around three tabs:
 - Movies
-- Favorites
+- AI Picks
+- Lists
 - Settings
 
 ## What’s Included
@@ -14,10 +15,17 @@ The app is organized around three tabs:
 - Search with validation and recent search history
 - Filter and sort controls for year, rating, genre, and ordering
 - Rich detail pages with trailer, cast, watch providers, gallery, and similar titles
-- Multiple browse sections such as trending, popular, now playing, upcoming, and top rated
+- Multiple browse sections such as trending, now playing, popular, top rated, hidden gems, family night, action/adventure, upcoming, and more
+- Per-section horizontal pagination so browse rows keep loading as users scroll
 
-### Favorites
-- Multiple custom favorite lists instead of a single flat “saved” bucket
+### AI Picks
+- Apple Foundation Models integration for private on-device movie recommendations on supported iPhones
+- Mood-based prompts such as “tense but not too heavy”
+- Recommendations use saved lists, watchlist state, ratings, platform preferences, and current TMDB candidates
+- Graceful fallback when Apple Intelligence is unavailable, disabled, or still preparing the on-device model
+
+### Lists
+- Multiple custom movie lists instead of a single flat “saved” bucket
 - Create, rename, delete, move, and remove flows
 - Confirmation steps for destructive actions
 - Movie management flows that support both moving and removing without forcing unnecessary list creation
@@ -26,6 +34,7 @@ The app is organized around three tabs:
 - Light / dark theme selection
 - English, Turkish, and Arabic localization
 - RTL-aware layout handling for Arabic
+- Streaming platform preferences that prioritize matching providers on movie detail pages
 - Local sign up, sign in, sign out, password change, and account deletion flows
 - App version display, privacy/data details, and TMDB attribution
 
@@ -33,8 +42,9 @@ The app is organized around three tabs:
 
 Some choices were intentional because they make the app feel more complete than a typical study-case implementation:
 
-- Favorites are list-based. People usually think in collections like “Watch This Weekend” or “Sci-Fi”, not in a single generic saved pool.
+- Lists are list-based. People usually think in collections like “Watch This Weekend” or “Sci-Fi”, not in a single generic saved pool.
 - Search history is stored locally and kept small on purpose, so it stays useful instead of becoming noise.
+- Apple Intelligence features are treated as an enhancement, not a hard dependency. The app still works normally on unsupported devices.
 - Destructive or structural actions use confirmation where it matters, but not everywhere, to keep the app from feeling heavy.
 - Localization was treated as a real product concern. Arabic support includes layout-direction handling, not just translated strings.
 - Connectivity is checked against the same backend the app actually uses, so the “offline” experience reflects the real product path instead of a generic internet probe.
@@ -49,7 +59,7 @@ The project follows a feature-oriented MVVM structure with protocol-driven depen
 - `Core`
   Shared infrastructure such as networking, storage, localization, settings, logging, and design primitives
 - `Features`
-  Vertical slices for Movies, Favorites, Settings, Auth, and Onboarding
+  Vertical slices for Movies, Lists, Settings, Auth, and Onboarding
 - `DeFilmsTests`
   Unit tests grouped by feature and core area
 - `DeFilmsUITests`
@@ -61,7 +71,7 @@ The project follows a feature-oriented MVVM structure with protocol-driven depen
 - Repository abstraction for persistence
 - Protocol-based dependency injection
 - Factory/composition root for object creation
-- Store-style state coordination for favorites
+- Store-style state coordination for lists
 
 This structure keeps screen code reasonably light while avoiding the usual case-study problem of mixing networking, persistence, and navigation directly into views.
 
@@ -74,13 +84,16 @@ This structure keeps screen code reasonably light while avoiding the usual case-
 - Core Data
 - Keychain
 - CryptoKit
+- Foundation Models
 - XCTest / XCUITest
 
 ## Notable Implementation Details
 
-- Navigation flows are coordinator-backed across app, movies, favorites, and settings.
-- Favorites and recent searches are persisted locally and include defensive migration handling.
+- Navigation flows are coordinator-backed across app, movies, lists, and settings.
+- Lists and recent searches are persisted locally with current Core Data entities.
 - Search and pagination flows protect against stale async responses overriding newer state.
+- Browse pagination is section-scoped, so one horizontal row can continue loading without blocking the rest of the home screen.
+- AI picks are generated from a constrained candidate set; model output is filtered back to known TMDB movie IDs.
 - Poster loading retries cleanly after connectivity is restored.
 - Auth fields were tuned for more stable layout behavior instead of shifting as content changes.
 - Menu and dialog behavior was adjusted to behave correctly across LTR/RTL language switches.
@@ -147,8 +160,20 @@ It is not a full accessibility audit, but it goes beyond defaults.
 ## Known Limitations
 - Authentication is local-only and not backed by a real server
 - There is no offline browsing mode; the app depends on live TMDB content
+- Apple Intelligence recommendations require a supported iPhone, iOS 26+, and Apple Intelligence enabled
 - Snapshot-style visual workflows still benefit from environment-specific setup on a fresh machine
 - Some UI composition files are intentionally dense and could be split further if the app grows
+
+## Changelog
+
+### 2026-05-02
+- Added a dedicated AI Picks tab powered by Apple Foundation Models on supported devices.
+- Added mood-based private recommendations using lists, watchlist, ratings, platform preferences, and TMDB candidates.
+- Added onboarding copy for AI-assisted discovery.
+- Added section-level browse pagination for horizontal movie rows.
+- Expanded and reordered home browse sections with TMDB discover-based rows.
+- Improved movie detail actions with a full-width horizontal action rail and clearer scroll affordance.
+- Removed the separate search button from the search field and tightened empty search layout.
 
 ## App Store Readiness
 
@@ -210,13 +235,13 @@ Search results flow in both light and dark themes.
   <img src="./Screenshots/MovieSearch-Dark.png" width="220" alt="Movie Search Dark"/>
 </p>
 
-### Favorites
+### Lists
 ---
 Custom list management surface in light and dark variants.
 
 <p align="center">
-  <img src="./Screenshots/Favorites-Light.png" width="220" alt="Favorites Light"/>
-  <img src="./Screenshots/Favorites-Dark.png" width="220" alt="Favorites Dark"/>
+  <img src="./Screenshots/Lists-Light.png" width="220" alt="Lists Light"/>
+  <img src="./Screenshots/Lists-Dark.png" width="220" alt="Lists Dark"/>
 </p>
 
 ### Settings

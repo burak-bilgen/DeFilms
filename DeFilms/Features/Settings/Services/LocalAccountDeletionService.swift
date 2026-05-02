@@ -21,16 +21,16 @@ enum LocalAccountDeletionError: Error, LocalizedError, Equatable {
 
 final class LocalAccountDeletionService: LocalAccountDeleting {
     private let sessionManager: AuthSessionManaging
-    private let favoritesRepository: FavoritesRepositoryProtocol
+    private let listsRepository: ListsRepositoryProtocol
     private let recentSearchRepository: RecentSearchRepositoryProtocol
 
     init(
         sessionManager: AuthSessionManaging,
-        favoritesRepository: FavoritesRepositoryProtocol,
+        listsRepository: ListsRepositoryProtocol,
         recentSearchRepository: RecentSearchRepositoryProtocol
     ) {
         self.sessionManager = sessionManager
-        self.favoritesRepository = favoritesRepository
+        self.listsRepository = listsRepository
         self.recentSearchRepository = recentSearchRepository
     }
 
@@ -42,7 +42,7 @@ final class LocalAccountDeletionService: LocalAccountDeleting {
         let userIdentifiers = accountScopedIdentifiers(for: session)
 
         do {
-            try await favoritesRepository.deleteLists(for: userIdentifiers)
+            try await listsRepository.deleteLists(for: userIdentifiers)
             try await recentSearchRepository.clearRecentSearches(for: userIdentifiers)
             try sessionManager.deleteSignedInAccount()
         } catch let error as LocalizedError {

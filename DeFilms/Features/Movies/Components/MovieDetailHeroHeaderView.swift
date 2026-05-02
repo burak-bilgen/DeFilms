@@ -50,12 +50,12 @@ struct MovieDetailHeroHeaderView: View {
 
             Spacer()
 
-            VStack(spacing: 10) {
-                FavoriteMovieButton(movie: movie, style: .hero)
-
+            HStack(spacing: AppSpacing.xs) {
                 if let tmdbURL = viewModel.tmdbURL {
                     shareButton(url: tmdbURL)
                 }
+
+                MovieListButton(movie: movie, style: .hero)
             }
         }
     }
@@ -114,28 +114,26 @@ struct MovieDetailHeroHeaderView: View {
                 }
             }
 
-            statusActions
-
-            if viewModel.hasTrailer {
-                trailerButton
-                    .padding(.leading, -6)
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .layoutPriority(1)
     }
 
     private func regularHeroContent(width: CGFloat) -> some View {
-        HStack(alignment: .bottom, spacing: heroContentSpacing(for: width)) {
-            VStack(alignment: .leading, spacing: 0) {
-                posterView
-            }
-            .fixedSize()
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            HStack(alignment: .bottom, spacing: heroContentSpacing(for: width)) {
+                VStack(alignment: .leading, spacing: 0) {
+                    posterView
+                }
+                .fixedSize()
 
-            VStack(alignment: .leading, spacing: 0) {
-                titleBlock(width: width)
+                VStack(alignment: .leading, spacing: 0) {
+                    titleBlock(width: width)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            actionStrip
         }
         .padding(.horizontal, AppSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -145,6 +143,7 @@ struct MovieDetailHeroHeaderView: View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             posterView
             titleBlock(width: width)
+            actionStrip
         }
     }
 
@@ -191,45 +190,70 @@ struct MovieDetailHeroHeaderView: View {
         }
     }
 
+    private var actionStrip: some View {
+        let status = movieStatusStore.status(for: viewModel.movie)
+
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: AppSpacing.sm) {
+                compactActions(status: status)
+
+                Spacer(minLength: AppSpacing.xs)
+
+                if viewModel.hasTrailer {
+                    trailerButton
+                }
+            }
+
+            VStack(alignment: .trailing, spacing: AppSpacing.sm) {
+                compactActions(status: status)
+
+                if viewModel.hasTrailer {
+                    trailerButton
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .bottomLeading)
+    }
+
+    private func compactActions(status: UserMovieStatus) -> some View {
+        HStack(spacing: AppSpacing.xs) {
+            watchlistButton(isSelected: status.isWatchlisted)
+            watchedButton(isSelected: status.isWatched)
+            ratingMenu(rating: status.rating)
+            reminderButton
+        }
+        .padding(AppSpacing.xxs)
+        .background(Color.black.opacity(0.24))
+        .clipShape(Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.white.opacity(0.16), lineWidth: 1)
+        )
+    }
+
     private var trailerButton: some View {
         Button {
             viewModel.presentTrailer()
         } label: {
-            detailActionButtonLabel(
-                title: Localization.string("movies.detail.trailer.watch"),
-                systemImage: "play.rectangle.fill"
-            )
+            Image(systemName: "play.fill")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.black)
+                .frame(width: 42, height: 42)
+                .background(Circle().fill(.white))
+                .overlay(Circle().stroke(Color.black.opacity(0.08), lineWidth: 1))
+                .shadow(color: Color.black.opacity(0.22), radius: 12, x: 0, y: 7)
         }
         .buttonStyle(.plain)
-    }
-
-    private var statusActions: some View {
-        let status = movieStatusStore.status(for: viewModel.movie)
-
-        return ViewThatFits(in: .horizontal) {
-            HStack(spacing: AppSpacing.xs) {
-                watchlistButton(isSelected: status.isWatchlisted)
-                watchedButton(isSelected: status.isWatched)
-                ratingMenu(rating: status.rating)
-                reminderButton
-            }
-
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                watchlistButton(isSelected: status.isWatchlisted)
-                watchedButton(isSelected: status.isWatched)
-                ratingMenu(rating: status.rating)
-                reminderButton
-            }
-        }
+        .accessibilityLabel(Localization.string("movies.detail.trailer.watch"))
     }
 
     private func watchlistButton(isSelected: Bool) -> some View {
         Button {
             movieStatusStore.toggleWatchlist(for: viewModel.movie)
         } label: {
-            detailActionButtonLabel(
+            compactActionLabel(
                 title: Localization.string(isSelected ? "movies.status.watchlist.remove" : "movies.status.watchlist.add"),
-                systemImage: isSelected ? "clock.fill" : "clock"
+                systemImage: isSelected ? "bookmark.fill" : "bookmark"
             )
         }
         .buttonStyle(.plain)
@@ -249,7 +273,7 @@ struct MovieDetailHeroHeaderView: View {
                 }
             }
         } label: {
-            detailActionButtonLabel(
+            compactActionLabel(
                 title: Localization.string("movies.reminder.action"),
                 systemImage: "bell"
             )
@@ -261,7 +285,7 @@ struct MovieDetailHeroHeaderView: View {
         Button {
             movieStatusStore.toggleWatched(for: viewModel.movie)
         } label: {
-            detailActionButtonLabel(
+            compactActionLabel(
                 title: Localization.string(isSelected ? "movies.status.watched" : "movies.status.markWatched"),
                 systemImage: isSelected ? "checkmark.circle.fill" : "checkmark.circle"
             )
@@ -285,7 +309,7 @@ struct MovieDetailHeroHeaderView: View {
                 }
             }
         } label: {
-            detailActionButtonLabel(
+            compactActionLabel(
                 title: rating.map { Localization.string("movies.status.rating.short", $0) } ?? Localization.string("movies.status.rating.add"),
                 systemImage: rating == nil ? "star" : "star.fill"
             )
@@ -300,28 +324,22 @@ struct MovieDetailHeroHeaderView: View {
         .buttonStyle(.plain)
     }
 
-    @ViewBuilder
-    private func detailActionButtonLabel(title: String, systemImage: String?) -> some View {
-        HStack(spacing: AppSpacing.xs) {
-            if let systemImage {
-                Image(systemName: systemImage)
-                    .font(.subheadline.weight(.bold))
-            }
+    private func compactActionLabel(title: String, systemImage: String) -> some View {
+        VStack(spacing: 3) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .bold))
+                .frame(height: 16)
 
             Text(title)
-                .font(.system(size: 13, weight: .bold, design: .rounded))
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .allowsTightening(true)
         }
         .foregroundStyle(.white)
-        .padding(.horizontal, AppSpacing.md + 2)
-        .frame(minHeight: AppDimension.controlHeight)
-        .background(Color.black.opacity(0.28))
+        .frame(width: 52, height: 42)
+        .contentShape(Capsule())
         .clipShape(Capsule())
-        .overlay(
-            Capsule()
-                .stroke(Color.white.opacity(0.18), lineWidth: 1)
-        )
     }
 
     private func topBarButton(systemImage: String, action: @escaping () -> Void) -> some View {

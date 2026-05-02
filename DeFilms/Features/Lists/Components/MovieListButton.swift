@@ -1,7 +1,7 @@
 
 import SwiftUI
 
-struct FavoriteMovieButton: View {
+struct MovieListButton: View {
     enum Style {
         case card
         case hero
@@ -10,7 +10,7 @@ struct FavoriteMovieButton: View {
     let movie: Movie
     let style: Style
 
-    @EnvironmentObject private var favoritesStore: FavoritesStore
+    @EnvironmentObject private var listsStore: ListsStore
 
     @State private var isPickerPresented = false
 
@@ -21,14 +21,14 @@ struct FavoriteMovieButton: View {
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
         .fullScreenCover(isPresented: $isPickerPresented) {
-            FavoriteListPickerModalView(movie: movie)
-                .environmentObject(favoritesStore)
+            MovieListPickerModalView(movie: movie)
+                .environmentObject(listsStore)
         }
     }
 
     @ViewBuilder
     private var iconLabel: some View {
-        let isSaved = favoritesStore.isMovieInAnyList(movieID: movie.id)
+        let isSaved = listsStore.isMovieInAnyList(movieID: movie.id)
         let selectedBackground = Color(red: 0.96, green: 0.74, blue: 0.22)
 
         switch style {
@@ -68,11 +68,11 @@ struct FavoriteMovieButton: View {
     }
 
     private var accessibilityLabel: String {
-        if favoritesStore.isMovieInAnyList(movieID: movie.id) {
-            return Localization.string("favorites.manage.movie")
+        if listsStore.isMovieInAnyList(movieID: movie.id) {
+            return Localization.string("lists.manage.movie")
         }
 
-        return Localization.string("favorites.action.add")
+        return Localization.string("lists.action.add")
     }
 
     private func handleTap() {

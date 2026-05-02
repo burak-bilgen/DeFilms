@@ -70,7 +70,7 @@ struct MovieCardNavigationLink: View {
                 contentSpacing: cardStyle.contentSpacing,
                 metadataSpacing: cardStyle.metadataSpacing,
                 posterCornerRadius: cardStyle.posterCornerRadius,
-                showsFavoriteButton: false
+                showsListButton: false
             )
             .frame(width: cardStyle.width)
         }

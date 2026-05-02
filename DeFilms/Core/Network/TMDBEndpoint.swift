@@ -7,12 +7,20 @@ enum TMDBEndpoint: Endpoint {
         case week
     }
 
+    enum MovieDiscoverCategory {
+        case criticallyAcclaimed
+        case hiddenGems
+        case actionAdventure
+        case familyNight
+    }
+
     case searchMovie(query: String, page: Int)
     case popularMovies(page: Int)
     case upcomingMovies(page: Int)
     case nowPlayingMovies(page: Int)
     case topRatedMovies(page: Int)
     case trendingMovies(window: TrendingWindow, page: Int)
+    case discoverMovies(category: MovieDiscoverCategory, page: Int)
     case movieDetails(movieID: Int)
     case movieVideos(movieID: Int, languageCode: String?)
     case movieImages(movieID: Int)
@@ -35,6 +43,8 @@ enum TMDBEndpoint: Endpoint {
             return "/movie/top_rated"
         case let .trendingMovies(window, _):
             return "/trending/movie/\(window.rawValue)"
+        case .discoverMovies:
+            return "/discover/movie"
         case let .movieDetails(movieID):
             return "/movie/\(movieID)"
         case let .movieVideos(movieID, _):
@@ -96,6 +106,8 @@ enum TMDBEndpoint: Endpoint {
             return [
                 URLQueryItem(name: "page", value: String(page))
             ]
+        case let .discoverMovies(category, page):
+            return discoverQueryItems(for: category, page: page)
         case .movieDetails:
             return []
         case let .movieVideos(_, languageCode):
@@ -121,5 +133,33 @@ enum TMDBEndpoint: Endpoint {
         case .genreList:
             return []
         }
+    }
+
+    private func discoverQueryItems(for category: MovieDiscoverCategory, page: Int) -> [URLQueryItem] {
+        var items = [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "include_adult", value: "false"),
+            URLQueryItem(name: "include_video", value: "false")
+        ]
+
+        switch category {
+        case .criticallyAcclaimed:
+            items.append(URLQueryItem(name: "sort_by", value: "vote_average.desc"))
+            items.append(URLQueryItem(name: "vote_count.gte", value: "1200"))
+        case .hiddenGems:
+            items.append(URLQueryItem(name: "sort_by", value: "vote_average.desc"))
+            items.append(URLQueryItem(name: "vote_count.gte", value: "250"))
+            items.append(URLQueryItem(name: "vote_count.lte", value: "2500"))
+        case .actionAdventure:
+            items.append(URLQueryItem(name: "sort_by", value: "popularity.desc"))
+            items.append(URLQueryItem(name: "with_genres", value: "28|12"))
+            items.append(URLQueryItem(name: "vote_count.gte", value: "300"))
+        case .familyNight:
+            items.append(URLQueryItem(name: "sort_by", value: "popularity.desc"))
+            items.append(URLQueryItem(name: "with_genres", value: "10751|16"))
+            items.append(URLQueryItem(name: "vote_count.gte", value: "150"))
+        }
+
+        return items
     }
 }

@@ -4,7 +4,7 @@ import SwiftUI
 
 struct AppEntryView: View {
     let container: AppContainer
-    let favoritesStore: FavoritesStore
+    let listsStore: ListsStore
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var sessionManager: AuthSessionManager
     @EnvironmentObject private var toastCenter: ToastCenter
@@ -31,7 +31,7 @@ struct AppEntryView: View {
         ZStack {
             MainTabView(
                 container: container,
-                favoritesStore: favoritesStore
+                listsStore: listsStore
             )
             .id(preferences.interfaceLayoutRefreshToken)
             .blur(radius: isInteractionBlocked ? 6 : 0)
@@ -93,8 +93,8 @@ struct AppEntryView: View {
             .relayToast(from: sessionManager.$toastItem.eraseToAnyPublisher()) {
                 sessionManager.clearToast()
             }
-            .relayToast(from: favoritesStore.$toastItem.eraseToAnyPublisher()) {
-                favoritesStore.clearToast()
+            .relayToast(from: listsStore.$toastItem.eraseToAnyPublisher()) {
+                listsStore.clearToast()
             }
             .onChange(of: preferences.selectedTheme.rawValue) { _ in
                 toastCenter.clear()

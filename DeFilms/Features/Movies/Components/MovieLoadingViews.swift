@@ -63,7 +63,7 @@ struct MovieCardSkeletonView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             SkeletonBlock(cornerRadius: AppCornerRadius.md)
-                .aspectRatio(2.0 / 3.0, contentMode: .fit)
+                .aspectRatio(AppDimension.posterAspectRatio, contentMode: .fit)
 
             VStack(alignment: .leading, spacing: AppSpacing.xs - 2) {
                 SkeletonBlock(cornerRadius: 6)
