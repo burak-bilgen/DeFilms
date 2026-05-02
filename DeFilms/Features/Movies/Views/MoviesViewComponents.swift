@@ -100,38 +100,15 @@ struct MoviesSearchControlsRow: View {
     @State private var isSortOptionsPresented = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            if shouldShowFilterControl {
-                Button(action: openFilters) {
-                    SearchControlBubble(
-                        title: Localization.string("movies.filter.title"),
-                        systemImage: "line.3.horizontal.decrease.circle"
-                    )
-                }
-                .buttonStyle(PressableScaleButtonStyle())
-            }
+        ViewThatFits(in: .horizontal) {
+            controls
 
-            if shouldShowSortControl {
-                Button {
-                    isSortOptionsPresented = true
-                } label: {
-                    SearchControlBubble(
-                        title: Localization.string("movies.sort.title"),
-                        systemImage: "arrow.up.arrow.down.circle"
-                    )
-                }
-                .buttonStyle(PressableScaleButtonStyle())
+            ScrollView(.horizontal, showsIndicators: false) {
+                controls
             }
-
-            if shouldShowResetControls {
-                Button(action: resetFiltersAndSort) {
-                    SearchControlIconBubble(systemImage: "arrow.counterclockwise")
-                }
-                .buttonStyle(PressableScaleButtonStyle())
-                .accessibilityLabel(Localization.string("movies.filter.reset"))
-                .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.92)))
-            }
+            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, AppSpacing.sm)
         .padding(.vertical, AppSpacing.xs)
         .background(AppPalette.cardBackground.opacity(0.8))
@@ -164,6 +141,42 @@ struct MoviesSearchControlsRow: View {
             Button(Localization.string("common.cancel"), role: .cancel) {}
         }
     }
+
+    @ViewBuilder
+    private var controls: some View {
+        HStack(spacing: 10) {
+            if shouldShowFilterControl {
+                Button(action: openFilters) {
+                    SearchControlBubble(
+                        title: Localization.string("movies.filter.title"),
+                        systemImage: "line.3.horizontal.decrease.circle"
+                    )
+                }
+                .buttonStyle(PressableScaleButtonStyle())
+            }
+
+            if shouldShowSortControl {
+                Button {
+                    isSortOptionsPresented = true
+                } label: {
+                    SearchControlBubble(
+                        title: Localization.string("movies.sort.title"),
+                        systemImage: "arrow.up.arrow.down.circle"
+                    )
+                }
+                .buttonStyle(PressableScaleButtonStyle())
+            }
+
+            if shouldShowResetControls {
+                Button(action: resetFiltersAndSort) {
+                    SearchControlIconBubble(systemImage: "arrow.counterclockwise")
+                }
+                .buttonStyle(PressableScaleButtonStyle())
+                .accessibilityLabel(Localization.string("movies.filter.reset"))
+                .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .scale(scale: 0.92)))
+            }
+        }
+    }
 }
 
 private struct SearchControlBubble: View {
@@ -185,6 +198,7 @@ private struct SearchControlBubble: View {
             Text(title)
                 .font(.subheadline.weight(.semibold))
                 .lineLimit(1)
+                .minimumScaleFactor(0.86)
         }
         .foregroundStyle(.primary)
         .frame(height: AppDimension.controlHeight)

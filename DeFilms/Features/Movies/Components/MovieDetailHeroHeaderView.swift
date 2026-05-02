@@ -5,28 +5,37 @@ struct MovieDetailHeroHeaderView: View {
     let movie: Movie
     @ObservedObject var viewModel: MovieDetailViewModel
     let heroHeight: CGFloat
+    let topSafeAreaInset: CGFloat
     let scrollOffset: CGFloat
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         let collapseProgress = min(max(-scrollOffset / (heroHeight * 0.55), 0), 1)
         let contentOpacity = Double(1 - (collapseProgress * 0.22))
 
-        VStack(spacing: AppSpacing.xl) {
+        ZStack(alignment: .top) {
             topBar
                 .padding(.horizontal, 30)
-                .padding(.top, 40)
-                .offset(y: collapseProgress * 8)
+                .padding(.top, topBarTopPadding)
+                .offset(y: reduceMotion ? 0 : collapseProgress * 8)
+                .zIndex(1)
 
-            Spacer()
+            VStack {
+                Spacer(minLength: 0)
 
-            heroContent
+                GeometryReader { geometry in
+                    heroContent(width: geometry.size.width)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                }
+                .frame(height: heroContentHeight)
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.bottom, AppSpacing.xxl)
-                .offset(y: -38 - (collapseProgress * 10))
-                .scaleEffect(1 - (collapseProgress * 0.06), anchor: .bottomLeading)
-                .opacity(contentOpacity)
+            }
+            .offset(y: reduceMotion ? -30 : -30 - (collapseProgress * 10))
+            .scaleEffect(reduceMotion ? 1 : 1 - (collapseProgress * 0.06), anchor: .bottomLeading)
+            .opacity(contentOpacity)
         }
         .frame(height: heroHeight)
     }
@@ -49,12 +58,12 @@ struct MovieDetailHeroHeaderView: View {
         }
     }
 
-    private var heroContent: some View {
+    private func heroContent(width: CGFloat) -> some View {
         Group {
-            if shouldUseCompactLayout {
-                compactHeroContent
+            if shouldUseCompactLayout(for: width) {
+                compactHeroContent(width: width)
             } else {
-                regularHeroContent
+                regularHeroContent(width: width)
             }
         }
     }
@@ -70,11 +79,14 @@ struct MovieDetailHeroHeaderView: View {
         .accessibilityHidden(true)
     }
 
-    private var titleBlock: some View {
+    private func titleBlock(width: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text(viewModel.title)
-                .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 26 : 30, weight: .heavy, design: .rounded))
+                .font(.system(size: titleFontSize(for: width), weight: .heavy, design: .rounded))
                 .foregroundStyle(.white)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? 4 : 3)
+                .minimumScaleFactor(0.84)
+                .allowsTightening(true)
                 .fixedSize(horizontal: false, vertical: true)
 
             ViewThatFits(in: .vertical) {
@@ -109,15 +121,15 @@ struct MovieDetailHeroHeaderView: View {
         .layoutPriority(1)
     }
 
-    private var regularHeroContent: some View {
-        HStack(alignment: .bottom, spacing: AppSpacing.lg) {
+    private func regularHeroContent(width: CGFloat) -> some View {
+        HStack(alignment: .bottom, spacing: heroContentSpacing(for: width)) {
             VStack(alignment: .leading, spacing: 0) {
                 posterView
             }
             .fixedSize()
 
             VStack(alignment: .leading, spacing: 0) {
-                titleBlock
+                titleBlock(width: width)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -125,15 +137,44 @@ struct MovieDetailHeroHeaderView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var compactHeroContent: some View {
+    private func compactHeroContent(width: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             posterView
-            titleBlock
+            titleBlock(width: width)
         }
     }
 
-    private var shouldUseCompactLayout: Bool {
-        dynamicTypeSize.isAccessibilitySize
+    private var topBarTopPadding: CGFloat {
+        max(topSafeAreaInset + 8, 34)
+    }
+
+    private var heroContentHeight: CGFloat {
+        max(heroHeight - topBarTopPadding - 54, 260)
+    }
+
+    private func shouldUseCompactLayout(for width: CGFloat) -> Bool {
+        width < 340 || dynamicTypeSize.isAccessibilitySize
+    }
+
+    private func titleFontSize(for width: CGFloat) -> CGFloat {
+        guard !dynamicTypeSize.isAccessibilitySize else { return width < 360 ? 24 : 26 }
+
+        switch (viewModel.title.count, width) {
+        case (28..., ..<380):
+            return 22
+        case (22..., ..<380):
+            return 24
+        case (28..., _):
+            return 26
+        case (22..., _):
+            return 28
+        default:
+            return width < 360 ? 27 : 30
+        }
+    }
+
+    private func heroContentSpacing(for width: CGFloat) -> CGFloat {
+        width < 380 || viewModel.title.count >= 22 ? AppSpacing.md : AppSpacing.lg
     }
 
     private var heroFacts: some View {

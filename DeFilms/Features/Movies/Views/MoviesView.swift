@@ -28,28 +28,8 @@ struct MoviesView: View {
         viewModel.sortOption != .relevance
     }
 
-    private var searchResultCount: Int {
-        viewModel.filteredSearchResults.count
-    }
-
-    private var shouldShowFilterControl: Bool {
-        hasActiveFilters || searchResultCount > 0
-    }
-
-    private var shouldShowSortControl: Bool {
-        hasActiveSorting || searchResultCount > 1
-    }
-
     private var shouldShowResetControls: Bool {
         hasActiveFilters || hasActiveSorting
-    }
-
-    private var shouldShowSearchSummary: Bool {
-        !viewModel.shouldShowBrowseContent && (searchResultCount > 0 || hasActiveFilters || hasActiveSorting)
-    }
-
-    private var searchSummaryTitle: String {
-        Localization.string("movies.results.count", searchResultCount)
     }
 
     private var searchSummaryBadgeText: String {
@@ -62,11 +42,14 @@ struct MoviesView: View {
         hasActiveFilters || hasActiveSorting ? "slider.horizontal.3" : "sparkles"
     }
 
-    private var displayedSearchMovies: [Movie] {
-        viewModel.filteredSearchResults
-    }
-
     var body: some View {
+        let displayedSearchMovies = viewModel.filteredSearchResults
+        let searchResultCount = displayedSearchMovies.count
+        let shouldShowFilterControl = hasActiveFilters || searchResultCount > 0
+        let shouldShowSortControl = hasActiveSorting || searchResultCount > 1
+        let shouldShowSearchSummary = !viewModel.shouldShowBrowseContent &&
+            (searchResultCount > 0 || hasActiveFilters || hasActiveSorting)
+
         VStack(spacing: 0) {
             MoviesHeaderBar(openFavorites: openFavorites)
 
@@ -74,7 +57,7 @@ struct MoviesView: View {
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
                     if shouldShowSearchSummary {
                         MoviesSearchSummaryCard(
-                            title: searchSummaryTitle,
+                            title: Localization.string("movies.results.count", searchResultCount),
                             subtitle: summarySubtitle,
                             badgeText: searchSummaryBadgeText,
                             badgeSystemImage: searchSummaryBadgeSystemImage

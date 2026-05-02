@@ -147,34 +147,35 @@ private struct FavoriteMovieGridItem: View {
     let manageMovie: () -> Void
 
     var body: some View {
-        Button(action: openMovie) {
-            MovieCardView(
-                movie: movie.asMovie,
-                titleFont: .footnote,
-                contentSpacing: AppSpacing.xs,
-                metadataSpacing: 2,
-                posterCornerRadius: 14,
-                showsFavoriteButton: false
-            )
-            .padding(.horizontal, 3)
-            .overlay(alignment: .topTrailing) {
-                Button(action: manageMovie) {
-                    Image(systemName: "ellipsis")
-                        .font(.footnote.weight(.bold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 32, height: 32)
-                        .background(AppPalette.elevatedBackground)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(AppPalette.border, lineWidth: 1))
-                        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
-                        .padding(.top, 10)
-                        .padding(.trailing, 12)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Localization.string("favorites.manage.movie"))
+        ZStack(alignment: .topTrailing) {
+            Button(action: openMovie) {
+                MovieCardView(
+                    movie: movie.asMovie,
+                    titleFont: .footnote,
+                    contentSpacing: AppSpacing.xs,
+                    metadataSpacing: 2,
+                    posterCornerRadius: 14,
+                    showsFavoriteButton: false
+                )
+                .padding(.horizontal, 3)
             }
+            .buttonStyle(.plain)
+
+            Button(action: manageMovie) {
+                Image(systemName: "ellipsis")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 32, height: 32)
+                    .background(AppPalette.elevatedBackground)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(AppPalette.border, lineWidth: 1))
+                    .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
+                    .padding(.top, 10)
+                    .padding(.trailing, 12)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Localization.string("favorites.manage.movie"))
         }
-        .buttonStyle(.plain)
     }
 }
 

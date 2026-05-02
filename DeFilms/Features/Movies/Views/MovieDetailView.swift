@@ -3,11 +3,10 @@ import Combine
 import SwiftUI
 
 struct MovieDetailView: View {
-    private let heroHeight: CGFloat = 420
-
     @StateObject private var viewModel: MovieDetailViewModel
     @EnvironmentObject private var preferences: AppPreferences
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var scrollOffset: CGFloat = 0
     @State private var isContentVisible = false
 
@@ -20,58 +19,12 @@ struct MovieDetailView: View {
             if viewModel.isLoading && viewModel.detail == nil {
                 MovieDetailSkeletonView()
             } else {
-                ZStack(alignment: .top) {
-                    MovieDetailBackdropView(
-                        imageURL: viewModel.heroPosterURL,
-                        height: heroHeight,
-                        scrollOffset: scrollOffset
+                GeometryReader { geometry in
+                    detailContent(
+                        heroHeight: heroHeight(for: geometry.size),
+                        topSafeAreaInset: geometry.safeAreaInsets.top
                     )
-
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 20) {
-                            scrollOffsetReader
-
-                            MovieDetailHeroHeaderView(
-                                movie: viewModel.movie,
-                                viewModel: viewModel,
-                                heroHeight: heroHeight,
-                                scrollOffset: scrollOffset
-                            )
-
-                            MovieDetailContentCardView(viewModel: viewModel)
-                                .padding(.horizontal, 18)
-                                .opacity(isContentVisible ? 1 : 0)
-                                .offset(y: isContentVisible ? 0 : 24)
-
-                            if hasSupplementarySections {
-                                MovieDetailSupplementarySectionsView(
-                                    directors: viewModel.directors,
-                                    cast: viewModel.cast,
-                                    streamingPlatforms: viewModel.streamingPlatforms,
-                                    similarMovies: viewModel.similarMovies
-                                )
-                                .opacity(isContentVisible ? 1 : 0)
-                                .offset(y: isContentVisible ? 0 : 32)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.bottom, 30)
-                    }
-                    .coordinateSpace(name: "movieDetailScroll")
                 }
-                .background(
-                    LinearGradient(
-                        colors: [
-                            topBackgroundColor,
-                            middleBackgroundColor,
-                            bottomBackgroundColor
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .ignoresSafeArea(edges: .top)
-                .onPreferenceChange(MovieDetailScrollOffsetKey.self) { scrollOffset = $0 }
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -87,7 +40,7 @@ struct MovieDetailView: View {
                 return
             }
 
-            withAnimation(AppAnimation.emphasizedSpring) {
+            withAnimation(reduceMotion ? .easeInOut(duration: 0.12) : AppAnimation.emphasizedSpring) {
                 isContentVisible = true
             }
         }
@@ -116,6 +69,67 @@ struct MovieDetailView: View {
                 )
         }
         .frame(height: 0)
+    }
+
+    private func detailContent(heroHeight: CGFloat, topSafeAreaInset: CGFloat) -> some View {
+        ZStack(alignment: .top) {
+            MovieDetailBackdropView(
+                imageURL: viewModel.heroPosterURL,
+                height: heroHeight,
+                scrollOffset: scrollOffset
+            )
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    scrollOffsetReader
+
+                    MovieDetailHeroHeaderView(
+                        movie: viewModel.movie,
+                        viewModel: viewModel,
+                        heroHeight: heroHeight,
+                        topSafeAreaInset: topSafeAreaInset,
+                        scrollOffset: scrollOffset
+                    )
+
+                    MovieDetailContentCardView(viewModel: viewModel)
+                        .padding(.horizontal, 18)
+                        .opacity(isContentVisible ? 1 : 0)
+                        .offset(y: reduceMotion || isContentVisible ? 0 : 24)
+
+                    if hasSupplementarySections {
+                        MovieDetailSupplementarySectionsView(
+                            directors: viewModel.directors,
+                            cast: viewModel.cast,
+                            streamingPlatforms: viewModel.streamingPlatforms,
+                            similarMovies: viewModel.similarMovies
+                        )
+                        .opacity(isContentVisible ? 1 : 0)
+                        .offset(y: reduceMotion || isContentVisible ? 0 : 32)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 30)
+            }
+            .coordinateSpace(name: "movieDetailScroll")
+        }
+        .background(
+            LinearGradient(
+                colors: [
+                    topBackgroundColor,
+                    middleBackgroundColor,
+                    bottomBackgroundColor
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .ignoresSafeArea(edges: .top)
+        .onPreferenceChange(MovieDetailScrollOffsetKey.self) { scrollOffset = $0 }
+    }
+
+    private func heroHeight(for size: CGSize) -> CGFloat {
+        let proportionalHeight = size.height * 0.54
+        return min(max(proportionalHeight, 440), 500)
     }
 
     private var topBackgroundColor: Color {

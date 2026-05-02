@@ -6,6 +6,10 @@ struct OnboardingView: View {
     let signIn: () -> Void
     let signUp: () -> Void
 
+    private let primaryTextColor = Color(red: 0.11, green: 0.10, blue: 0.09)
+    private let secondaryTextColor = Color(red: 0.20, green: 0.18, blue: 0.15)
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHeaderVisible = false
     @State private var isFeaturesVisible = false
     @State private var isActionsVisible = false
@@ -25,6 +29,13 @@ struct OnboardingView: View {
         }
         .statusBarHidden()
         .task {
+            if reduceMotion {
+                isHeaderVisible = true
+                isFeaturesVisible = true
+                isActionsVisible = true
+                return
+            }
+
             withAnimation(AppAnimation.gentleSpring) {
                 isHeaderVisible = true
             }
@@ -74,20 +85,20 @@ struct OnboardingView: View {
             Text(Localization.string("onboarding.eyebrow"))
                 .font(.footnote.weight(.bold))
                 .tracking(1.6)
-                .foregroundStyle(Color.primary.opacity(0.55))
+                .foregroundStyle(secondaryTextColor.opacity(0.7))
 
             Text(Localization.string("onboarding.title"))
                 .font(.system(size: 38, weight: .heavy, design: .rounded))
-                .foregroundStyle(Color.primary)
+                .foregroundStyle(primaryTextColor)
 
             Text(Localization.string("onboarding.subtitle"))
                 .font(.body)
-                .foregroundStyle(Color.primary.opacity(0.72))
+                .foregroundStyle(secondaryTextColor.opacity(0.82))
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, 8)
         .opacity(isHeaderVisible ? 1 : 0)
-        .offset(y: isHeaderVisible ? 0 : 18)
+        .offset(y: reduceMotion || isHeaderVisible ? 0 : 18)
     }
 
     private var featureStack: some View {
@@ -109,7 +120,7 @@ struct OnboardingView: View {
             )
         }
         .opacity(isFeaturesVisible ? 1 : 0)
-        .offset(y: isFeaturesVisible ? 0 : 24)
+        .offset(y: reduceMotion || isFeaturesVisible ? 0 : 24)
     }
 
     private var actionStack: some View {
@@ -125,7 +136,7 @@ struct OnboardingView: View {
             Button(Localization.string("onboarding.action.guest"), action: continueAsGuest)
             .buttonStyle(.plain)
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(Color.primary.opacity(0.72))
+            .foregroundStyle(secondaryTextColor.opacity(0.82))
             .padding(.top, 15)
             .accessibilityIdentifier("onboarding.continueAsGuest")
             
@@ -133,19 +144,19 @@ struct OnboardingView: View {
 
             Text(Localization.string("onboarding.footnote"))
                 .font(.footnote)
-                .foregroundStyle(Color.primary.opacity(0.35))
+                .foregroundStyle(secondaryTextColor.opacity(0.46))
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 4)
         .opacity(isActionsVisible ? 1 : 0)
-        .offset(y: isActionsVisible ? 0 : 20)
+        .offset(y: reduceMotion || isActionsVisible ? 0 : 20)
     }
 
     private func featureCard(icon: String, title: String, message: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .font(.title3.weight(.bold))
-                .foregroundStyle(Color.primary)
+                .foregroundStyle(primaryTextColor)
                 .frame(width: 22)
                 .padding(12)
                 .background(
@@ -156,11 +167,11 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(title)
                     .font(.headline)
-                    .foregroundStyle(Color.primary)
+                    .foregroundStyle(primaryTextColor)
 
                 Text(message)
                     .font(.subheadline)
-                    .foregroundStyle(Color.primary.opacity(0.7))
+                    .foregroundStyle(secondaryTextColor.opacity(0.8))
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -195,10 +206,12 @@ private struct OnboardingPrimaryButtonStyle: ButtonStyle {
 }
 
 private struct OnboardingSecondaryButtonStyle: ButtonStyle {
+    private let textColor = Color(red: 0.11, green: 0.10, blue: 0.09)
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(Color.primary)
+            .foregroundStyle(textColor)
             .frame(maxWidth: .infinity)
             .frame(height: 52)
             .background(

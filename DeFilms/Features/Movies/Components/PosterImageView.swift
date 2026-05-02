@@ -1,21 +1,29 @@
 
 import SwiftUI
+import ImageIO
 import UIKit
 
 struct PosterImageView: View {
     let url: URL?
     let cornerRadius: CGFloat
     let placeholderSystemImage: String
+    let maxPixelSize: CGFloat
 
     @State private var image: UIImage?
     @State private var isLoading: Bool
     @State private var loadedURL: URL?
     @State private var retrySeed = 0
 
-    init(url: URL?, cornerRadius: CGFloat, placeholderSystemImage: String) {
+    init(
+        url: URL?,
+        cornerRadius: CGFloat,
+        placeholderSystemImage: String,
+        maxPixelSize: CGFloat = 700
+    ) {
         self.url = url
         self.cornerRadius = cornerRadius
         self.placeholderSystemImage = placeholderSystemImage
+        self.maxPixelSize = maxPixelSize
         _isLoading = State(initialValue: false)
     }
 
@@ -43,7 +51,7 @@ struct PosterImageView: View {
     }
 
     private var taskIdentifier: String {
-        "\(url?.absoluteString ?? "nil")-\(retrySeed)"
+        "\(url?.absoluteString ?? "nil")-\(Int(maxPixelSize))-\(retrySeed)"
     }
 
     private var placeholder: some View {
@@ -71,7 +79,7 @@ struct PosterImageView: View {
             return
         }
 
-        if let cachedImage = await PosterImagePipeline.shared.cachedImage(for: url) {
+        if let cachedImage = await PosterImagePipeline.shared.cachedImage(for: url, maxPixelSize: maxPixelSize) {
             loadedURL = url
             image = cachedImage
             isLoading = false
@@ -87,7 +95,7 @@ struct PosterImageView: View {
             return
         }
 
-        guard let loadedImage = await PosterImagePipeline.shared.image(for: url) else {
+        guard let loadedImage = await PosterImagePipeline.shared.image(for: url, maxPixelSize: maxPixelSize) else {
             isLoading = false
             image = nil
             return
@@ -105,9 +113,9 @@ struct PosterImageView: View {
 actor PosterImagePipeline {
     static let shared = PosterImagePipeline()
 
-    private let cache = NSCache<NSURL, UIImage>()
+    private let cache = NSCache<NSString, UIImage>()
     private let session: URLSession
-    private var inFlightTasks: [URL: Task<UIImage?, Never>] = [:]
+    private var inFlightTasks: [String: Task<UIImage?, Never>] = [:]
 
     private init() {
         cache.countLimit = 300
@@ -120,16 +128,18 @@ actor PosterImagePipeline {
         session = URLSession(configuration: configuration)
     }
 
-    func cachedImage(for url: URL) -> UIImage? {
-        cache.object(forKey: url as NSURL)
+    func cachedImage(for url: URL, maxPixelSize: CGFloat = 700) -> UIImage? {
+        cache.object(forKey: cacheKey(for: url, maxPixelSize: maxPixelSize) as NSString)
     }
 
-    func image(for url: URL) async -> UIImage? {
-        if let cachedImage = cachedImage(for: url) {
+    func image(for url: URL, maxPixelSize: CGFloat = 700) async -> UIImage? {
+        let key = cacheKey(for: url, maxPixelSize: maxPixelSize)
+
+        if let cachedImage = cachedImage(for: url, maxPixelSize: maxPixelSize) {
             return cachedImage
         }
 
-        if let task = inFlightTasks[url] {
+        if let task = inFlightTasks[key] {
             return await task.value
         }
 
@@ -140,23 +150,24 @@ actor PosterImagePipeline {
 
             do {
                 let (data, _) = try await self.session.data(for: request)
-                guard let loadedImage = UIImage(data: data) else { return nil }
-                await self.insert(loadedImage, for: url)
+                guard let loadedImage = Self.downsampledImage(from: data, maxPixelSize: maxPixelSize) else { return nil }
+                await self.insert(loadedImage, for: key)
                 return loadedImage
             } catch {
                 return nil
             }
         }
 
-        inFlightTasks[url] = task
+        inFlightTasks[key] = task
         let image = await task.value
-        inFlightTasks[url] = nil
+        inFlightTasks[key] = nil
         return image
     }
 
     func prefetch(urls: [URL]) {
         for url in urls {
-            guard cachedImage(for: url) == nil, inFlightTasks[url] == nil else { continue }
+            let key = cacheKey(for: url, maxPixelSize: 700)
+            guard cachedImage(for: url) == nil, inFlightTasks[key] == nil else { continue }
 
             let task = Task<UIImage?, Never> {
                 var request = URLRequest(url: url)
@@ -165,29 +176,50 @@ actor PosterImagePipeline {
 
                 do {
                     let (data, _) = try await self.session.data(for: request)
-                    guard let loadedImage = UIImage(data: data) else { return nil }
-                    await self.insert(loadedImage, for: url)
+                    guard let loadedImage = Self.downsampledImage(from: data, maxPixelSize: 700) else { return nil }
+                    await self.insert(loadedImage, for: key)
                     return loadedImage
                 } catch {
                     return nil
                 }
             }
 
-            inFlightTasks[url] = task
+            inFlightTasks[key] = task
 
             Task {
                 _ = await task.value
-                await self.finishPrefetch(for: url)
+                await self.finishPrefetch(forKey: key)
             }
         }
     }
 
-    private func finishPrefetch(for url: URL) async {
-        inFlightTasks[url] = nil
+    private func finishPrefetch(forKey key: String) async {
+        inFlightTasks[key] = nil
     }
 
-    private func insert(_ image: UIImage, for url: URL) async {
-        let cost = Int(image.size.width * image.size.height * image.scale * image.scale)
-        cache.setObject(image, forKey: url as NSURL, cost: cost)
+    private func insert(_ image: UIImage, for key: String) async {
+        let pixelWidth = Int(image.size.width * image.scale)
+        let pixelHeight = Int(image.size.height * image.scale)
+        let cost = pixelWidth * pixelHeight * 4
+        cache.setObject(image, forKey: key as NSString, cost: cost)
+    }
+
+    private func cacheKey(for url: URL, maxPixelSize: CGFloat) -> String {
+        "\(url.absoluteString)#\(Int(maxPixelSize.rounded()))"
+    }
+
+    private static func downsampledImage(from data: Data, maxPixelSize: CGFloat) -> UIImage? {
+        let options = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithData(data as CFData, options) else { return nil }
+
+        let thumbnailOptions = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: max(1, Int(maxPixelSize.rounded()))
+        ] as CFDictionary
+
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, thumbnailOptions) else { return nil }
+        return UIImage(cgImage: image)
     }
 }

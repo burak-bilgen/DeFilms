@@ -14,7 +14,7 @@ struct MovieHorizontalSection: View {
                 .accessibilityAddTraits(.isHeader)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: AppSpacing.lg + 2) {
+                LazyHStack(alignment: .top, spacing: AppSpacing.lg + 2) {
                     ForEach(movies) { movie in
                         MovieCardNavigationLink(movie: movie, cardStyle: .rail) {
                             coordinator.show(.detail(movie))
