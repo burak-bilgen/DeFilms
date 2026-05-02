@@ -1,5 +1,6 @@
 <p align="left">
   <img src="./DeFilms/App/Assets.xcassets/AppLogo.imageset/logoDark@3x.png" alt="DeFilms logo" width="125" />
+  <img src="./DeFilms/App/Assets.xcassets/AppLogo.imageset/logo@3x.png" alt="DeFilms logo" width="125" />
 </p>
 DeFilms is a SwiftUI movie discovery app built with the TMDB API. It was developed as an iOS case study, but I approached it like a small product rather than a one-off demo: stable navigation, testable state, careful persistence, polished localization, and a user flow that holds together across edge cases.
 
