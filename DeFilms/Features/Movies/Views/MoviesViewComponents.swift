@@ -88,6 +88,110 @@ struct MoviesSearchSummaryCard: View {
     }
 }
 
+struct MovieDecisionCard: View {
+    let stats: UserMovieStats
+    let primaryAction: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            HStack(alignment: .top, spacing: AppSpacing.md) {
+                Image(systemName: "sparkles.tv")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 42, height: 42)
+                    .background(Color.primary.opacity(0.07))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                    Text(Localization.string("movies.decision.title"))
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+
+                    Text(decisionSubtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: AppSpacing.sm) {
+                    statChip(value: stats.watchlistCount, title: Localization.string("movies.stats.watchlist"))
+                    statChip(value: stats.watchedCount, title: Localization.string("movies.stats.watched"))
+                    if let averageRating = stats.averageRating {
+                        statChip(value: String(format: "%.1f", averageRating), title: Localization.string("movies.stats.avgRating"))
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    statChip(value: stats.watchlistCount, title: Localization.string("movies.stats.watchlist"))
+                    statChip(value: stats.watchedCount, title: Localization.string("movies.stats.watched"))
+                    if let averageRating = stats.averageRating {
+                        statChip(value: String(format: "%.1f", averageRating), title: Localization.string("movies.stats.avgRating"))
+                    }
+                }
+            }
+
+            Button(action: primaryAction) {
+                Label(Localization.string("movies.decision.action"), systemImage: "shuffle")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(PrimaryProminentButtonStyle())
+        }
+        .padding(AppSpacing.md)
+        .background(
+            LinearGradient(
+                colors: [
+                    AppPalette.cardBackground,
+                    AppPalette.cardAccentBackground
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous)
+                .stroke(AppPalette.border, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
+        .shadow(color: AppPalette.shadow.opacity(0.7), radius: 12, x: 0, y: 8)
+    }
+
+    private var decisionSubtitle: String {
+        if stats.watchlistCount > 0 {
+            return Localization.string("movies.decision.subtitle.watchlist", stats.watchlistCount)
+        }
+
+        if stats.watchedCount > 0 || stats.ratedCount > 0 {
+            return Localization.string("movies.decision.subtitle.personal")
+        }
+
+        return Localization.string("movies.decision.subtitle.empty")
+    }
+
+    private func statChip(value: Int, title: String) -> some View {
+        statChip(value: "\(value)", title: title)
+    }
+
+    private func statChip(value: String, title: String) -> some View {
+        HStack(spacing: AppSpacing.xxs) {
+            Text(value)
+                .font(.caption.weight(.bold))
+            Text(title)
+                .font(.caption)
+        }
+        .foregroundStyle(.primary)
+        .padding(.horizontal, AppSpacing.sm)
+        .frame(height: 30)
+        .background(Color.primary.opacity(0.06))
+        .clipShape(Capsule())
+    }
+}
+
 struct MoviesSearchControlsRow: View {
     let shouldShowFilterControl: Bool
     let shouldShowSortControl: Bool

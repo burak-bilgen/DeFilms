@@ -1,6 +1,7 @@
 
 import Foundation
 
+@MainActor
 final class AppContainer {
     let persistenceController: PersistenceController
     let keychainService: KeychainServicing
@@ -9,38 +10,44 @@ final class AppContainer {
     let favoritesRepository: FavoritesRepository
     let sessionManager: AuthSessionManager
     let toastCenter: ToastCenter
+    let movieStatusStore: UserMovieStatusStore
     let moviesFactory: MoviesFactory
     let favoritesFactory: FavoritesFactory
     let settingsFactory: SettingsFactory
 
     init(
-        persistenceController: PersistenceController = PersistenceController(),
+        persistenceController: PersistenceController? = nil,
         keychainService: KeychainServicing? = nil,
         networkService: NetworkServiceProtocol? = nil,
         recentSearchRepository: RecentSearchRepository? = nil,
         favoritesRepository: FavoritesRepository? = nil,
         sessionManager: AuthSessionManager? = nil,
-        toastCenter: ToastCenter = ToastCenter()
+        movieStatusStore: UserMovieStatusStore? = nil,
+        toastCenter: ToastCenter? = nil
     ) {
+        let resolvedPersistenceController = persistenceController ?? PersistenceController()
         let resolvedKeychainService = keychainService ?? Self.makeDefaultKeychainService()
         let resolvedNetworkService = networkService ?? NetworkManager()
         let resolvedRecentSearchRepository = recentSearchRepository ?? RecentSearchRepository(
-            persistenceController: persistenceController
+            persistenceController: resolvedPersistenceController
         )
         let resolvedFavoritesRepository = favoritesRepository ?? FavoritesRepository(
-            persistenceController: persistenceController
+            persistenceController: resolvedPersistenceController
         )
         let resolvedSessionManager = sessionManager ?? AuthSessionManager(
             keychainService: resolvedKeychainService
         )
+        let resolvedMovieStatusStore = movieStatusStore ?? UserMovieStatusStore()
+        let resolvedToastCenter = toastCenter ?? ToastCenter()
 
-        self.persistenceController = persistenceController
+        self.persistenceController = resolvedPersistenceController
         self.keychainService = resolvedKeychainService
         self.networkService = resolvedNetworkService
         self.recentSearchRepository = resolvedRecentSearchRepository
         self.favoritesRepository = resolvedFavoritesRepository
         self.sessionManager = resolvedSessionManager
-        self.toastCenter = toastCenter
+        self.toastCenter = resolvedToastCenter
+        self.movieStatusStore = resolvedMovieStatusStore
         self.moviesFactory = MoviesFactory(
             networkService: resolvedNetworkService,
             recentSearchRepository: resolvedRecentSearchRepository,

@@ -200,6 +200,8 @@ struct MovieDetailCarouselSection: View {
 }
 
 struct MovieDetailSupplementarySectionsView: View {
+    @EnvironmentObject private var preferences: AppPreferences
+
     let directors: [MovieCrewMember]
     let cast: [MovieCastMember]
     let streamingPlatforms: [MovieStreamingPlatform]
@@ -224,7 +226,7 @@ struct MovieDetailSupplementarySectionsView: View {
             if !streamingPlatforms.isEmpty {
                 MoviePlatformCarouselSection(
                     title: Localization.string("movies.detail.availableOn"),
-                    platforms: streamingPlatforms
+                    platforms: preferredStreamingPlatforms
                 )
             }
 
@@ -236,6 +238,21 @@ struct MovieDetailSupplementarySectionsView: View {
             }
         }
         .movieDetailSectionSurface()
+    }
+
+    private var preferredStreamingPlatforms: [MovieStreamingPlatform] {
+        guard !preferences.selectedStreamingProviders.isEmpty else { return streamingPlatforms }
+
+        return streamingPlatforms.sorted { lhs, rhs in
+            let lhsPreferred = preferences.selectedStreamingProviders.contains(lhs.name)
+            let rhsPreferred = preferences.selectedStreamingProviders.contains(rhs.name)
+
+            if lhsPreferred != rhsPreferred {
+                return lhsPreferred
+            }
+
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        }
     }
 }
 

@@ -14,6 +14,7 @@ struct FavoriteListDetailView: View {
     @State private var isRenamePresented = false
     @State private var isDeletePresented = false
     @State private var isListActionsPresented = false
+    @State private var isSharePreviewPresented = false
     @State private var moviePendingManagement: FavoriteMovie?
 
     var body: some View {
@@ -48,9 +49,11 @@ struct FavoriteListDetailView: View {
                 .navigationTitle(list.name)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    if let shareText = viewModel.shareText {
+                    if viewModel.shareText != nil {
                         ToolbarItem(placement: .topBarTrailing) {
-                            ShareLink(item: shareText) {
+                            Button {
+                                isSharePreviewPresented = true
+                            } label: {
                                 Image(systemName: "square.and.arrow.up")
                             }
                             .accessibilityLabel(Localization.string("favorites.share.button"))
@@ -138,6 +141,105 @@ struct FavoriteListDetailView: View {
                 }
             )
         }
+        .sheet(isPresented: $isSharePreviewPresented) {
+            if let list = viewModel.list, let shareText = viewModel.shareText {
+                FavoriteListSharePreview(list: list, shareText: shareText)
+            }
+        }
+    }
+}
+
+private struct FavoriteListSharePreview: View {
+    let list: FavoriteList
+    let shareText: String
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: AppSpacing.lg) {
+                    FavoriteListShareCard(list: list)
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.top, AppSpacing.lg)
+
+                    ShareLink(item: shareText) {
+                        Label(Localization.string("favorites.share.button"), systemImage: "square.and.arrow.up")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(PrimaryProminentButtonStyle())
+                    .padding(.horizontal, AppSpacing.lg)
+                }
+                .padding(.bottom, AppSpacing.xxl)
+            }
+            .background(AppPalette.screenBackground)
+            .navigationTitle(Localization.string("favorites.share.preview.title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(Localization.string("common.close")) {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct FavoriteListShareCard: View {
+    let list: FavoriteList
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.lg) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text("DeFilms")
+                    .font(.caption.weight(.bold))
+                    .tracking(1.4)
+                    .foregroundStyle(.secondary)
+
+                Text(list.name)
+                    .font(.system(size: 28, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+
+                Text(Localization.string("favorites.list.card.subtitle", list.movies.count))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: AppSpacing.sm) {
+                ForEach(Array(list.movies.prefix(6))) { movie in
+                    VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                        PosterImageView(
+                            url: movie.asMovie.posterURL,
+                            cornerRadius: 12,
+                            placeholderSystemImage: "film"
+                        )
+                        .aspectRatio(2.0 / 3.0, contentMode: .fit)
+
+                        Text(movie.title)
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(2)
+                            .foregroundStyle(.primary)
+                    }
+                }
+            }
+        }
+        .padding(AppSpacing.lg)
+        .background(
+            LinearGradient(
+                colors: [AppPalette.cardBackground, AppPalette.cardAccentBackground],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous)
+                .stroke(AppPalette.border, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous))
+        .shadow(color: AppPalette.shadow.opacity(0.8), radius: 16, x: 0, y: 10)
     }
 }
 

@@ -11,6 +11,8 @@ struct MovieDetailHeroHeaderView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var movieStatusStore: UserMovieStatusStore
+    @EnvironmentObject private var toastCenter: ToastCenter
     var body: some View {
         let collapseProgress = min(max(-scrollOffset / (heroHeight * 0.55), 0), 1)
         let contentOpacity = Double(1 - (collapseProgress * 0.22))
@@ -112,6 +114,8 @@ struct MovieDetailHeroHeaderView: View {
                 }
             }
 
+            statusActions
+
             if viewModel.hasTrailer {
                 trailerButton
                     .padding(.leading, -6)
@@ -194,6 +198,96 @@ struct MovieDetailHeroHeaderView: View {
             detailActionButtonLabel(
                 title: Localization.string("movies.detail.trailer.watch"),
                 systemImage: "play.rectangle.fill"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var statusActions: some View {
+        let status = movieStatusStore.status(for: viewModel.movie)
+
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: AppSpacing.xs) {
+                watchlistButton(isSelected: status.isWatchlisted)
+                watchedButton(isSelected: status.isWatched)
+                ratingMenu(rating: status.rating)
+                reminderButton
+            }
+
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                watchlistButton(isSelected: status.isWatchlisted)
+                watchedButton(isSelected: status.isWatched)
+                ratingMenu(rating: status.rating)
+                reminderButton
+            }
+        }
+    }
+
+    private func watchlistButton(isSelected: Bool) -> some View {
+        Button {
+            movieStatusStore.toggleWatchlist(for: viewModel.movie)
+        } label: {
+            detailActionButtonLabel(
+                title: Localization.string(isSelected ? "movies.status.watchlist.remove" : "movies.status.watchlist.add"),
+                systemImage: isSelected ? "clock.fill" : "clock"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var reminderButton: some View {
+        Button {
+            Task {
+                let result = await MovieWatchReminderScheduler.scheduleTonightReminder(for: viewModel.movie)
+                switch result {
+                case .scheduled:
+                    toastCenter.showSuccess(Localization.string("movies.reminder.scheduled"))
+                case .denied:
+                    toastCenter.showError(Localization.string("movies.reminder.denied"))
+                case .failed:
+                    toastCenter.showError(Localization.string("movies.reminder.failed"))
+                }
+            }
+        } label: {
+            detailActionButtonLabel(
+                title: Localization.string("movies.reminder.action"),
+                systemImage: "bell"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func watchedButton(isSelected: Bool) -> some View {
+        Button {
+            movieStatusStore.toggleWatched(for: viewModel.movie)
+        } label: {
+            detailActionButtonLabel(
+                title: Localization.string(isSelected ? "movies.status.watched" : "movies.status.markWatched"),
+                systemImage: isSelected ? "checkmark.circle.fill" : "checkmark.circle"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func ratingMenu(rating: Int?) -> some View {
+        Menu {
+            ForEach(1...5, id: \.self) { value in
+                Button {
+                    movieStatusStore.setRating(value, for: viewModel.movie)
+                } label: {
+                    Text(Localization.string("movies.status.rating.value", value))
+                }
+            }
+
+            if rating != nil {
+                Button(Localization.string("movies.status.rating.clear"), role: .destructive) {
+                    movieStatusStore.setRating(nil, for: viewModel.movie)
+                }
+            }
+        } label: {
+            detailActionButtonLabel(
+                title: rating.map { Localization.string("movies.status.rating.short", $0) } ?? Localization.string("movies.status.rating.add"),
+                systemImage: rating == nil ? "star" : "star.fill"
             )
         }
         .buttonStyle(.plain)

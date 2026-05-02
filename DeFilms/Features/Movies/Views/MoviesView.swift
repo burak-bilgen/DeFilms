@@ -9,6 +9,7 @@ struct MoviesView: View {
     @State private var isSearchHistoryClearConfirmationPresented = false
     @FocusState private var isSearchFocused: Bool
     @EnvironmentObject private var preferences: AppPreferences
+    @EnvironmentObject private var movieStatusStore: UserMovieStatusStore
 
     private let searchColumns = [
         GridItem(.adaptive(minimum: AppDimension.posterRailWidth, maximum: AppDimension.posterRailWidth), spacing: AppSpacing.xxxl, alignment: .top)
@@ -45,6 +46,9 @@ struct MoviesView: View {
     var body: some View {
         let displayedSearchMovies = viewModel.filteredSearchResults
         let searchResultCount = displayedSearchMovies.count
+        let browseMovies = viewModel.browseSections.flatMap(\.movies).uniquedByID()
+        let watchlistMovies = movieStatusStore.watchlistMovies
+        let recommendedMovies = movieStatusStore.recommendations(from: browseMovies)
         let shouldShowFilterControl = hasActiveFilters || searchResultCount > 0
         let shouldShowSortControl = hasActiveSorting || searchResultCount > 1
         let shouldShowSearchSummary = !viewModel.shouldShowBrowseContent &&
@@ -69,6 +73,34 @@ struct MoviesView: View {
                     searchBar
                         .padding(.horizontal)
                         .animation(.easeInOut(duration: 0.2), value: viewModel.shouldShowBrowseContent)
+
+                    if viewModel.shouldShowBrowseContent {
+                        MovieDecisionCard(
+                            stats: movieStatusStore.stats,
+                            primaryAction: {
+                                openTonightPick(
+                                    watchlistMovies: watchlistMovies,
+                                    recommendedMovies: recommendedMovies,
+                                    fallbackMovies: browseMovies
+                                )
+                            }
+                        )
+                        .padding(.horizontal)
+
+                        if !watchlistMovies.isEmpty {
+                            MovieHorizontalSection(
+                                title: Localization.string("movies.section.watchlist"),
+                                movies: Array(watchlistMovies.prefix(12))
+                            )
+                        }
+
+                        if !recommendedMovies.isEmpty {
+                            MovieHorizontalSection(
+                                title: Localization.string("movies.section.forYou"),
+                                movies: recommendedMovies
+                            )
+                        }
+                    }
 
                     if !viewModel.shouldShowBrowseContent {
                         MoviesSearchControlsRow(
@@ -205,6 +237,17 @@ struct MoviesView: View {
         Task {
             await viewModel.loadNextSearchPageIfNeeded(after: movie, in: displayedMovies)
         }
+    }
+
+    private func openTonightPick(
+        watchlistMovies: [Movie],
+        recommendedMovies: [Movie],
+        fallbackMovies: [Movie]
+    ) {
+        let candidates = [watchlistMovies, recommendedMovies, fallbackMovies]
+            .first(where: { !$0.isEmpty }) ?? []
+        guard let movie = candidates.randomElement() else { return }
+        coordinator.show(.detail(movie))
     }
 
     private func localizedBrowseTitle(_ sectionID: String) -> String {

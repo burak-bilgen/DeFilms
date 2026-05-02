@@ -11,10 +11,11 @@ struct MovieCardView: View {
     var showsFavoriteButton: Bool = true
 
     @EnvironmentObject private var favoritesStore: FavoritesStore
+    @EnvironmentObject private var movieStatusStore: UserMovieStatusStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: contentSpacing) {
-            ZStack(alignment: .topTrailing) {
+            ZStack(alignment: .top) {
                 PosterImageView(
                     url: movie.posterURL,
                     cornerRadius: posterCornerRadius,
@@ -56,10 +57,16 @@ struct MovieCardView: View {
                 )
                 .frame(maxWidth: 150)
 
-                if showsFavoriteButton {
-                    favoriteButton
-                        .padding(AppSpacing.xs)
+                HStack(alignment: .top) {
+                    statusBadge
+
+                    Spacer(minLength: 0)
+
+                    if showsFavoriteButton {
+                        favoriteButton
+                    }
                 }
+                .padding(AppSpacing.xs)
             }
             .padding(.bottom, AppSpacing.xs - 2)
 
@@ -84,5 +91,28 @@ struct MovieCardView: View {
 
     private var favoriteButton: some View {
         FavoriteMovieButton(movie: movie, style: .card)
+    }
+
+    @ViewBuilder
+    private var statusBadge: some View {
+        let status = movieStatusStore.status(for: movie)
+
+        if status.isWatched {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.white)
+                .frame(width: 28, height: 28)
+                .background(Color.green.opacity(0.9))
+                .clipShape(Circle())
+                .accessibilityLabel(Localization.string("movies.status.watched"))
+        } else if status.isWatchlisted {
+            Image(systemName: "clock.fill")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.white)
+                .frame(width: 28, height: 28)
+                .background(Color.blue.opacity(0.9))
+                .clipShape(Circle())
+                .accessibilityLabel(Localization.string("movies.status.watchlist"))
+        }
     }
 }

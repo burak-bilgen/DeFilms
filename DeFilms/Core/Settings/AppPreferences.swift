@@ -53,6 +53,23 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 }
 
+enum StreamingProviderPreference: String, CaseIterable, Identifiable {
+    case netflix = "Netflix"
+    case primeVideo = "Amazon Prime Video"
+    case disneyPlus = "Disney Plus"
+    case appleTV = "Apple TV"
+    case max = "Max"
+    case hulu = "Hulu"
+    case mubi = "MUBI"
+    case youtube = "YouTube"
+
+    var id: String { rawValue }
+
+    var localizedName: String {
+        rawValue
+    }
+}
+
 @MainActor
 final class AppPreferences: ObservableObject {
     private let defaults: UserDefaults
@@ -79,12 +96,19 @@ final class AppPreferences: ObservableObject {
         }
     }
 
+    @Published var selectedStreamingProviders: Set<String> {
+        didSet {
+            defaults.set(Array(selectedStreamingProviders).sorted(), forKey: Self.streamingProvidersKey)
+        }
+    }
+
     @Published private(set) var isApplyingLanguageChange = false
     @Published private(set) var interfaceLayoutRefreshToken = UUID()
 
     nonisolated static let themeKey = "app.theme"
     nonisolated static let languageKey = "app.language"
     nonisolated static let onboardingKey = "app.onboarding.completed"
+    nonisolated static let streamingProvidersKey = "app.streamingProviders"
 
     nonisolated static var persistedLanguage: AppLanguage {
         let languageValue = UserDefaults.standard.string(forKey: Self.languageKey)
@@ -99,6 +123,7 @@ final class AppPreferences: ObservableObject {
         selectedTheme = AppTheme(rawValue: themeValue ?? "") ?? .system
         selectedLanguage = AppLanguage(rawValue: languageValue ?? "") ?? .english
         hasCompletedOnboarding = defaults.bool(forKey: Self.onboardingKey)
+        selectedStreamingProviders = Set(defaults.stringArray(forKey: Self.streamingProvidersKey) ?? [])
         AppLayoutDirectionController.apply(selectedLanguage.layoutDirection)
         AppLogger.log("Preferences loaded", category: .app)
     }
@@ -113,6 +138,14 @@ final class AppPreferences: ObservableObject {
 
     var layoutDirection: LayoutDirection {
         selectedLanguage.layoutDirection
+    }
+
+    func toggleStreamingProvider(_ provider: StreamingProviderPreference) {
+        if selectedStreamingProviders.contains(provider.rawValue) {
+            selectedStreamingProviders.remove(provider.rawValue)
+        } else {
+            selectedStreamingProviders.insert(provider.rawValue)
+        }
     }
 
     func applyLanguage(_ language: AppLanguage) async {

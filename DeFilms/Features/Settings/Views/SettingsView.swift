@@ -25,6 +25,7 @@ struct SettingsView: View {
             }
             appearanceSection
             languageSection
+            streamingSection
             accountSection
             aboutSection
         }
@@ -97,6 +98,20 @@ struct SettingsView: View {
                 )
             }
             .accessibilityIdentifier("settings.language.row")
+        }
+    }
+
+    private var streamingSection: some View {
+        Section(Localization.string("settings.section.streaming")) {
+            NavigationLink {
+                StreamingProviderSelectionView()
+            } label: {
+                SettingsValueRow(
+                    symbol: "play.tv.fill",
+                    title: Localization.string("settings.streaming.providers"),
+                    value: Localization.string("settings.streaming.selectedCount", preferences.selectedStreamingProviders.count)
+                )
+            }
         }
     }
 

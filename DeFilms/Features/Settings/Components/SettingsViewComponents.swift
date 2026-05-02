@@ -329,3 +329,41 @@ struct LanguageSelectionView: View {
         .accessibilityValue(preferences.selectedLanguage == language ? Localization.string("common.selected") : "")
     }
 }
+
+struct StreamingProviderSelectionView: View {
+    @EnvironmentObject private var preferences: AppPreferences
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(StreamingProviderPreference.allCases) { provider in
+                    Button {
+                        preferences.toggleStreamingProvider(provider)
+                    } label: {
+                        HStack {
+                            Text(provider.localizedName)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if preferences.selectedStreamingProviders.contains(provider.rawValue) {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.primary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PressableScaleButtonStyle())
+                    .accessibilityValue(
+                        preferences.selectedStreamingProviders.contains(provider.rawValue)
+                            ? Localization.string("common.selected")
+                            : ""
+                    )
+                }
+            } footer: {
+                Text(Localization.string("settings.streaming.footer"))
+            }
+        }
+        .navigationTitle(Localization.string("settings.streaming.providers"))
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}

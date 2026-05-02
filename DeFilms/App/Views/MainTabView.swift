@@ -13,6 +13,7 @@ struct MainTabView: View {
     @StateObject private var settingsCoordinator = SettingsCoordinator()
     @StateObject private var moviesViewModel: MovieSearchViewModel
     @StateObject private var favoritesViewModel: FavoritesViewModel
+    @StateObject private var movieStatusStore: UserMovieStatusStore
 
     init(container: AppContainer, favoritesStore: FavoritesStore) {
         self.container = container
@@ -23,6 +24,7 @@ struct MainTabView: View {
                 favoritesStore: favoritesStore
             )
         )
+        _movieStatusStore = StateObject(wrappedValue: container.movieStatusStore)
     }
 
     var body: some View {
@@ -48,6 +50,7 @@ struct MainTabView: View {
         .id(preferences.interfaceLayoutRefreshToken)
         .tint(.primary)
         .animation(AppAnimation.gentleSpring, value: selection)
+        .environmentObject(movieStatusStore)
         .relayToast(from: moviesViewModel.$toastItem.eraseToAnyPublisher()) {
             moviesViewModel.clearToast()
         }
