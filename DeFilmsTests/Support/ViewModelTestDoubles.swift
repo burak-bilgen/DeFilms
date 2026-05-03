@@ -19,15 +19,25 @@ final class MockMovieCatalogService: MovieCatalogServicing {
     var browseContentError: Error?
     var genresError: Error?
     var searchHandler: (String, Int) throws -> MovieResponse
+    var keywordSearchHandler: (String, Int) throws -> MovieKeywordResponse
+    var keywordDiscoverHandler: ([Int], TMDBEndpoint.KeywordMatchMode, Int) throws -> MovieResponse
     private(set) var searchRequests: [(String, Int)] = []
+    private(set) var keywordSearchRequests: [(String, Int)] = []
+    private(set) var keywordDiscoverRequests: [([Int], TMDBEndpoint.KeywordMatchMode, Int)] = []
     private(set) var browseLoadCount = 0
     private(set) var genresLoadCount = 0
     private(set) var prefetchedMovieBatches: [[Movie]] = []
 
     init(searchHandler: @escaping (String, Int) throws -> MovieResponse = { _, _ in
         MovieResponse(page: 1, results: [], totalPages: 1)
+    }, keywordSearchHandler: @escaping (String, Int) throws -> MovieKeywordResponse = { _, _ in
+        MovieKeywordResponse(page: 1, results: [], totalPages: 1)
+    }, keywordDiscoverHandler: @escaping ([Int], TMDBEndpoint.KeywordMatchMode, Int) throws -> MovieResponse = { _, _, page in
+        MovieResponse(page: page, results: [], totalPages: 1)
     }) {
         self.searchHandler = searchHandler
+        self.keywordSearchHandler = keywordSearchHandler
+        self.keywordDiscoverHandler = keywordDiscoverHandler
     }
 
     func loadBrowseContent() async throws -> MovieBrowseContent {
@@ -43,6 +53,20 @@ final class MockMovieCatalogService: MovieCatalogServicing {
     func searchMovies(query: String, page: Int) async throws -> MovieResponse {
         searchRequests.append((query, page))
         return try searchHandler(query, page)
+    }
+
+    func searchKeywords(query: String, page: Int) async throws -> MovieKeywordResponse {
+        keywordSearchRequests.append((query, page))
+        return try keywordSearchHandler(query, page)
+    }
+
+    func discoverMovies(
+        keywordIDs: [Int],
+        matchMode: TMDBEndpoint.KeywordMatchMode,
+        page: Int
+    ) async throws -> MovieResponse {
+        keywordDiscoverRequests.append((keywordIDs, matchMode, page))
+        return try keywordDiscoverHandler(keywordIDs, matchMode, page)
     }
 
     func loadGenres() async throws -> [MovieGenre] {

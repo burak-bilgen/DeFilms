@@ -7,8 +7,14 @@ struct MovieListDetailView: View {
 
     @ObservedObject var viewModel: MovieListDetailViewModel
     private let columns = [
-        GridItem(.flexible(), spacing: 20),
-        GridItem(.flexible(), spacing: 20)
+        GridItem(
+            .adaptive(
+                minimum: AppDimension.posterRailWidth,
+                maximum: AppDimension.posterRailWidth
+            ),
+            spacing: AppSpacing.lg,
+            alignment: .top
+        )
     ]
     @State private var renameText: String = ""
     @State private var isRenamePresented = false

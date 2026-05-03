@@ -14,13 +14,29 @@ enum TMDBEndpoint: Endpoint {
         case familyNight
     }
 
+    enum KeywordMatchMode {
+        case any
+        case all
+
+        var separator: String {
+            switch self {
+            case .any:
+                return "|"
+            case .all:
+                return ","
+            }
+        }
+    }
+
     case searchMovie(query: String, page: Int)
+    case searchKeyword(query: String, page: Int)
     case popularMovies(page: Int)
     case upcomingMovies(page: Int)
     case nowPlayingMovies(page: Int)
     case topRatedMovies(page: Int)
     case trendingMovies(window: TrendingWindow, page: Int)
     case discoverMovies(category: MovieDiscoverCategory, page: Int)
+    case discoverMoviesByKeywords(keywordIDs: [Int], matchMode: KeywordMatchMode, page: Int)
     case movieDetails(movieID: Int)
     case movieVideos(movieID: Int, languageCode: String?)
     case movieImages(movieID: Int)
@@ -33,6 +49,8 @@ enum TMDBEndpoint: Endpoint {
         switch self {
         case .searchMovie:
             return "/search/movie"
+        case .searchKeyword:
+            return "/search/keyword"
         case .popularMovies:
             return "/movie/popular"
         case .upcomingMovies:
@@ -43,7 +61,7 @@ enum TMDBEndpoint: Endpoint {
             return "/movie/top_rated"
         case let .trendingMovies(window, _):
             return "/trending/movie/\(window.rawValue)"
-        case .discoverMovies:
+        case .discoverMovies, .discoverMoviesByKeywords:
             return "/discover/movie"
         case let .movieDetails(movieID):
             return "/movie/\(movieID)"
@@ -86,6 +104,11 @@ enum TMDBEndpoint: Endpoint {
                 URLQueryItem(name: "query", value: query),
                 URLQueryItem(name: "page", value: String(page))
             ]
+        case let .searchKeyword(query, page):
+            return [
+                URLQueryItem(name: "query", value: query),
+                URLQueryItem(name: "page", value: String(page))
+            ]
         case let .popularMovies(page):
             return [
                 URLQueryItem(name: "page", value: String(page))
@@ -108,6 +131,8 @@ enum TMDBEndpoint: Endpoint {
             ]
         case let .discoverMovies(category, page):
             return discoverQueryItems(for: category, page: page)
+        case let .discoverMoviesByKeywords(keywordIDs, matchMode, page):
+            return discoverQueryItems(forKeywordIDs: keywordIDs, matchMode: matchMode, page: page)
         case .movieDetails:
             return []
         case let .movieVideos(_, languageCode):
@@ -161,5 +186,23 @@ enum TMDBEndpoint: Endpoint {
         }
 
         return items
+    }
+
+    private func discoverQueryItems(
+        forKeywordIDs keywordIDs: [Int],
+        matchMode: KeywordMatchMode,
+        page: Int
+    ) -> [URLQueryItem] {
+        [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "include_adult", value: "false"),
+            URLQueryItem(name: "include_video", value: "false"),
+            URLQueryItem(name: "sort_by", value: "popularity.desc"),
+            URLQueryItem(name: "vote_count.gte", value: "20"),
+            URLQueryItem(
+                name: "with_keywords",
+                value: keywordIDs.map(String.init).joined(separator: matchMode.separator)
+            )
+        ]
     }
 }

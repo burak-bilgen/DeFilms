@@ -260,16 +260,12 @@ struct MovieDetailHeroHeaderView: View {
     }
 
     private var reminderButton: some View {
-        Button {
-            Task {
-                let result = await MovieWatchReminderScheduler.scheduleTonightReminder(for: viewModel.movie)
-                switch result {
-                case .scheduled:
-                    toastCenter.showSuccess(Localization.string("movies.reminder.scheduled"))
-                case .denied:
-                    toastCenter.showError(Localization.string("movies.reminder.denied"))
-                case .failed:
-                    toastCenter.showError(Localization.string("movies.reminder.failed"))
+        Menu {
+            ForEach(MovieWatchReminderOption.allCases) { option in
+                Button {
+                    scheduleReminder(option)
+                } label: {
+                    Label(option.title, systemImage: option.systemImage)
                 }
             }
         } label: {
@@ -279,6 +275,20 @@ struct MovieDetailHeroHeaderView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    private func scheduleReminder(_ option: MovieWatchReminderOption) {
+        Task {
+            let result = await MovieWatchReminderScheduler.scheduleReminder(for: viewModel.movie, option: option)
+            switch result {
+            case .scheduled:
+                toastCenter.showSuccess(Localization.string("movies.reminder.scheduled.option", option.title))
+            case .denied:
+                toastCenter.showError(Localization.string("movies.reminder.denied"))
+            case .failed:
+                toastCenter.showError(Localization.string("movies.reminder.failed"))
+            }
+        }
     }
 
     private func watchedButton(isSelected: Bool) -> some View {

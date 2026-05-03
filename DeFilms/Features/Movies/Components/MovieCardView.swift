@@ -3,11 +3,12 @@ import SwiftUI
 
 struct MovieCardView: View {
     let movie: Movie
-    var posterAspectRatio: CGFloat = AppDimension.posterAspectRatio
     var titleFont: Font = .subheadline
     var contentSpacing: CGFloat = AppSpacing.sm
     var metadataSpacing: CGFloat = AppSpacing.xxs
     var posterCornerRadius: CGFloat = AppCornerRadius.sm
+    var posterWidth: CGFloat = AppDimension.posterRailWidth
+    var posterHeight: CGFloat = AppDimension.posterRailHeight
     var showsListButton: Bool = true
 
     @EnvironmentObject private var listsStore: ListsStore
@@ -21,7 +22,7 @@ struct MovieCardView: View {
                     cornerRadius: posterCornerRadius,
                     placeholderSystemImage: "photo"
                 )
-                .aspectRatio(posterAspectRatio, contentMode: .fit)
+                .frame(width: posterWidth, height: posterHeight)
                 .background(
                     RoundedRectangle(cornerRadius: posterCornerRadius, style: .continuous)
                         .fill(
@@ -55,7 +56,7 @@ struct MovieCardView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: posterCornerRadius, style: .continuous))
                 )
-                .frame(maxWidth: 150)
+                .fixedSize()
 
                 HStack(alignment: .top) {
                     statusBadge
@@ -67,7 +68,9 @@ struct MovieCardView: View {
                     }
                 }
                 .padding(AppSpacing.xs)
+                .frame(width: posterWidth, alignment: .top)
             }
+            .frame(width: posterWidth, height: posterHeight, alignment: .top)
             .padding(.bottom, AppSpacing.xs - 2)
 
             VStack(alignment: .leading, spacing: metadataSpacing) {

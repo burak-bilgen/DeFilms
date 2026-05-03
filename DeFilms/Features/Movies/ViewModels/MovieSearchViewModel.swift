@@ -289,6 +289,59 @@ final class MovieSearchViewModel: ObservableObject {
         }
     }
 
+    func loadAICandidateMovies(matching prompt: String, aiSearchPlan: MovieAISearchPlan? = nil) async throws -> [Movie] {
+        let searchPlan = MovieAICandidateSearchPlan(prompt: prompt, aiSearchPlan: aiSearchPlan)
+        guard !searchPlan.isEmpty else { return [] }
+
+        var rankedCandidates = MovieAICandidateRanker(searchPlan: searchPlan)
+        var keywords: [MovieKeyword] = []
+
+        for query in searchPlan.movieQueries {
+            let response = try await movieCatalogService.searchMovies(query: query, page: 1)
+            rankedCandidates.add(response.results, sourceBoost: 8)
+        }
+
+        for query in searchPlan.keywordQueries {
+            let response = try await movieCatalogService.searchKeywords(query: query, page: 1)
+            keywords.append(contentsOf: response.results.prefix(3))
+        }
+
+        let keywordIDs = keywords.uniquedByID().prefix(12).map(\.id)
+        if !keywordIDs.isEmpty {
+            let response = try await movieCatalogService.discoverMovies(
+                keywordIDs: Array(keywordIDs),
+                matchMode: .any,
+                page: 1
+            )
+            rankedCandidates.add(response.results, sourceBoost: 14)
+        }
+
+        let focusedKeywordIDs = keywords.uniquedByID().prefix(4).map(\.id)
+        if focusedKeywordIDs.count > 1 {
+            let response = try await movieCatalogService.discoverMovies(
+                keywordIDs: Array(focusedKeywordIDs),
+                matchMode: .all,
+                page: 1
+            )
+            rankedCandidates.add(response.results, sourceBoost: 28)
+        }
+
+        for keywordPair in focusedKeywordIDs.adjacentPairs().prefix(4) {
+            let response = try await movieCatalogService.discoverMovies(
+                keywordIDs: [keywordPair.0, keywordPair.1],
+                matchMode: .all,
+                page: 1
+            )
+            rankedCandidates.add(response.results, sourceBoost: 22)
+        }
+
+        let uniqueMovies = rankedCandidates.movies(limit: 72)
+        Task {
+            await self.movieCatalogService.prefetchImages(for: uniqueMovies)
+        }
+        return uniqueMovies
+    }
+
     private func loadBrowseContent() async {
         let requestID = UUID()
         activeBrowseRequestID = requestID
@@ -498,10 +551,235 @@ final class MovieSearchViewModel: ObservableObject {
 
 }
 
+struct MovieAICandidateSearchPlan {
+    let movieQueries: [String]
+    let keywordQueries: [String]
+    let rankingTerms: [String]
+    let rankingPhrases: [String]
+
+    var isEmpty: Bool {
+        movieQueries.isEmpty && keywordQueries.isEmpty
+    }
+
+    init(prompt: String, aiSearchPlan: MovieAISearchPlan? = nil) {
+        let normalized = prompt
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard !normalized.isEmpty else {
+            movieQueries = []
+            keywordQueries = []
+            rankingTerms = []
+            rankingPhrases = []
+            return
+        }
+
+        let words = normalized
+            .split { !$0.isLetter && !$0.isNumber }
+            .map(String.init)
+        let terms = Self.priorityTerms(from: words)
+        let expandedTerms = Self.expandedKeywordTerms(from: terms)
+        let phrases = Self.contiguousPhrases(from: terms, maxLength: 3)
+        let aiTitleQueries = aiSearchPlan?.titleQueries ?? []
+        let aiKeywordQueries = aiSearchPlan?.keywordQueries ?? []
+        let aiTerms = aiSearchPlan?.semanticTerms ?? []
+        let aiPhrases = aiSearchPlan?.semanticPhrases ?? []
+
+        movieQueries = (
+            aiTitleQueries +
+                [normalized] +
+                terms
+        )
+        .uniqued()
+        .prefix(10)
+        .map { $0 }
+
+        keywordQueries = (
+            aiKeywordQueries +
+                aiPhrases +
+                [normalized] +
+                phrases +
+                terms +
+                expandedTerms +
+                aiTerms
+        )
+        .uniqued()
+        .prefix(32)
+        .map { $0 }
+
+        rankingTerms = (aiTerms + terms + expandedTerms).uniqued()
+        rankingPhrases = (aiPhrases + [normalized] + phrases + expandedTerms.filter { $0.contains(" ") }).uniqued()
+    }
+
+    private static func priorityTerms(from words: [String]) -> [String] {
+        var terms: [String] = []
+        let stopWords: Set<String> = [
+            "a", "an", "and", "about", "around", "for", "give", "i", "ile", "ilgili",
+            "movie", "movies", "film", "films", "filmler", "with", "the", "to", "want",
+            "ben", "bana", "bir", "listele", "oner"
+        ]
+
+        for word in words where !stopWords.contains(word) && word.count > 2 {
+            terms.append(word)
+            if word.hasSuffix("ies"), word.count > 4 {
+                terms.append(String(word.dropLast(3)) + "y")
+            } else if word.hasSuffix("s"), word.count > 3 {
+                terms.append(String(word.dropLast()))
+            }
+        }
+
+        return terms
+    }
+
+    private static func expandedKeywordTerms(from terms: [String]) -> [String] {
+        let expansions: [String: [String]] = [
+            "alien": ["extraterrestrial", "space", "invasion", "creature"],
+            "aliens": ["extraterrestrial", "space", "invasion", "creature"],
+            "apocalypse": ["post-apocalyptic", "end of world", "dystopia", "wasteland", "survival"],
+            "apocalyptic": ["post-apocalyptic", "end of world", "dystopia", "wasteland", "survival"],
+            "car": ["car chase", "vehicle", "road movie", "race", "racing"],
+            "cars": ["car chase", "vehicle", "road movie", "race", "racing"],
+            "desert": ["wasteland", "sandstorm", "survival", "road movie"],
+            "ghost": ["haunting", "supernatural", "spirit"],
+            "haunted": ["haunting", "supernatural", "ghost"],
+            "robot": ["android", "artificial intelligence", "machine"],
+            "robots": ["android", "artificial intelligence", "machine"],
+            "space": ["outer space", "space travel", "planet", "spaceship"],
+            "vampire": ["vampire", "supernatural", "blood"],
+            "vampires": ["vampire", "supernatural", "blood"],
+            "zombie": ["zombie apocalypse", "undead", "survival horror", "infection"],
+            "zombies": ["zombie apocalypse", "undead", "survival horror", "infection"]
+        ]
+
+        return terms.flatMap { term in
+            expansions[term, default: []]
+        }
+    }
+
+    private static func contiguousPhrases(from words: [String], maxLength: Int) -> [String] {
+        guard words.count > 1 else { return [] }
+
+        var phrases: [String] = []
+        for startIndex in words.indices {
+            let upperBound = min(words.count, startIndex + maxLength)
+            guard startIndex + 1 < upperBound else { continue }
+
+            for endIndex in (startIndex + 2)...upperBound {
+                phrases.append(words[startIndex..<endIndex].joined(separator: " "))
+            }
+        }
+
+        return phrases
+    }
+}
+
+private struct MovieAICandidateRanker {
+    private struct RankedMovie {
+        var movie: Movie
+        var score: Double
+    }
+
+    private let searchPlan: MovieAICandidateSearchPlan
+    private var rankedMovies: [Int: RankedMovie] = [:]
+
+    init(searchPlan: MovieAICandidateSearchPlan) {
+        self.searchPlan = searchPlan
+    }
+
+    mutating func add(_ movies: [Movie], sourceBoost: Double) {
+        for movie in movies {
+            let score = sourceBoost + lexicalScore(for: movie) + ratingScore(for: movie)
+            if var existing = rankedMovies[movie.id] {
+                existing.score += score * 0.45
+                existing.movie = merge(existing.movie, with: movie)
+                rankedMovies[movie.id] = existing
+            } else {
+                rankedMovies[movie.id] = RankedMovie(movie: movie, score: score)
+            }
+        }
+    }
+
+    func movies(limit: Int) -> [Movie] {
+        rankedMovies.values
+            .sorted {
+                if $0.score == $1.score {
+                    return ($0.movie.voteAverage ?? 0) > ($1.movie.voteAverage ?? 0)
+                }
+                return $0.score > $1.score
+            }
+            .prefix(limit)
+            .map(\.movie)
+    }
+
+    private func lexicalScore(for movie: Movie) -> Double {
+        let title = movie.title.lowercased()
+        let overview = (movie.overview ?? "").lowercased()
+        var score: Double = 0
+
+        for phrase in searchPlan.rankingPhrases where phrase.count > 3 {
+            if title.contains(phrase) {
+                score += 18
+            }
+            if overview.contains(phrase) {
+                score += 7
+            }
+        }
+
+        for term in searchPlan.rankingTerms where term.count > 2 {
+            if title.contains(term) {
+                score += 8
+            }
+            if overview.contains(term) {
+                score += 3
+            }
+        }
+
+        return score
+    }
+
+    private func ratingScore(for movie: Movie) -> Double {
+        guard let rating = movie.voteAverage else { return 0 }
+        return min(max(rating - 5, 0), 4)
+    }
+
+    private func merge(_ existing: Movie, with incoming: Movie) -> Movie {
+        Movie(
+            id: existing.id,
+            title: existing.title,
+            overview: existing.overview ?? incoming.overview,
+            posterPath: existing.posterPath ?? incoming.posterPath,
+            backdropPath: existing.backdropPath ?? incoming.backdropPath,
+            releaseDate: existing.releaseDate ?? incoming.releaseDate,
+            voteAverage: existing.voteAverage ?? incoming.voteAverage,
+            genreIDs: existing.genreIDs ?? incoming.genreIDs
+        )
+    }
+}
+
 private extension Array where Element == Movie {
     mutating func appendUniqueMovies(_ movies: [Movie]) {
         var seenIDs = Set(map(\.id))
         append(contentsOf: movies.filter { seenIDs.insert($0.id).inserted })
+    }
+}
+
+private extension Array where Element == String {
+    func uniqued() -> [String] {
+        var seen = Set<String>()
+        return filter { seen.insert($0).inserted }
+    }
+}
+
+private extension Array where Element == MovieKeyword {
+    func uniquedByID() -> [MovieKeyword] {
+        var seen = Set<Int>()
+        return filter { seen.insert($0.id).inserted }
+    }
+}
+
+private extension Array where Element == Int {
+    func adjacentPairs() -> [(Int, Int)] {
+        guard count > 1 else { return [] }
+        return zip(self, dropFirst()).map { ($0, $1) }
     }
 }
 

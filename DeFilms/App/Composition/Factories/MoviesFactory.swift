@@ -99,6 +99,24 @@ private struct UITestMovieCatalogService: MovieCatalogServicing {
         return MovieResponse(page: page, results: results, totalPages: 1)
     }
 
+    func searchKeywords(query: String, page: Int) async throws -> MovieKeywordResponse {
+        MovieKeywordResponse(
+            page: page,
+            results: [
+                MovieKeyword(id: 1, name: query)
+            ],
+            totalPages: 1
+        )
+    }
+
+    func discoverMovies(
+        keywordIDs: [Int],
+        matchMode: TMDBEndpoint.KeywordMatchMode,
+        page: Int
+    ) async throws -> MovieResponse {
+        MovieResponse(page: page, results: [featuredMovie, supportingMovie], totalPages: 1)
+    }
+
     func loadGenres() async throws -> [MovieGenre] {
         [
             MovieGenre(id: 18, name: "Drama"),

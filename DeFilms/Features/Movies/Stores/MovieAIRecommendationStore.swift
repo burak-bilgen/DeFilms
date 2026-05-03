@@ -29,6 +29,13 @@ struct MovieAIRecommendation: Equatable, Identifiable {
     var id: Int { movieID }
 }
 
+struct MovieAISearchPlan: Equatable {
+    let titleQueries: [String]
+    let keywordQueries: [String]
+    let semanticTerms: [String]
+    let semanticPhrases: [String]
+}
+
 @MainActor
 final class MovieAIRecommendationStore: ObservableObject {
     @Published private(set) var availability: MovieAIRecommendationAvailability = .unsupportedOS
@@ -54,37 +61,65 @@ final class MovieAIRecommendationStore: ObservableObject {
         errorMessage = nil
     }
 
+    func showError(_ message: String) {
+        errorMessage = message
+    }
+
+    func makeSearchPlan(for prompt: String, language: AppLanguage) async -> MovieAISearchPlan? {
+        refreshAvailability()
+        guard availability == .available else { return nil }
+
+        let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedPrompt.isEmpty else { return nil }
+
+        do {
+            if #available(iOS 26.0, *) {
+                return try await FoundationModelsMovieRecommendationEngine.makeSearchPlan(
+                    prompt: trimmedPrompt,
+                    language: language
+                )
+            }
+        } catch {
+            AppLogger.log("Foundation Models search planning failed", category: .app, level: .error)
+        }
+
+        return nil
+    }
+
     func generate(
         candidates: [Movie],
         statuses: [UserMovieStatus],
         language: AppLanguage,
         preferredProviders: Set<String>
-    ) async {
+    ) async -> [MovieAIRecommendation] {
         refreshAvailability()
-        guard availability == .available else { return }
+        guard availability == .available else { return [] }
 
-        let candidatePool = candidates.uniquedByID().prefix(36).map { $0 }
-        guard !candidatePool.isEmpty else { return }
+        let candidatePool = candidates.uniquedByID().prefix(64).map { $0 }
+        guard !candidatePool.isEmpty else { return [] }
 
         isGenerating = true
         errorMessage = nil
+        defer { isGenerating = false }
 
         do {
             if #available(iOS 26.0, *) {
-                picks = try await FoundationModelsMovieRecommendationEngine.generate(
+                let generatedPicks = try await FoundationModelsMovieRecommendationEngine.generate(
                     mood: moodPrompt,
                     candidates: candidatePool,
                     statuses: statuses,
                     language: language,
                     preferredProviders: preferredProviders
                 )
+                picks = generatedPicks
+                return generatedPicks
             }
         } catch {
             AppLogger.log("Foundation Models recommendation failed", category: .app, level: .error)
             errorMessage = Localization.string("movies.ai.error")
         }
 
-        isGenerating = false
+        return []
     }
 }
 
@@ -101,6 +136,15 @@ private struct GeneratedMovieRecommendationPick {
     var confidence: Double
     var reason: String
     var moodTag: String
+}
+
+@available(iOS 26.0, *)
+@Generable
+private struct GeneratedMovieSearchPlanResponse {
+    var titleQueries: [String]
+    var keywordQueries: [String]
+    var semanticTerms: [String]
+    var semanticPhrases: [String]
 }
 
 @available(iOS 26.0, *)
@@ -140,7 +184,10 @@ private enum FoundationModelsMovieRecommendationEngine {
             instructions: """
             You are DeFilms' private on-device movie recommendation assistant.
             Rank only the candidate movies provided by the app. Never invent movie IDs.
+            The app already ordered candidates by TMDB title, keyword, and overview relevance. Treat earlier candidates as stronger request matches.
             Prefer movies the user has not watched, use ratings and saved movies as taste signals, and keep reasons short.
+            When the user names a theme, genre, creature, actor, franchise, or keyword, prioritize candidates that match that request.
+            Infer cinematic intent from combinations of concepts and prefer iconic matches when the candidate set supports them.
             Respond in \(languageInstruction(for: language)).
             """
         )
@@ -163,7 +210,7 @@ private enum FoundationModelsMovieRecommendationEngine {
         let candidateIDs = Set(candidates.map(\.id))
         return response.content.picks
             .filter { candidateIDs.contains($0.movieID) }
-            .prefix(3)
+            .prefix(6)
             .map {
                 MovieAIRecommendation(
                     movieID: $0.movieID,
@@ -172,6 +219,48 @@ private enum FoundationModelsMovieRecommendationEngine {
                     moodTag: $0.moodTag
                 )
             }
+    }
+
+    static func makeSearchPlan(prompt: String, language: AppLanguage) async throws -> MovieAISearchPlan {
+        let model = SystemLanguageModel.default
+        guard model.isAvailable else {
+            return MovieAISearchPlan(titleQueries: [], keywordQueries: [], semanticTerms: [], semanticPhrases: [])
+        }
+
+        let session = LanguageModelSession(
+            model: model,
+            instructions: """
+            You convert natural movie requests into TMDB search strategy.
+            Do not simply echo the user's words. Infer cinematic concepts, subgenres, settings, creatures, story patterns, eras, and iconic search phrases.
+            Return concise English search terms because TMDB keyword data is strongest in English.
+            For vague requests, include both broad keyword concepts and a few representative title/franchise queries.
+            """
+        )
+
+        let response = try await session.respond(
+            to: """
+            User request in \(languageInstruction(for: language)): \(prompt)
+
+            Generate:
+            - titleQueries: up to 6 TMDB movie title/franchise queries, only when a title/franchise is likely.
+            - keywordQueries: up to 16 TMDB keyword searches for themes, settings, creatures, actions, and genres.
+            - semanticTerms: up to 14 single concept terms useful for ranking title/overview matches.
+            - semanticPhrases: up to 10 multi-word phrases useful for ranking title/overview matches.
+            """,
+            generating: GeneratedMovieSearchPlanResponse.self,
+            options: GenerationOptions(
+                sampling: .greedy,
+                temperature: 0.15,
+                maximumResponseTokens: 420
+            )
+        )
+
+        return MovieAISearchPlan(
+            titleQueries: sanitized(response.content.titleQueries, limit: 6),
+            keywordQueries: sanitized(response.content.keywordQueries, limit: 16),
+            semanticTerms: sanitized(response.content.semanticTerms, limit: 14),
+            semanticPhrases: sanitized(response.content.semanticPhrases, limit: 10)
+        )
     }
 
     private static func prompt(
@@ -191,11 +280,11 @@ private enum FoundationModelsMovieRecommendationEngine {
             }
             .joined(separator: "\n")
 
-        let candidateLines = candidates.map { movie in
+        let candidateLines = candidates.enumerated().map { index, movie in
             let overview = (movie.overview ?? "")
                 .replacingOccurrences(of: "\n", with: " ")
-                .prefix(180)
-            return "- id=\(movie.id); title=\(movie.title); year=\(movie.releaseYear); tmdbRating=\(String(format: "%.1f", movie.voteAverage ?? 0)); watched=\(watchedIDs.contains(movie.id)); genres=\((movie.genreIDs ?? []).map(String.init).joined(separator: ",")); overview=\(overview)"
+                .prefix(220)
+            return "- rank=\(index + 1); id=\(movie.id); title=\(movie.title); year=\(movie.releaseYear); tmdbRating=\(String(format: "%.1f", movie.voteAverage ?? 0)); watched=\(watchedIDs.contains(movie.id)); genres=\((movie.genreIDs ?? []).map(String.init).joined(separator: ",")); overview=\(overview)"
         }
         .joined(separator: "\n")
 
@@ -209,7 +298,7 @@ private enum FoundationModelsMovieRecommendationEngine {
         Candidate movies:
         \(candidateLines)
 
-        Return 3 picks. Each pick must include:
+        Return up to 6 picks. Each pick must include:
         - movieID from the candidates only
         - confidence between 0 and 1
         - reason under 120 characters
@@ -227,5 +316,13 @@ private enum FoundationModelsMovieRecommendationEngine {
             return "Arabic"
         }
     }
-}
 
+    private static func sanitized(_ values: [String], limit: Int) -> [String] {
+        var seen = Set<String>()
+        return values
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .filter { !$0.isEmpty && seen.insert($0).inserted }
+            .prefix(limit)
+            .map { $0 }
+    }
+}

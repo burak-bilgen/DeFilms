@@ -40,7 +40,7 @@ struct MovieHorizontalSection: View {
 
                     if isLoadingMore {
                         ProgressView()
-                            .frame(width: AppDimension.posterRailWidth, height: 236)
+                            .frame(width: AppDimension.posterRailWidth, height: AppDimension.posterRailHeight)
                             .transition(.opacity)
                     }
                 }

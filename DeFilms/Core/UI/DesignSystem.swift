@@ -27,6 +27,7 @@ enum AppDimension {
     static let posterHeroWidth: CGFloat = 132
     static let posterHeroHeight: CGFloat = 198
     static let posterRailWidth: CGFloat = 146
+    static let posterRailHeight: CGFloat = posterRailWidth / posterAspectRatio
     static let emptyStateMinHeight: CGFloat = 460
 }
 

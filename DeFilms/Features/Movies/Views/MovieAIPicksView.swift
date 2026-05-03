@@ -8,7 +8,12 @@ struct MovieAIPicksView: View {
     @EnvironmentObject private var preferences: AppPreferences
     @EnvironmentObject private var movieStatusStore: UserMovieStatusStore
     @StateObject private var aiRecommendationStore = MovieAIRecommendationStore()
+    @State private var messages: [MovieAIChatMessage] = []
+    @State private var draftMessage = ""
+    @State private var promptMatchedMovies: [Movie] = []
+    @State private var isResolvingPromptCandidates = false
     @State private var isAppleIntelligenceHelpPresented = false
+    @FocusState private var isComposerFocused: Bool
 
     private var listMovies: [Movie] {
         listsStore.lists
@@ -23,6 +28,7 @@ struct MovieAIPicksView: View {
 
     private var candidateMovies: [Movie] {
         [
+            promptMatchedMovies,
             listMovies,
             movieStatusStore.watchlistMovies,
             movieStatusStore.recommendations(from: browseMovies, limit: 18),
@@ -36,380 +42,419 @@ struct MovieAIPicksView: View {
         Dictionary(uniqueKeysWithValues: candidateMovies.map { ($0.id, $0) })
     }
 
-    private var resolvedPicks: [(MovieAIRecommendation, Movie)] {
-        aiRecommendationStore.picks.compactMap { pick in
-            guard let movie = moviesByID[pick.movieID] else { return nil }
-            return (pick, movie)
-        }
-    }
-
-    private var candidateSignature: String {
-        candidateMovies.map(\.id).prefix(80).map(String.init).joined(separator: "-")
+    private var canSendMessage: Bool {
+        !draftMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            !isResolvingPromptCandidates &&
+            !aiRecommendationStore.isGenerating
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                hero
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: AppSpacing.md) {
+                    ForEach(messages) { message in
+                        chatBubble(for: message)
+                            .id(message.id)
+                    }
 
-                switch aiRecommendationStore.availability {
-                case .available:
-                    promptPanel
-                    resultsSection
-                case .appleIntelligenceDisabled:
-                    availabilityPanel(
-                        systemImage: "apple.intelligence",
-                        title: Localization.string("movies.ai.disabled.title"),
-                        message: Localization.string("movies.ai.disabled.message"),
-                        actionTitle: Localization.string("movies.ai.disabled.action"),
-                        action: { isAppleIntelligenceHelpPresented = true }
-                    )
-                case .modelNotReady:
-                    availabilityPanel(
-                        systemImage: "hourglass",
-                        title: Localization.string("movies.ai.modelNotReady.title"),
-                        message: Localization.string("movies.ai.modelNotReady.message"),
-                        actionTitle: nil,
-                        action: nil
-                    )
-                case .unsupportedOS, .deviceNotEligible, .unavailable:
-                    MoviesMessageView(
-                        title: Localization.string("movies.ai.unavailable.title"),
-                        message: Localization.string("movies.ai.unavailable.message"),
-                        buttonTitle: nil,
-                        action: nil
-                    )
+                    if isResolvingPromptCandidates || aiRecommendationStore.isGenerating {
+                        typingBubble
+                            .id("typing")
+                    }
                 }
-
-                sourceSections
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.top, AppSpacing.md)
+                .padding(.bottom, AppSpacing.lg)
             }
-            .padding(.horizontal, AppSpacing.md)
-            .padding(.top, AppSpacing.md)
-            .padding(.bottom, AppSpacing.xxl)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .background(AppPalette.screenBackground)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(Localization.string("tab.ai"))
-                    .font(.headline.weight(.semibold))
+            .scrollDismissesKeyboard(.interactively)
+            .background(MovieAIChatPalette.background)
+            .safeAreaInset(edge: .bottom) {
+                composer
             }
-        }
-        .sheet(isPresented: $isAppleIntelligenceHelpPresented) {
-            AppleIntelligenceHelpSheet()
-                .presentationDetents([.medium])
-        }
-        .task {
-            aiRecommendationStore.refreshAvailability()
-            await moviesViewModel.loadBrowseContentIfNeeded(for: preferences.selectedLanguage)
-        }
-        .onChange(of: candidateSignature) { _ in
-            aiRecommendationStore.clearPicks()
-        }
-        .onChange(of: preferences.selectedLanguage.rawValue) { _ in
-            aiRecommendationStore.clearPicks()
+            .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $isAppleIntelligenceHelpPresented) {
+                AppleIntelligenceHelpSheet()
+                    .presentationDetents([.medium])
+            }
+            .task {
+                aiRecommendationStore.refreshAvailability()
+                appendWelcomeMessageIfNeeded()
+                await moviesViewModel.loadBrowseContentIfNeeded(for: preferences.selectedLanguage)
+            }
+            .onChange(of: messages.count) { _ in
+                scrollToBottom(with: proxy)
+            }
+            .onChange(of: isResolvingPromptCandidates || aiRecommendationStore.isGenerating) { _ in
+                scrollToBottom(with: proxy)
+            }
+            .onChange(of: preferences.selectedLanguage.rawValue) { _ in
+                resetConversationForLanguageChange()
+            }
         }
     }
 
-    private var hero: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                    Text(Localization.string("movies.ai.tab.title"))
-                        .font(.system(size: 34, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.primary)
-
-                    Text(Localization.string("movies.ai.tab.subtitle"))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer(minLength: AppSpacing.md)
-
-                Image(systemName: "sparkles")
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 50, height: 50)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.indigo, Color.cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .accessibilityHidden(true)
+    @ViewBuilder
+    private func chatBubble(for message: MovieAIChatMessage) -> some View {
+        HStack(alignment: .bottom, spacing: AppSpacing.sm) {
+            if message.role == .assistant {
+                assistantAvatar
             }
+
+            if message.role == .user {
+                Spacer(minLength: AppSpacing.xl)
+            }
+
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                Text(message.text)
+                    .font(.subheadline)
+                    .foregroundStyle(message.role == .user ? MovieAIChatPalette.userText : MovieAIChatPalette.primaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if !message.picks.isEmpty {
+                    VStack(spacing: AppSpacing.sm) {
+                        ForEach(Array(message.picks.enumerated()), id: \.element.0.id) { index, item in
+                            aiPickCard(rank: index + 1, pick: item.0, movie: item.1)
+                        }
+                    }
+                }
+            }
+            .padding(AppSpacing.md)
+            .background(message.role == .user ? MovieAIChatPalette.userBubble : MovieAIChatPalette.assistantBubble)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(message.role == .user ? Color.clear : MovieAIChatPalette.border, lineWidth: 1)
+            )
+            .shadow(
+                color: message.role == .user ? Color.clear : MovieAIChatPalette.softShadow,
+                radius: 14,
+                x: 0,
+                y: 8
+            )
+            .frame(maxWidth: message.role == .user ? 310 : .infinity, alignment: message.role == .user ? .trailing : .leading)
+
+            if message.role == .assistant {
+                Spacer(minLength: AppSpacing.xl)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
+    }
+
+    private var assistantAvatar: some View {
+        ZStack {
+            Circle()
+                .fill(MovieAIChatPalette.assistantAvatarBackground)
+            Image(systemName: "sparkles")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(MovieAIChatPalette.assistantAvatarForeground)
+        }
+        .frame(width: 32, height: 32)
+        .overlay(Circle().stroke(MovieAIChatPalette.border, lineWidth: 1))
+        .shadow(color: MovieAIChatPalette.softShadow, radius: 8, x: 0, y: 4)
+        .accessibilityHidden(true)
+    }
+
+    private var typingBubble: some View {
+        HStack(alignment: .bottom, spacing: AppSpacing.sm) {
+            assistantAvatar
 
             HStack(spacing: AppSpacing.xs) {
-                sourceChip(value: listMovies.count, title: Localization.string("movies.ai.source.lists"))
-                sourceChip(value: movieStatusStore.watchlistMovies.count, title: Localization.string("movies.stats.watchlist"))
-                sourceChip(value: candidateMovies.count, title: Localization.string("movies.ai.sources.candidates"))
+                ProgressView()
+                    .controlSize(.small)
+                Text(Localization.string("movies.ai.chat.thinking"))
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(MovieAIChatPalette.secondaryText)
             }
+            .padding(.horizontal, AppSpacing.md)
+            .frame(height: 42)
+            .background(MovieAIChatPalette.assistantBubble)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(MovieAIChatPalette.border, lineWidth: 1))
+            .shadow(color: MovieAIChatPalette.softShadow, radius: 10, x: 0, y: 6)
+
+            Spacer(minLength: AppSpacing.xl)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(AppSpacing.lg)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(.secondarySystemBackground),
-                    Color.indigo.opacity(0.11),
-                    Color.cyan.opacity(0.08)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous)
-                .stroke(AppPalette.border, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.xl, style: .continuous))
-        .shadow(color: AppPalette.shadow.opacity(0.7), radius: 14, x: 0, y: 8)
     }
 
-    private var promptPanel: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
-            Text(Localization.string("movies.ai.prompt.title"))
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
-
+    private var composer: some View {
+        HStack(alignment: .center, spacing: AppSpacing.xs) {
             TextField(
-                Localization.string("movies.ai.prompt.placeholder"),
-                text: $aiRecommendationStore.moodPrompt,
-                axis: .vertical
+                Localization.string("movies.ai.chat.placeholder"),
+                text: $draftMessage
             )
+            .focused($isComposerFocused)
+            .lineLimit(1)
             .font(.body)
-            .lineLimit(2...4)
-            .padding(AppSpacing.md)
-            .background(Color(.systemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
+            .foregroundStyle(MovieAIChatPalette.primaryText)
+            .textFieldStyle(.plain)
+            .submitLabel(.send)
+            .onSubmit(sendMessage)
+            .padding(.horizontal, 12)
+            .frame(height: 36, alignment: .center)
+            .background(MovieAIChatPalette.inputBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous)
-                    .stroke(AppPalette.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(MovieAIChatPalette.inputBorder(isFocused: isComposerFocused), lineWidth: 1)
             )
 
-            Button(action: generatePicks) {
-                HStack {
-                    if aiRecommendationStore.isGenerating {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Image(systemName: "sparkles.tv")
-                    }
-
-                    Text(Localization.string("movies.ai.generate"))
-                }
-                .font(.subheadline.weight(.semibold))
-                .frame(maxWidth: .infinity)
+            Button(action: sendMessage) {
+                Image(systemName: "arrow.up")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(MovieAIChatPalette.sendForeground)
+                    .frame(width: 32, height: 32)
+                    .background(canSendMessage ? MovieAIChatPalette.sendBackground : MovieAIChatPalette.disabledSendBackground)
+                    .clipShape(Circle())
             }
-            .buttonStyle(PrimaryProminentButtonStyle())
-            .disabled(aiRecommendationStore.isGenerating || candidateMovies.isEmpty)
-
-            if let errorMessage = aiRecommendationStore.errorMessage {
-                Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+            .disabled(!canSendMessage)
+            .accessibilityLabel(Localization.string("movies.ai.chat.send"))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(AppSpacing.md)
-        .appCardSurface(cornerRadius: AppCornerRadius.lg)
-    }
-
-    @ViewBuilder
-    private var resultsSection: some View {
-        if resolvedPicks.isEmpty && !aiRecommendationStore.isGenerating {
-            emptyResultsPanel
-        } else if !resolvedPicks.isEmpty {
-            VStack(alignment: .leading, spacing: AppSpacing.md) {
-                Text(Localization.string("movies.ai.results.title"))
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
-
-                VStack(spacing: AppSpacing.sm) {
-                    ForEach(Array(resolvedPicks.enumerated()), id: \.element.0.id) { index, item in
-                        aiPickCard(rank: index + 1, pick: item.0, movie: item.1)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.top, 6)
+        .padding(.bottom, 10)
+        .background(.regularMaterial)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(MovieAIChatPalette.border)
+                .frame(height: 1)
         }
-    }
-
-    private var emptyResultsPanel: some View {
-        HStack(alignment: .top, spacing: AppSpacing.md) {
-            Image(systemName: "lock.shield")
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
-                .frame(width: 38, height: 38)
-                .background(Color.primary.opacity(0.06))
-                .clipShape(Circle())
-
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text(Localization.string("movies.ai.empty.title"))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-
-                Text(Localization.string("movies.ai.empty"))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(AppSpacing.md)
-        .appCardSurface(cornerRadius: AppCornerRadius.lg)
-    }
-
-    @ViewBuilder
-    private var sourceSections: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.lg) {
-            if !listMovies.isEmpty {
-                MovieHorizontalSection(
-                    title: Localization.string("movies.ai.source.lists"),
-                    movies: Array(listMovies.prefix(18))
-                )
-                .padding(.horizontal, -AppSpacing.md)
-            }
-
-            if !movieStatusStore.watchlistMovies.isEmpty {
-                MovieHorizontalSection(
-                    title: Localization.string("movies.section.watchlist"),
-                    movies: Array(movieStatusStore.watchlistMovies.prefix(18))
-                )
-                .padding(.horizontal, -AppSpacing.md)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func availabilityPanel(
-        systemImage: String,
-        title: String,
-        message: String,
-        actionTitle: String?,
-        action: (() -> Void)?
-    ) -> some View {
-        VStack(alignment: .leading, spacing: AppSpacing.md) {
-            Image(systemName: systemImage)
-                .font(.title3.weight(.bold))
-                .foregroundStyle(.primary)
-                .frame(width: 44, height: 44)
-                .background(Color.primary.opacity(0.07))
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-            Text(title)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
-
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if let actionTitle, let action {
-                Button(actionTitle, action: action)
-                    .buttonStyle(PrimaryProminentButtonStyle())
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(AppSpacing.md)
-        .appCardSurface(cornerRadius: AppCornerRadius.lg)
     }
 
     private func aiPickCard(rank: Int, pick: MovieAIRecommendation, movie: Movie) -> some View {
         Button {
-            openMovie(movie)
+            coordinator.show(.detail(movie))
         } label: {
-            HStack(alignment: .top, spacing: AppSpacing.md) {
+            HStack(alignment: .top, spacing: AppSpacing.sm) {
                 ZStack(alignment: .topLeading) {
                     PosterImageView(
                         url: movie.posterURL,
-                        cornerRadius: AppCornerRadius.md,
+                        cornerRadius: AppCornerRadius.sm,
                         placeholderSystemImage: "film"
                     )
-                    .frame(width: 76, height: 114)
+                    .frame(width: 58, height: 87)
                     .accessibilityHidden(true)
 
                     Text("\(rank)")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 24, height: 24)
-                        .background(Color.black.opacity(0.72))
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(MovieAIChatPalette.userText)
+                        .frame(width: 20, height: 20)
+                        .background(MovieAIChatPalette.rankBadgeBackground)
                         .clipShape(Circle())
-                        .padding(6)
+                        .padding(4)
                 }
 
                 VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Text(movie.title)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(MovieAIChatPalette.primaryText)
                         .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                    Text(pick.reason)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
+                    Text(movieMetaText(for: movie))
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(MovieAIChatPalette.secondaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
 
-                    HStack(spacing: AppSpacing.xs) {
+                    if !pick.reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text(pick.reason)
+                            .font(.footnote)
+                            .foregroundStyle(MovieAIChatPalette.secondaryText)
+                            .lineLimit(3)
+                    }
+
+                    if !pick.moodTag.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         Text(pick.moodTag)
                             .font(.caption.weight(.bold))
+                            .lineLimit(1)
                             .padding(.horizontal, AppSpacing.sm)
-                            .frame(height: 26)
-                            .background(Color.primary.opacity(0.06))
+                            .frame(height: 23)
+                            .background(MovieAIChatPalette.chipBackground)
                             .clipShape(Capsule())
-
-                        Text("\(Int(pick.confidence * 100))%")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.secondary)
                     }
                 }
-
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(AppSpacing.sm)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(AppSpacing.md)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous))
+            .background(MovieAIChatPalette.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: AppCornerRadius.lg, style: .continuous)
-                    .stroke(AppPalette.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppCornerRadius.md, style: .continuous)
+                    .stroke(MovieAIChatPalette.border, lineWidth: 1)
             )
+            .shadow(color: MovieAIChatPalette.cardShadow, radius: 10, x: 0, y: 5)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableScaleButtonStyle())
     }
 
-    private func sourceChip(value: Int, title: String) -> some View {
-        HStack(spacing: AppSpacing.xxs) {
-            Text("\(value)")
-                .font(.caption.weight(.bold))
-            Text(title)
-                .font(.caption)
-                .lineLimit(1)
-        }
-        .foregroundStyle(.primary)
-        .padding(.horizontal, AppSpacing.sm)
-        .frame(height: 28)
-        .background(Color.primary.opacity(0.06))
-        .clipShape(Capsule())
-    }
+    private func sendMessage() {
+        let prompt = draftMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prompt.isEmpty, canSendMessage else { return }
 
-    private func generatePicks() {
+        messages.append(MovieAIChatMessage(role: .user, text: prompt))
+        draftMessage = ""
+        isComposerFocused = false
+
         Task {
-            await aiRecommendationStore.generate(
+            await resolve(prompt: prompt)
+        }
+    }
+
+    private func resolve(prompt: String) async {
+        isResolvingPromptCandidates = true
+        aiRecommendationStore.moodPrompt = prompt
+        aiRecommendationStore.clearPicks()
+
+        do {
+            let aiSearchPlan = await aiRecommendationStore.makeSearchPlan(
+                for: prompt,
+                language: preferences.selectedLanguage
+            )
+            let matchedMovies = try await moviesViewModel.loadAICandidateMovies(
+                matching: prompt,
+                aiSearchPlan: aiSearchPlan
+            )
+            promptMatchedMovies = matchedMovies
+            isResolvingPromptCandidates = false
+
+            guard !matchedMovies.isEmpty else {
+                messages.append(
+                    MovieAIChatMessage(
+                        role: .assistant,
+                        text: Localization.string("movies.ai.search.empty")
+                    )
+                )
+                return
+            }
+
+            let generatedPicks = await aiRecommendationStore.generate(
                 candidates: candidateMovies,
                 statuses: Array(movieStatusStore.statuses.values),
                 language: preferences.selectedLanguage,
                 preferredProviders: preferences.selectedStreamingProviders
             )
+
+            let resolvedPicks = generatedPicks.compactMap { pick -> (MovieAIRecommendation, Movie)? in
+                guard let movie = moviesByID[pick.movieID] else { return nil }
+                return (pick, movie)
+            }
+            let displayedPicks = resolvedPicks.isEmpty ? fallbackPicks(from: matchedMovies) : resolvedPicks
+
+            messages.append(
+                MovieAIChatMessage(
+                    role: .assistant,
+                    text: responseText(didUseFallback: resolvedPicks.isEmpty),
+                    picks: displayedPicks
+                )
+            )
+        } catch {
+            isResolvingPromptCandidates = false
+            AppLogger.log("AI prompt movie search failed", category: .search, level: .error)
+            messages.append(
+                MovieAIChatMessage(
+                    role: .assistant,
+                    text: Localization.string("movies.ai.search.error")
+                )
+            )
         }
     }
 
-    private func openMovie(_ movie: Movie) {
-        coordinator.show(.detail(movie))
+    private func fallbackPicks(from movies: [Movie]) -> [(MovieAIRecommendation, Movie)] {
+        movies.prefix(6).map { movie in
+            (
+                MovieAIRecommendation(
+                    movieID: movie.id,
+                    confidence: 0,
+                    reason: movie.overview ?? "",
+                    moodTag: ""
+                ),
+                movie
+            )
+        }
+    }
+
+    private func responseText(didUseFallback: Bool) -> String {
+        if didUseFallback {
+            return Localization.string("movies.ai.chat.fallbackResponse")
+        }
+
+        return Localization.string("movies.ai.chat.aiResponse")
+    }
+
+    private func movieMetaText(for movie: Movie) -> String {
+        var parts = [movie.releaseYear]
+        if let rating = movie.voteAverage {
+            parts.append(String(format: "%.1f", rating))
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private func appendWelcomeMessageIfNeeded() {
+        guard messages.isEmpty else { return }
+        messages.append(
+            MovieAIChatMessage(
+                role: .assistant,
+                text: Localization.string("movies.ai.chat.welcome")
+            )
+        )
+    }
+
+    private func resetConversationForLanguageChange() {
+        messages = []
+        promptMatchedMovies = []
+        aiRecommendationStore.clearPicks()
+        appendWelcomeMessageIfNeeded()
+    }
+
+    private func scrollToBottom(with proxy: ScrollViewProxy) {
+        let lastID = messages.last?.id
+        DispatchQueue.main.async {
+            withAnimation(.easeOut(duration: 0.22)) {
+                if isResolvingPromptCandidates || aiRecommendationStore.isGenerating {
+                    proxy.scrollTo("typing", anchor: .bottom)
+                } else if let lastID {
+                    proxy.scrollTo(lastID, anchor: .bottom)
+                }
+            }
+        }
+    }
+}
+
+private struct MovieAIChatMessage: Identifiable {
+    enum Role {
+        case user
+        case assistant
+    }
+
+    let id = UUID()
+    let role: Role
+    let text: String
+    var picks: [(MovieAIRecommendation, Movie)] = []
+}
+
+private enum MovieAIChatPalette {
+    static let background = Color(.systemGroupedBackground)
+    static let assistantBubble = Color(.secondarySystemGroupedBackground)
+    static let assistantAvatarBackground = Color(.systemBackground)
+    static let assistantAvatarForeground = Color.accentColor
+    static let userBubble = Color.primary
+    static let userText = Color(.systemBackground)
+    static let primaryText = Color.primary
+    static let secondaryText = Color.secondary
+    static let inputBackground = Color(.secondarySystemGroupedBackground)
+    static let cardBackground = Color(.systemBackground)
+    static let chipBackground = Color.primary.opacity(0.055)
+    static let border = Color.primary.opacity(0.09)
+    static let softShadow = Color.black.opacity(0.05)
+    static let cardShadow = Color.black.opacity(0.04)
+    static let sendBackground = Color.primary
+    static let sendForeground = Color(.systemBackground)
+    static let disabledSendBackground = Color.secondary.opacity(0.24)
+    static let rankBadgeBackground = Color.primary.opacity(0.78)
+
+    static func inputBorder(isFocused: Bool) -> Color {
+        isFocused ? Color.accentColor.opacity(0.35) : Color.primary.opacity(0.08)
     }
 }

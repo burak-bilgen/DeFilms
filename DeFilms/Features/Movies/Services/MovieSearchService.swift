@@ -31,6 +31,8 @@ protocol MovieCatalogServicing {
     func loadBrowseContent() async throws -> MovieBrowseContent
     func loadBrowseSection(sectionID: String, page: Int) async throws -> MovieResponse
     func searchMovies(query: String, page: Int) async throws -> MovieResponse
+    func searchKeywords(query: String, page: Int) async throws -> MovieKeywordResponse
+    func discoverMovies(keywordIDs: [Int], matchMode: TMDBEndpoint.KeywordMatchMode, page: Int) async throws -> MovieResponse
     func loadGenres() async throws -> [MovieGenre]
     func prefetchImages(for movies: [Movie]) async
 }
@@ -92,6 +94,26 @@ final class TMDBMovieCatalogService: MovieCatalogServicing {
     func searchMovies(query: String, page: Int) async throws -> MovieResponse {
         try await networkService.request(
             endpoint: TMDBEndpoint.searchMovie(query: query, page: page)
+        )
+    }
+
+    func searchKeywords(query: String, page: Int) async throws -> MovieKeywordResponse {
+        try await networkService.request(
+            endpoint: TMDBEndpoint.searchKeyword(query: query, page: page)
+        )
+    }
+
+    func discoverMovies(
+        keywordIDs: [Int],
+        matchMode: TMDBEndpoint.KeywordMatchMode,
+        page: Int
+    ) async throws -> MovieResponse {
+        try await networkService.request(
+            endpoint: TMDBEndpoint.discoverMoviesByKeywords(
+                keywordIDs: keywordIDs,
+                matchMode: matchMode,
+                page: page
+            )
         )
     }
 
