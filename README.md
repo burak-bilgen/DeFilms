@@ -1,262 +1,170 @@
-<p align="left">
+# DeFilms — Movie Discovery for iOS
 
-  <img src="./DeFilms/App/Assets.xcassets/AppLogo.imageset/logoDark@3x.png#gh-dark-mode-only" alt="DeFilms logo dark" width="125" />
-
-  <img src="./DeFilms/App/Assets.xcassets/AppLogo.imageset/logo@3x.png#gh-light-mode-only" alt="DeFilms logo light" width="125" />
-
+<p align="center">
+  <img src="./DeFilms/App/Assets.xcassets/AppLogo.imageset/logoDark@3x.png#gh-dark-mode-only" width="140" alt="DeFilms">
+  <img src="./DeFilms/App/Assets.xcassets/AppLogo.imageset/logo@3x.png#gh-light-mode-only" width="140" alt="DeFilms">
 </p>
-DeFilms is a SwiftUI movie discovery app built with the TMDB API. It was developed as an iOS case study, but I approached it like a small product rather than a one-off demo: stable navigation, testable state, careful persistence, polished localization, and a user flow that holds together across edge cases.
 
-The app is organized around three tabs:
-- Movies
-- AI Picks
-- Lists
-- Settings
+<p align="center">
+  <img src="https://img.shields.io/badge/iOS-16%2B-blue?style=flat-square&logo=apple" alt="iOS 16+">
+  <img src="https://img.shields.io/badge/Swift-6.0-orange?style=flat-square&logo=swift" alt="Swift 6">
+  <img src="https://img.shields.io/badge/Architecture-MVVM%20%2B%20Coordinator-blue?style=flat-square" alt="Architecture">
+  <img src="https://img.shields.io/badge/API-TMDB-01d277?style=flat-square&logo=themoviedatabase" alt="TMDB API">
+  <img src="https://img.shields.io/badge/Localization-EN%20%2F%20TR%20%2F%20AR-red?style=flat-square" alt="Localization">
+  <img src="https://img.shields.io/badge/Tests-88%20tests-success?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/Apple%20Intelligence-Yes-purple?style=flat-square" alt="Apple Intelligence">
+</p>
 
-## What’s Included
+DeFilms is a SwiftUI movie discovery app built with the TMDB API. Designed as a small product rather than a one-off demo — stable navigation, testable state, careful persistence, polished localization, and a user flow that holds together across edge cases.
 
-### Movies
-- Search with validation and recent search history
-- Filter and sort controls for year, rating, genre, and ordering
-- Rich detail pages with trailer, cast, watch providers, gallery, and similar titles
-- Multiple browse sections such as trending, now playing, popular, top rated, hidden gems, family night, action/adventure, upcoming, and more
-- Per-section horizontal pagination so browse rows keep loading as users scroll
-
-### AI Picks
-- Apple Foundation Models integration for private on-device movie recommendations on supported iPhones
-- Mood-based prompts such as “tense but not too heavy”
-- Recommendations use saved lists, watchlist state, ratings, platform preferences, and current TMDB candidates
-- Graceful fallback when Apple Intelligence is unavailable, disabled, or still preparing the on-device model
-
-### Lists
-- Multiple custom movie lists instead of a single flat “saved” bucket
-- Create, rename, delete, move, and remove flows
-- Confirmation steps for destructive actions
-- Movie management flows that support both moving and removing without forcing unnecessary list creation
-
-### Settings
-- Light / dark theme selection
-- English, Turkish, and Arabic localization
-- RTL-aware layout handling for Arabic
-- Streaming platform preferences that prioritize matching providers on movie detail pages
-- Local sign up, sign in, sign out, password change, and account deletion flows
-- App version display, privacy/data details, and TMDB attribution
-
-## A Few Product Decisions
-
-Some choices were intentional because they make the app feel more complete than a typical study-case implementation:
-
-- Lists are list-based. People usually think in collections like “Watch This Weekend” or “Sci-Fi”, not in a single generic saved pool.
-- Search history is stored locally and kept small on purpose, so it stays useful instead of becoming noise.
-- Apple Intelligence features are treated as an enhancement, not a hard dependency. The app still works normally on unsupported devices.
-- Destructive or structural actions use confirmation where it matters, but not everywhere, to keep the app from feeling heavy.
-- Localization was treated as a real product concern. Arabic support includes layout-direction handling, not just translated strings.
-- Connectivity is checked against the same backend the app actually uses, so the “offline” experience reflects the real product path instead of a generic internet probe.
+---
 
 ## Architecture
 
-The project follows a feature-oriented MVVM structure with protocol-driven dependencies and coordinator-based navigation.
+```
+DeFilms/
+├── App/                  # Composition root, lifecycle, routing, root views
+├── Core/                 # Shared infrastructure
+│   ├── Foundation/       # Extensions, validation, utilities
+│   ├── Localization/     # L10n manager (EN/TR/AR)
+│   ├── Logging/          # Structured logging
+│   ├── Navigation/       # Coordinator + router
+│   ├── Network/          # Endpoints, network manager, monitoring
+│   ├── Security/         # Keychain, biometric auth
+│   ├── Settings/         # App settings
+│   ├── Storage/          # Core Data models + stack
+│   └── UI/               # Theme, reusable components
+├── Features/             # Vertical slices
+│   ├── Auth/             # Local sign up/sign in, account management
+│   ├── Lists/            # Custom movie lists
+│   ├── Movies/           # Browse, search, detail, AI picks
+│   ├── Onboarding/       # First-run flow
+│   └── Settings/         # Preferences, privacy, account
+├── DeFilmsTests/         # Unit tests (72 tests)
+└── DeFilmsUITests/       # UI tests (16 tests)
+```
 
-### High-level structure
-- `App`
-  App composition, lifecycle, app-level routing, and root views
-- `Core`
-  Shared infrastructure such as networking, storage, localization, settings, logging, and design primitives
-- `Features`
-  Vertical slices for Movies, Lists, Settings, Auth, and Onboarding
-- `DeFilmsTests`
-  Unit tests grouped by feature and core area
-- `DeFilmsUITests`
-  UI flow coverage and launch-based scenarios
+### Key Design Decisions
 
-### Patterns in use
-- MVVM for screen state and view logic
-- Coordinator pattern for navigation ownership
-- Repository abstraction for persistence
-- Protocol-based dependency injection
-- Factory/composition root for object creation
-- Store-style state coordination for lists
+| Principle | Implementation |
+|-----------|---------------|
+| **MVVM + Coordinator** | ViewModels own screen state, coordinators own navigation — views stay lean |
+| **Protocol-driven Networking** | Repository abstractions with mockable protocols |
+| **Feature-oriented Slices** | Each feature is a vertical slice: models, services, view models, views |
+| **Apple Intelligence** | On-device AI picks via Foundation Models — graceful fallback when unavailable |
+| **RTL-aware Localization** | Full Arabic support with layout-direction handling, not just translated strings |
+| **Deterministic UI Tests** | Seeded launch arguments for consistent test flows |
+| **Stale Response Protection** | Search and pagination guard against out-of-order async responses |
 
-This structure keeps screen code reasonably light while avoiding the usual case-study problem of mixing networking, persistence, and navigation directly into views.
+---
+
+## Features
+
+### Movies
+- Search with validation and recent search history
+- Filter/sort controls for year, rating, genre, ordering
+- Rich detail pages: trailer, cast, watch providers, gallery, similar titles
+- Browse sections: trending, now playing, popular, top rated, hidden gems, family night, upcoming, and more
+- Section-scoped horizontal pagination
+
+### AI Picks
+- On-device movie recommendations powered by Apple Foundation Models
+- Mood-based prompts (e.g. "tense but not too heavy")
+- Context-aware: lists, watchlist, ratings, platform preferences, TMDB candidates
+- Graceful fallback when Apple Intelligence unavailable or model not ready
+
+### Lists
+- Multiple custom lists instead of a single flat "saved" collection
+- Full CRUD: create, rename, delete, move, remove movies
+- Confirmation steps for destructive actions
+
+### Settings
+- Light / dark / system theme
+- EN / TR / AR localization with RTL layout for Arabic
+- Streaming platform preferences
+- Local auth: sign up, sign in, sign out, password change, account deletion
+- TMDB attribution, privacy notes, App Store review readiness
+
+---
 
 ## Tech Stack
-- Swift
-- SwiftUI
-- Swift Concurrency (`async/await`)
-- URLSession
-- Network framework
-- Core Data
-- Keychain
-- CryptoKit
-- Foundation Models
-- XCTest / XCUITest
 
-## Notable Implementation Details
+| Layer | Technology |
+|-------|-----------|
+| **UI** | SwiftUI |
+| **Concurrency** | Swift async/await |
+| **Networking** | URLSession + custom network layer |
+| **Persistence** | Core Data + Keychain + CryptoKit |
+| **AI** | Apple Foundation Models |
+| **Auth** | Local (Biometric + Keychain) |
+| **Testing** | XCTest / XCUITest |
 
-- Navigation flows are coordinator-backed across app, movies, lists, and settings.
-- Lists and recent searches are persisted locally with current Core Data entities.
-- Search and pagination flows protect against stale async responses overriding newer state.
-- Browse pagination is section-scoped, so one horizontal row can continue loading without blocking the rest of the home screen.
-- AI picks are generated from a constrained candidate set; model output is filtered back to known TMDB movie IDs.
-- Poster loading retries cleanly after connectivity is restored.
-- Auth fields were tuned for more stable layout behavior instead of shifting as content changes.
-- Menu and dialog behavior was adjusted to behave correctly across LTR/RTL language switches.
-- TMDB attribution, local privacy notes, and account deletion are available from Settings for App Store review readiness.
+---
 
-These are small details, but they tend to be the difference between a prototype and something that feels maintained.
+## Testing
+
+```
+Test Suite 'DeFilmsTests' passed
+Test Suite 'DeFilmsUITests' passed
+Executed 88 tests, with 0 failures
+```
+
+Coverage weighted toward regressions: view model state transitions, validation rules, persistence behavior, navigation-critical flows, async loading and error handling.
+
+---
 
 ## Installation
 
 ### Requirements
 - Xcode 16+
 - iOS 16.0+
-- A valid TMDB API key
+- TMDB API key
 
 ### Setup
-1. Clone the repository.
-2. Copy `Config/Secrets.xcconfig.example` to `Config/Secrets.xcconfig`.
-3. Set `TMDB_API_KEY` in `Config/Secrets.xcconfig`.
-4. Open the project in Xcode.
-5. Select the `DeFilms` scheme.
-6. Build and run on an iOS 16+ simulator or physical device.
-7. If you want to run the UI tests, keep the default test plans enabled; the project already includes seeded launch arguments for deterministic flows.
 
-`Config/Secrets.xcconfig` is intentionally ignored by git. Rotate any TMDB key that was ever committed before using the app as a public portfolio project.
-
-## Testing
-
-The project includes both unit tests and UI tests. Coverage is weighted toward the parts most likely to regress in a real app:
-- view model state transitions
-- validation rules
-- persistence behavior
-- navigation-critical flows
-- async loading and error handling
-
-Current suite footprint:
-- `72` unit tests
-- `16` UI tests
-- `88` total test methods
-
-Example output:
-
-```text
-Test Suite 'All tests' started
-Test Suite 'DeFilmsTests' passed
-Test Suite 'DeFilmsUITests' passed
-Executed 88 tests, with 0 failures
+```bash
+git clone https://github.com/burak-bilgen/DeFilms.git
+cd DeFilms
+cp Config/Secrets.xcconfig.example Config/Secrets.xcconfig
+# Set TMDB_API_KEY in Config/Secrets.xcconfig
+open DeFilms.xcodeproj
 ```
 
-## Localization & Accessibility
+Select the **DeFilms** scheme, build and run on iOS 16+ simulator or device.
 
-Supported languages:
-- English
-- Turkish
-- Arabic
+> `Config/Secrets.xcconfig` is git-ignored. Rotate any TMDB key that was ever committed before public use.
 
-Accessibility work is practical rather than purely checkbox-driven:
-- dynamic type handling in tighter layouts
-- RTL-aware presentation
-- reduced visual noise in loading states
-- safer modal and destructive action presentation
-
-It is not a full accessibility audit, but it goes beyond defaults.
-
-## Known Limitations
-- Authentication is local-only and not backed by a real server
-- There is no offline browsing mode; the app depends on live TMDB content
-- Apple Intelligence recommendations require a supported iPhone, iOS 26+, and Apple Intelligence enabled
-- Snapshot-style visual workflows still benefit from environment-specific setup on a fresh machine
-- Some UI composition files are intentionally dense and could be split further if the app grows
-
-## Changelog
-
-### 2026-05-02
-- Added a dedicated AI Picks tab powered by Apple Foundation Models on supported devices.
-- Added mood-based private recommendations using lists, watchlist, ratings, platform preferences, and TMDB candidates.
-- Added onboarding copy for AI-assisted discovery.
-- Added section-level browse pagination for horizontal movie rows.
-- Expanded and reordered home browse sections with TMDB discover-based rows.
-- Improved movie detail actions with a full-width horizontal action rail and clearer scroll affordance.
-- Removed the separate search button from the search field and tightened empty search layout.
-
-## App Store Readiness
-
-- TMDB attribution is available under Settings > About > TMDB Attribution.
-- Local account deletion is available under Settings when signed in.
-- Privacy and data handling notes are available under Settings > About > Privacy & Data.
-- `PrivacyInfo.xcprivacy` is included for required-reason API disclosure.
-- A public privacy policy draft lives in `PRIVACY.md`.
-- App Store review notes and submission checks live in `AppStore/SubmissionChecklist.md`.
-
-## Possible Next Steps
-- Replace local auth with a backend-backed identity flow
-- Add CI automation for UI and visual regression checks
-- Expand accessibility labels for more custom controls
-- Introduce a limited cached browsing mode if offline support becomes a product goal
-- Break a few larger feature views into smaller presentation units over time
-
-## Screenshots
-### Onboarding & Auth
 ---
-Entry points for the first-run flow and local account experience.
 
-<p align="center">
-  <img src="./Screenshots/Onboarding.png" width="220" alt="Onboarding"/>
-  <img src="./Screenshots/SignUp-Light.png" width="220" alt="Sign Up"/>
-  <img src="./Screenshots/Sign-In-Light.png" width="220" alt="Sign In"/>
-</p>
+## Project Statistics
 
-### Movies
+| Metric | Value |
+|--------|-------|
+| Swift files | ~96 (production) |
+| Unit tests | 72 |
+| UI tests | 16 |
+| Localized languages | 3 (EN, TR, AR) |
+| Minimum deployment | iOS 16.0 |
+| External dependencies | TMDB API only |
+
 ---
-Main browsing surface shown in light, dark, and RTL variants.
 
-<p align="center">
-  <img src="./Screenshots/Movies-Light.png" width="220" alt="Movies Light"/>
-  <img src="./Screenshots/Movies-Dark.png" width="220" alt="Movies Dark"/>
-  <img src="./Screenshots/Movies-RTLSupport.png" width="220" alt="Movies RTL"/>
-</p>
+## Localization
 
-### Movie Detail
+| Language | Layout |
+|----------|--------|
+| English | LTR |
+| Turkish | LTR |
+| Arabic | RTL |
+
 ---
-Detail presentation across the two primary appearance modes.
 
-<p align="center">
-  <img src="./Screenshots/MovieDetail-Light.png" width="220" alt="Movie Detail Light"/>
-  <img src="./Screenshots/MovieDetail-Light-2.png" width="220" alt="Movie Detail Light 2"/>
-</p>
+## License
 
-<p align="center">
-  <img src="./Screenshots/MovieDetail-Dark.png" width="220" alt="Movie Detail Dark"/>
-  <img src="./Screenshots/MovieDetail-Dark-2.png" width="220" alt="Movie Detail Dark 2"/>
-</p>
+MIT License — see [LICENSE](LICENSE) for details.
 
-### Search
 ---
-Search results flow in both light and dark themes.
 
 <p align="center">
-  <img src="./Screenshots/MovieSearch-Light.png" width="220" alt="Movie Search Light"/>
-  <img src="./Screenshots/MovieSearch-Dark.png" width="220" alt="Movie Search Dark"/>
+  <sub>Built with SwiftUI + TMDB API by <a href="https://github.com/burak-bilgen">Bilgen Works</a></sub>
 </p>
-
-### Lists
----
-Custom list management surface in light and dark variants.
-
-<p align="center">
-  <img src="./Screenshots/Lists-Light.png" width="220" alt="Lists Light"/>
-  <img src="./Screenshots/Lists-Dark.png" width="220" alt="Lists Dark"/>
-</p>
-
-### Settings
----
-Theme, language, and account controls shown across both appearance modes.
-
-<p align="center">
-  <img src="./Screenshots/Settings-Light.png" width="220" alt="Settings Light"/>
-  <img src="./Screenshots/Settings-Dark.png" width="220" alt="Settings Dark"/>
-</p>
-
-## Closing Note
-
-The goal with DeFilms was not only to satisfy the checklist, but to make the project feel reviewable, durable, and intentionally built. The strongest parts of the submission are the feature completeness, the navigation/state separation, the localization work, and the attention given to edge cases that usually get skipped in small take-home projects.
